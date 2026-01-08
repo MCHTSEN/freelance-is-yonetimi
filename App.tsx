@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useAuth } from './lib/AuthContext';
+import Login from './screens/Login';
 import SalesKanban from './screens/SalesKanban';
 import CreateProposal from './screens/CreateProposal';
 import MeetingNotes from './screens/MeetingNotes';
@@ -14,7 +16,25 @@ enum Screen {
 }
 
 export default function App() {
+  const { user, loading, signOut } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.KANBAN);
+
+  // Show loading spinner while checking auth
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen bg-background-dark items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
+          <p className="text-text-secondary">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login screen if not authenticated
+  if (!user) {
+    return <Login />;
+  }
 
   const NavItem = ({ screen, icon, label }: { screen: Screen; icon: string; label: string }) => (
     <button
@@ -37,7 +57,7 @@ export default function App() {
         <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4">
           <span className="material-symbols-outlined text-white text-[24px]">grid_view</span>
         </div>
-        
+
         <div className="flex flex-col gap-4 w-full px-4 items-center">
           <NavItem screen={Screen.KANBAN} icon="view_kanban" label="Sales Process" />
           <NavItem screen={Screen.PROPOSAL} icon="description" label="Proposals" />
@@ -46,9 +66,19 @@ export default function App() {
           <NavItem screen={Screen.FINANCE} icon="attach_money" label="Finance" />
         </div>
 
-        <div className="mt-auto flex flex-col gap-4">
-          <div className="size-10 rounded-full bg-slate-700 overflow-hidden border border-white/10">
-             <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuBL1_Ye6TOS2wERfNU196H1ydxH7JOn7q9tS8KSisgAFxubytj_M0tDHz4tB4Uy0EyADcMrkRWp7R1ZLT4FQyDR2lb5BI9AFk-cyPwhJM5F0EzE-eO-diselCFlKKOKjQ7tWngFtuWhBAWIn7CTluTDUguiUZNE4v4Wpk3myidqAI26dR_R4HC_5ZQh8mUTcpY09if5rCFvlLds0J_AlYqblQMhpf45V3SXuX_0gDsiYG2RvelA_2AhNeqMOcvMEnVsvyMBM_cv6Zo" alt="User" className="w-full h-full object-cover" />
+        <div className="mt-auto flex flex-col gap-4 items-center">
+          {/* Logout Button */}
+          <button
+            onClick={signOut}
+            className="size-10 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center"
+            title="Çıkış Yap"
+          >
+            <span className="material-symbols-outlined text-[20px]">logout</span>
+          </button>
+
+          {/* User Avatar */}
+          <div className="size-10 rounded-full bg-primary/20 overflow-hidden border border-primary/30 flex items-center justify-center">
+            <span className="material-symbols-outlined text-primary text-[20px]">person</span>
           </div>
         </div>
       </nav>
