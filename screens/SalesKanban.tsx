@@ -1,229 +1,305 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react'
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragStartEvent,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { usePipeline, STAGE_CONFIG, PipelineStage, PipelineWithClient } from '../hooks/usePipeline'
+import { useClients } from '../hooks/useClients'
+import Modal from '../components/Modal'
+import ClientForm from '../components/ClientForm'
+import PipelineForm from '../components/PipelineForm'
 
-interface Card {
-  id: string;
-  title: string;
-  desc: string;
-  tag?: string;
-  tagColor?: string;
-  tagIcon?: string;
-  date?: string;
-  initials?: string;
-  color?: string;
-  amount?: string;
-  isLost?: boolean;
-}
-
-interface Column {
-  id: string;
-  title: string;
-  cards: Card[];
-}
-
+// Kanban Card Component
 interface KanbanCardProps {
-  card: Card;
-  onDelete: (id: string) => void;
-  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
+  item: PipelineWithClient
+  onDelete: () => void
+  isDragging?: boolean
 }
 
-const KanbanCard: React.FC<KanbanCardProps> = ({ card, onDelete, onDragStart }) => (
-  <div 
-    draggable
-    onDragStart={onDragStart}
-    className={`group relative bg-surface-lighter p-4 rounded-xl border border-transparent hover:border-[#324d67] cursor-grab active:cursor-grabbing shadow-sm transition-all hover:-translate-y-1 ${card.isLost ? 'opacity-50 hover:opacity-80 grayscale' : ''}`}
-  >
-    <div className="flex justify-between items-start mb-3">
-      {card.tag ? (
-        <div className={`${card.tagColor} text-xs font-bold px-2 py-1 rounded flex items-center gap-1`}>
-          {card.tagIcon && <span className="material-symbols-outlined text-[12px]">{card.tagIcon}</span>}
-          {card.tag}
+function KanbanCard({ item, onDelete, isDragging }: KanbanCardProps) {
+  const clientName = item.clients
+    ? `${item.clients.first_name} ${item.clients.last_name}`
+    : 'İsimsiz Müşteri'
+
+  const initials = item.clients
+    ? `${item.clients.first_name[0]}${item.clients.last_name[0]}`
+    : '??'
+
+  const priorityConfig = {
+    high: { color: 'bg-red-500/20 text-red-300', label: 'Yüksek' },
+    medium: { color: 'bg-yellow-500/20 text-yellow-300', label: 'Orta' },
+    low: { color: 'bg-gray-500/20 text-gray-300', label: 'Düşük' },
+  }
+
+  const priority = priorityConfig[item.priority as keyof typeof priorityConfig] || priorityConfig.medium
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null
+    const date = new Date(dateStr)
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+  }
+
+  const formatCurrency = (value: number | null) => {
+    if (!value) return null
+    return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value)
+  }
+
+  return (
+    <div
+      className={`group relative bg-[#1a2634] p-4 rounded-xl border border-transparent hover:border-[#324d67] shadow-sm transition-all ${
+        isDragging ? 'opacity-50 scale-105 shadow-xl' : 'hover:-translate-y-1'
+      } ${item.stage === 'lost' ? 'opacity-50 grayscale' : ''}`}
+    >
+      <div className="flex justify-between items-start mb-3">
+        <div className={`${priority.color} text-xs font-bold px-2 py-1 rounded flex items-center gap-1`}>
+          {priority.label}
         </div>
-      ) : <div></div>}
-      <button 
-        onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-[#92adc9] hover:text-red-400 p-1 -mr-2 -mt-2"
-      >
-        <span className="material-symbols-outlined text-[18px]">delete</span>
-      </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (window.confirm('Bu kartı silmek istediğinize emin misiniz?')) {
+              onDelete()
+            }
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity text-[#92adc9] hover:text-red-400 p-1 -mr-2 -mt-2"
+        >
+          <span className="material-symbols-outlined text-[18px]">delete</span>
+        </button>
+      </div>
+
+      <h4 className={`text-white font-bold text-base mb-1 ${item.stage === 'lost' ? 'line-through decoration-slate-500' : ''}`}>
+        {clientName}
+      </h4>
+
+      {item.clients?.company && (
+        <p className="text-[#92adc9] text-sm mb-2">{item.clients.company}</p>
+      )}
+
+      {item.notes && (
+        <p className="text-[#6b8ba3] text-sm mb-3 line-clamp-2">{item.notes}</p>
+      )}
+
+      {item.estimated_value && (
+        <p className="text-primary text-sm font-bold mb-3">{formatCurrency(item.estimated_value)}</p>
+      )}
+
+      {item.follow_up_date && (
+        <div className="flex items-center justify-between border-t border-[#324d67] pt-3 mt-2">
+          <div className="flex items-center gap-2 text-[#92adc9] text-xs">
+            <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+            <span>{formatDate(item.follow_up_date)}</span>
+          </div>
+          <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30">
+            {initials}
+          </div>
+        </div>
+      )}
+
+      {!item.follow_up_date && (
+        <div className="flex justify-end mt-2">
+          <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30">
+            {initials}
+          </div>
+        </div>
+      )}
     </div>
-    <h4 className={`text-white font-bold text-base mb-1 ${card.isLost ? 'line-through decoration-slate-500' : ''}`}>{card.title}</h4>
-    <p className="text-[#92adc9] text-sm mb-4 line-clamp-2">{card.desc}</p>
-    {card.amount && <p className="text-white text-sm font-bold mb-3">{card.amount}</p>}
-    {card.date && (
-      <div className="flex items-center justify-between border-t border-[#324d67] pt-3 mt-2">
-        <div className="flex items-center gap-2 text-[#92adc9] text-xs">
-          <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-          <span>{card.date}</span>
+  )
+}
+
+// Sortable Card Wrapper
+function SortableCard({ item, onDelete }: { item: PipelineWithClient; onDelete: () => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+      <KanbanCard item={item} onDelete={onDelete} isDragging={isDragging} />
+    </div>
+  )
+}
+
+// Column Component
+interface ColumnProps {
+  stage: PipelineStage
+  title: string
+  items: PipelineWithClient[]
+  onAddCard: () => void
+  onDeleteCard: (id: string) => void
+  isOver?: boolean
+}
+
+function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: ColumnProps) {
+  return (
+    <div className="flex flex-col w-[320px] shrink-0 gap-4">
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-2">
+          <h3 className="font-bold text-sm text-[#92adc9] uppercase tracking-wider">{title}</h3>
+          <span className="bg-[#233648] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+            {items.length}
+          </span>
         </div>
-        <div className={`size-6 rounded-full ${card.color || 'bg-slate-600'} flex items-center justify-center text-[10px] font-bold border border-[#233648]`}>
-          {card.initials}
+        <div className="flex gap-1">
+          <button
+            onClick={onAddCard}
+            className="text-[#92adc9] hover:text-white transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+          </button>
         </div>
       </div>
-    )}
-  </div>
-);
 
+      <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
+        <div
+          className={`flex flex-col gap-3 min-h-[150px] rounded-xl p-2 transition-colors ${
+            isOver ? 'bg-primary/10 border-2 border-dashed border-primary/50' : 'border-2 border-transparent'
+          }`}
+        >
+          {items.map((item) => (
+            <SortableCard
+              key={item.id}
+              item={item}
+              onDelete={() => onDeleteCard(item.id)}
+            />
+          ))}
+          {items.length === 0 && (
+            <div className="h-full flex items-center justify-center text-[#233648] text-sm font-medium py-8">
+              Buraya sürükleyin
+            </div>
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  )
+}
+
+// Main Component
 export default function SalesKanban() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [draggedItem, setDraggedItem] = useState<{ cardId: string; colId: string } | null>(null);
-  
-  const [columns, setColumns] = useState<Column[]>([
-    {
-      id: 'c1',
-      title: 'Lead',
-      cards: [
-        { id: '1', title: 'TechStart Ltd.', desc: 'E-ticaret platformu modernizasyonu ve mobil uygulama entegrasyonu.', tag: 'Yeni Lead', tagColor: 'bg-purple-500/20 text-purple-300', date: '14 Eki', initials: 'TS', color: 'bg-blue-500' },
-        { id: '2', title: 'Atlas Lojistik', desc: 'Depo yönetim sistemi (WMS) için yazılım danışmanlığı.', tag: 'Referans', tagColor: 'bg-blue-500/20 text-blue-300', date: '15 Eki', initials: 'AL', color: 'bg-orange-500' },
-        { id: '3', title: 'Kahve Dünyası', desc: 'Basit bir landing page tasarımı.', tag: 'Düşük Öncelik', tagColor: 'bg-gray-700/50 text-gray-400', date: '20 Eki', initials: 'KD', color: 'bg-amber-700' },
-      ]
-    },
-    {
-      id: 'c2',
-      title: 'Görüşüldü',
-      cards: [
-        { id: '4', title: 'FinansPort', desc: 'Teknik mülakat tamamlandı, bütçe onayı bekleniyor.', tag: 'Takip Et', tagColor: 'bg-yellow-500/20 text-yellow-300', tagIcon: 'schedule', date: 'Yarın', initials: 'FP', color: 'bg-indigo-600' },
-        { id: '5', title: 'NextGen AI', desc: 'Prototip sunumu yapıldı. Feedback bekleniyor.', tag: 'Genel', tagColor: 'bg-transparent text-[#92adc9]', date: '18 Eki', initials: 'NG', color: 'bg-pink-600' },
-      ]
-    },
-    {
-      id: 'c3',
-      title: 'Teklif Gönderildi',
-      cards: [
-        { id: '6', title: 'Creative Studio', desc: 'Kurumsal web sitesi yenileme ve SEO paketi teklifi iletildi.', tag: '45.000 ₺', tagColor: 'bg-primary/20 text-primary', tagIcon: 'attach_money', date: '10 Eki', initials: 'CS', color: 'bg-teal-600', amount: '45.000 ₺' }
-      ]
-    },
-    {
-      id: 'c4',
-      title: 'Sözleşme',
-      cards: [
-        { id: '7', title: 'GreenEnergy A.Ş.', desc: 'IoT dashboard projesi. Sözleşme taslağı hukuk departmanında.', tag: 'İmzalanıyor', tagColor: 'bg-green-500/20 text-green-400', date: 'Onay Bekliyor', initials: 'GE', color: 'bg-green-700' }
-      ]
-    },
-    {
-      id: 'c5',
-      title: 'Sonuçlanan',
-      cards: [
-         { id: '8', title: 'MegaMarket App', desc: 'iOS ve Android uygulama geliştirme.', tag: 'Kazanıldı', tagColor: 'bg-green-500 text-white', tagIcon: 'check', date: 'Bitti', initials: 'MM', color: 'bg-emerald-600', amount: '120.000 ₺' },
-         { id: '9', title: 'Local Food', desc: 'Bütçe yetersizliği nedeniyle iptal edildi.', tag: 'Kaybedildi', tagColor: 'bg-red-500/20 text-red-400', tagIcon: 'close', isLost: true, initials: 'LF', color: 'bg-red-900' }
-      ]
-    }
-  ]);
+  const [searchQuery, setSearchQuery] = useState('')
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [showPipelineModal, setShowPipelineModal] = useState(false)
+  const [showClientModal, setShowClientModal] = useState(false)
+  const [selectedStage, setSelectedStage] = useState<PipelineStage>('lead')
 
-  const handleDeleteCard = (columnId: string, cardId: string) => {
-    if (window.confirm('Bu kartı silmek istediğinize emin misiniz?')) {
-      setColumns(cols => cols.map(col => {
-        if (col.id === columnId) {
-          return { ...col, cards: col.cards.filter(c => c.id !== cardId) };
+  const { items, loading, updateStage, deleteItem, addItem, getItemsByStage } = usePipeline()
+  const { clients, addClient, refetch: refetchClients } = useClients()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const activeItem = useMemo(
+    () => items.find((item) => item.id === activeId),
+    [activeId, items]
+  )
+
+  const filteredItems = useMemo(() => {
+    if (!searchQuery) return items
+    const lowerQ = searchQuery.toLowerCase()
+    return items.filter(item => {
+      const clientName = item.clients
+        ? `${item.clients.first_name} ${item.clients.last_name}`.toLowerCase()
+        : ''
+      const company = item.clients?.company?.toLowerCase() || ''
+      const notes = item.notes?.toLowerCase() || ''
+      return clientName.includes(lowerQ) || company.includes(lowerQ) || notes.includes(lowerQ)
+    })
+  }, [items, searchQuery])
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string)
+  }
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveId(null)
+
+    if (!over) return
+
+    const activeItem = items.find(i => i.id === active.id)
+    if (!activeItem) return
+
+    // Find which column the item was dropped into
+    const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
+    for (const stage of stages) {
+      const stageItems = getItemsByStage(stage)
+      const isOverStage = stageItems.some(i => i.id === over.id) || over.id === stage
+
+      if (isOverStage && activeItem.stage !== stage) {
+        try {
+          await updateStage(activeItem.id, stage)
+        } catch (error) {
+          console.error('Failed to update stage:', error)
         }
-        return col;
-      }));
-    }
-  };
-
-  const handleAddColumn = () => {
-    const name = window.prompt('Yeni liste adı:');
-    if (name) {
-      setColumns([...columns, { id: `c-${Date.now()}`, title: name, cards: [] }]);
-    }
-  };
-
-  const handleAddCard = (columnId: string) => {
-    const title = window.prompt('Müşteri/Proje Adı:');
-    if (!title) return;
-    const desc = window.prompt('Açıklama:') || '';
-    
-    setColumns(cols => cols.map(col => {
-      if (col.id === columnId) {
-        return {
-          ...col,
-          cards: [{
-            id: `new-${Date.now()}`,
-            title,
-            desc,
-            date: 'Bugün',
-            initials: title.substring(0, 2).toUpperCase(),
-            color: 'bg-slate-600',
-            tag: 'Yeni',
-            tagColor: 'bg-slate-700 text-white'
-          }, ...col.cards]
-        };
+        break
       }
-      return col;
-    }));
-  };
+    }
+  }
 
-  const handleGlobalAdd = () => {
-    handleAddCard(columns[0].id);
-  };
+  const handleAddPipeline = (stage: PipelineStage) => {
+    setSelectedStage(stage)
+    setShowPipelineModal(true)
+  }
 
-  // --- Drag and Drop Handlers ---
+  const handlePipelineSubmit = async (data: Parameters<typeof addItem>[0]) => {
+    await addItem(data)
+    setShowPipelineModal(false)
+  }
 
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, cardId: string, colId: string) => {
-    setDraggedItem({ cardId, colId });
-    // Effect to make opacity slightly lower during drag (optional, native does this well usually)
-    e.currentTarget.style.opacity = '0.5';
-  };
+  const handleClientSubmit = async (data: Parameters<typeof addClient>[0]) => {
+    await addClient(data)
+    await refetchClients()
+    setShowClientModal(false)
+  }
 
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    e.currentTarget.style.opacity = '1';
-    setDraggedItem(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    // This is necessary to allow dropping
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColId: string) => {
-    e.preventDefault();
-    
-    if (!draggedItem) return;
-
-    // If dropped in the same column, do nothing (or implement reordering within column later)
-    if (draggedItem.colId === targetColId) return;
-
-    setColumns(prevColumns => {
-        const sourceCol = prevColumns.find(c => c.id === draggedItem.colId);
-        const targetCol = prevColumns.find(c => c.id === targetColId);
-
-        if (!sourceCol || !targetCol) return prevColumns;
-
-        const cardToMove = sourceCol.cards.find(c => c.id === draggedItem.cardId);
-        if (!cardToMove) return prevColumns;
-
-        // Remove from source
-        const newSourceCards = sourceCol.cards.filter(c => c.id !== draggedItem.cardId);
-        
-        // Add to target (prepend to top)
-        const newTargetCards = [cardToMove, ...targetCol.cards];
-
-        return prevColumns.map(col => {
-            if (col.id === draggedItem.colId) return { ...col, cards: newSourceCards };
-            if (col.id === targetColId) return { ...col, cards: newTargetCards };
-            return col;
-        });
-    });
-
-    setDraggedItem(null);
-  };
-
-  // -----------------------------
-
-  const filteredColumns = useMemo(() => {
-    if (!searchQuery) return columns;
-    const lowerQ = searchQuery.toLowerCase();
-    return columns.map(col => ({
-      ...col,
-      cards: col.cards.filter(c => c.title.toLowerCase().includes(lowerQ) || c.desc.toLowerCase().includes(lowerQ))
-    }));
-  }, [columns, searchQuery]);
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+          <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
+          <p className="text-text-secondary">Pipeline yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col w-full h-full bg-background-dark">
       {/* Header */}
       <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#233648] px-10 py-3 bg-background-dark shrink-0">
         <div className="flex items-center gap-8">
-            <h2 className="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Personal OS</h2>
+          <h2 className="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Personal OS</h2>
           <label className="flex flex-col min-w-40 !h-10 max-w-64">
             <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
               <div className="text-[#92adc9] flex border-none bg-[#233648] items-center justify-center pl-4 rounded-l-lg border-r-0">
@@ -240,10 +316,7 @@ export default function SalesKanban() {
         </div>
         <div className="flex flex-1 justify-end gap-8">
           <div className="flex items-center gap-9">
-            <a href="#" className="text-white text-sm font-bold border-b-2 border-primary pb-0.5">Müşteriler</a>
-            <a href="#" className="text-[#92adc9] hover:text-white text-sm font-medium transition-colors">Projeler</a>
-            <a href="#" className="text-[#92adc9] hover:text-white text-sm font-medium transition-colors">Notlar</a>
-            <a href="#" className="text-[#92adc9] hover:text-white text-sm font-medium transition-colors">Toplantılar</a>
+            <span className="text-white text-sm font-bold border-b-2 border-primary pb-0.5">Müşteriler</span>
           </div>
         </div>
       </header>
@@ -254,82 +327,86 @@ export default function SalesKanban() {
           <div className="flex flex-wrap justify-between items-center gap-4">
             <div className="flex min-w-72 flex-col gap-1">
               <h1 className="text-white text-3xl font-black leading-tight tracking-[-0.033em]">Satış Süreci</h1>
-              <p className="text-[#92adc9] text-base font-normal leading-normal">Müşteri adaylarını ve teklif durumlarını yönetin</p>
+              <p className="text-[#92adc9] text-base font-normal leading-normal">
+                Müşteri adaylarını ve teklif durumlarını yönetin
+              </p>
             </div>
-            <button 
-              onClick={handleGlobalAdd}
+            <button
+              onClick={() => handleAddPipeline('lead')}
               className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-6 bg-primary hover:bg-blue-600 transition-colors text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-lg shadow-blue-900/20 active:transform active:scale-95"
             >
               <span className="material-symbols-outlined text-[20px] mr-2">add</span>
               <span className="truncate">Yeni Müşteri/Teklif Ekle</span>
             </button>
           </div>
-          <div className="flex gap-3 flex-wrap">
-            {['Tüm Zamanlar', 'Yüksek Öncelik', 'Sadece Teklifler', 'Tarihe Göre'].map((filter) => (
-              <button key={filter} className="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#233648] hover:bg-[#2f455a] transition-colors pl-4 pr-2 border border-transparent hover:border-[#324d67]">
-                <p className="text-white text-sm font-medium leading-normal">{filter}</p>
-                <span className="material-symbols-outlined text-white text-[20px]">expand_more</span>
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className="flex-1 overflow-x-auto pb-4">
-          <div className="flex gap-6 min-w-full h-full items-start">
-            
-            {filteredColumns.map((col) => (
-              <div 
-                key={col.id} 
-                className="flex flex-col w-[320px] shrink-0 gap-4"
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, col.id)}
-              >
-                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-sm text-[#92adc9] uppercase tracking-wider">{col.title}</h3>
-                    <span className="bg-[#233648] text-white text-xs font-bold px-2 py-0.5 rounded-full">{col.cards.length}</span>
-                  </div>
-                  <div className="flex gap-1">
-                     <button onClick={() => handleAddCard(col.id)} className="text-[#92adc9] hover:text-white"><span className="material-symbols-outlined text-[20px]">add</span></button>
-                     <button className="text-[#92adc9] hover:text-white"><span className="material-symbols-outlined text-[20px]">more_horiz</span></button>
-                  </div>
-                </div>
-                {/* Min height ensures we can drop into an empty column */}
-                <div className={`flex flex-col gap-3 min-h-[150px] rounded-xl transition-colors ${draggedItem && draggedItem.colId !== col.id ? 'bg-[#192633]/50 border-2 border-dashed border-[#233648]' : 'border-2 border-transparent'}`}>
-                  {col.cards.map((card) => (
-                    <KanbanCard 
-                        key={card.id} 
-                        card={card} 
-                        onDelete={(cid) => handleDeleteCard(col.id, cid)}
-                        onDragStart={(e) => handleDragStart(e, card.id, col.id)}
-                        // Reset opacity on drag end
-                        {...{onDragEnd: handleDragEnd}}
-                    />
-                  ))}
-                  {col.cards.length === 0 && (
-                     <div className="h-full flex items-center justify-center text-[#233648] text-sm font-medium">
-                        Buraya sürükleyin
-                     </div>
-                  )}
-                </div>
-              </div>
-            ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCorners}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex gap-6 min-w-full h-full items-start">
+              {(Object.entries(STAGE_CONFIG) as [PipelineStage, typeof STAGE_CONFIG[PipelineStage]][]).map(([stage, config]) => {
+                const stageItems = searchQuery
+                  ? filteredItems.filter(i => i.stage === stage)
+                  : getItemsByStage(stage)
 
-            {/* Add Column */}
-            <div 
-              onClick={handleAddColumn}
-              className="flex flex-col w-[320px] shrink-0 gap-4 opacity-50 hover:opacity-100 transition-opacity cursor-pointer group"
-            >
-                <div className="h-6"></div>
-                <div className="flex flex-col h-[140px] border-2 border-dashed border-[#233648] group-hover:border-primary rounded-xl items-center justify-center text-[#92adc9] group-hover:text-primary transition-colors">
-                    <span className="material-symbols-outlined text-[32px] mb-2">add</span>
-                    <span className="text-sm font-medium">Yeni Liste Ekle</span>
-                </div>
+                return (
+                  <Column
+                    key={stage}
+                    stage={stage}
+                    title={config.title}
+                    items={stageItems}
+                    onAddCard={() => handleAddPipeline(stage)}
+                    onDeleteCard={deleteItem}
+                  />
+                )
+              })}
             </div>
 
-          </div>
+            <DragOverlay>
+              {activeItem ? (
+                <div className="rotate-3">
+                  <KanbanCard item={activeItem} onDelete={() => {}} isDragging />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </div>
       </div>
+
+      {/* Pipeline Modal */}
+      <Modal
+        isOpen={showPipelineModal}
+        onClose={() => setShowPipelineModal(false)}
+        title="Yeni Pipeline Kartı"
+      >
+        <PipelineForm
+          clients={clients}
+          onSubmit={handlePipelineSubmit}
+          onCancel={() => setShowPipelineModal(false)}
+          onAddClient={() => {
+            setShowPipelineModal(false)
+            setShowClientModal(true)
+          }}
+          initialStage={selectedStage}
+        />
+      </Modal>
+
+      {/* Client Modal */}
+      <Modal
+        isOpen={showClientModal}
+        onClose={() => setShowClientModal(false)}
+        title="Yeni Müşteri"
+      >
+        <ClientForm
+          onSubmit={handleClientSubmit}
+          onCancel={() => setShowClientModal(false)}
+        />
+      </Modal>
     </div>
-  );
+  )
 }
