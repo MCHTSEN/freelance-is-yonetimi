@@ -1,253 +1,457 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react'
+import { useNotes, NoteWithRelations } from '../hooks/useNotes'
+import { useClients } from '../hooks/useClients'
+import RichTextEditor from '../components/RichTextEditor'
+import Modal from '../components/Modal'
 
-interface Event {
-    id: string;
-    title: string;
-    color: string;
-    active?: boolean;
-    description?: string;
-}
+type NoteTypeFilter = 'all' | 'meeting' | 'technical' | 'general'
 
-interface ActionItem {
-    id: string;
-    text: string;
-    completed: boolean;
-}
+const NOTE_TYPES = [
+  { value: 'meeting', label: 'Toplantı', icon: 'groups', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
+  { value: 'technical', label: 'Teknik', icon: 'code', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+  { value: 'general', label: 'Genel', icon: 'description', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+]
 
 export default function MeetingNotes() {
-  const [selectedDay, setSelectedDay] = useState(9);
-  const [noteTitle, setNoteTitle] = useState('Fintech App - Sprint Review');
-  const [noteContent, setNoteContent] = useState(`API endpointlerinde yaşanan gecikme için cache mekanizması kurulacak.`);
-  const [actions, setActions] = useState<ActionItem[]>([
-      { id: '1', text: "Login animasyonunu 0.5s'ye düşür", completed: true },
-      { id: '2', text: "Redis kurulumunu tamamla", completed: false }
-  ]);
-  const [isSaved, setIsSaved] = useState(true);
+  const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null)
+  const [showNewNoteModal, setShowNewNoteModal] = useState(false)
+  const [typeFilter, setTypeFilter] = useState<NoteTypeFilter>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
-  // Auto-save effect simulation
-  useEffect(() => {
-    setIsSaved(false);
-    const timer = setTimeout(() => setIsSaved(true), 1500);
-    return () => clearTimeout(timer);
-  }, [noteTitle, noteContent, actions]);
+  // Form state
+  const [noteTitle, setNoteTitle] = useState('')
+  const [noteContent, setNoteContent] = useState('')
+  const [noteType, setNoteType] = useState<'meeting' | 'technical' | 'general'>('meeting')
+  const [selectedClientId, setSelectedClientId] = useState('')
+  const [meetingDate, setMeetingDate] = useState('')
 
-  const days = Array.from({ length: 35 }, (_, i) => {
-    const day = i - 4; // Start from previous month
-    
-    // In a real app, this would come from a DB based on the date
-    const events: Event[] = 
-      day === 3 ? [{ id: 'e1', title: 'SaaS Projesi - Kickoff', color: 'purple' }] : 
-      day === 5 ? [{ id: 'e2', title: 'Müşteri X - Demo', color: 'green' }] :
-      day === 9 ? [{ id: 'e3', title: 'Fintech App - Sprint Review', color: 'blue', active: true }] :
-      day === 10 ? [{ id: 'e4', title: 'Vergi Dairesi', color: 'orange' }] : [];
+  const { notes, loading, addNote, updateNote, deleteNote } = useNotes()
+  const { clients } = useClients()
 
-    return {
-      day: day > 0 && day <= 31 ? day : day <= 0 ? 31 + day : day - 31,
-      isCurrentMonth: day > 0 && day <= 31,
-      events,
-      fullDate: day // Simplification for demo
-    };
-  });
+  const filteredNotes = useMemo(() => {
+    let result = notes
 
-  const toggleAction = (id: string) => {
-    setActions(actions.map(a => a.id === id ? { ...a, completed: !a.completed } : a));
-  };
+    if (typeFilter !== 'all') {
+      result = result.filter(n => n.type === typeFilter)
+    }
 
-  const handleDayClick = (day: number) => {
-      setSelectedDay(day);
-      // Reset demo data for effect
-      if (day !== 9) {
-          setNoteTitle('Yeni Toplantı Notu');
-          setNoteContent('');
-          setActions([]);
-      } else {
-          setNoteTitle('Fintech App - Sprint Review');
-          setNoteContent(`API endpointlerinde yaşanan gecikme için cache mekanizması kurulacak.`);
-          setActions([
-            { id: '1', text: "Login animasyonunu 0.5s'ye düşür", completed: true },
-            { id: '2', text: "Redis kurulumunu tamamla", completed: false }
-        ]);
-      }
-  };
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(n =>
+        n.title?.toLowerCase().includes(q) ||
+        n.content?.toLowerCase().includes(q) ||
+        n.clients?.first_name?.toLowerCase().includes(q) ||
+        n.clients?.company?.toLowerCase().includes(q)
+      )
+    }
+
+    return result
+  }, [notes, typeFilter, searchQuery])
+
+  const handleSelectNote = (note: NoteWithRelations) => {
+    setSelectedNote(note)
+    setNoteTitle(note.title || '')
+    setNoteContent(note.content || '')
+    setNoteType((note.type as 'meeting' | 'technical' | 'general') || 'general')
+    setSelectedClientId(note.client_id || '')
+    setMeetingDate(note.meeting_date ? note.meeting_date.split('T')[0] : '')
+  }
+
+  const handleNewNote = () => {
+    setSelectedNote(null)
+    setNoteTitle('')
+    setNoteContent('')
+    setNoteType('meeting')
+    setSelectedClientId('')
+    setMeetingDate(new Date().toISOString().split('T')[0])
+    setShowNewNoteModal(true)
+  }
+
+  const handleSaveNewNote = async () => {
+    try {
+      const newNote = await addNote({
+        title: noteTitle || 'Adsız Not',
+        content: noteContent,
+        type: noteType,
+        client_id: selectedClientId || null,
+        meeting_date: meetingDate ? new Date(meetingDate).toISOString() : null,
+      })
+      setShowNewNoteModal(false)
+      handleSelectNote(newNote as NoteWithRelations)
+    } catch (error) {
+      console.error('Failed to create note:', error)
+    }
+  }
+
+  const handleUpdateNote = async () => {
+    if (!selectedNote) return
+    try {
+      await updateNote(selectedNote.id, {
+        title: noteTitle,
+        content: noteContent,
+        type: noteType,
+        client_id: selectedClientId || null,
+        meeting_date: meetingDate ? new Date(meetingDate).toISOString() : null,
+      })
+    } catch (error) {
+      console.error('Failed to update note:', error)
+    }
+  }
+
+  const handleDeleteNote = async () => {
+    if (!selectedNote) return
+    if (!window.confirm('Bu notu silmek istediğinize emin misiniz?')) return
+    try {
+      await deleteNote(selectedNote.id)
+      setSelectedNote(null)
+    } catch (error) {
+      console.error('Failed to delete note:', error)
+    }
+  }
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return ''
+    return new Date(dateStr).toLocaleDateString('tr-TR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  }
+
+  const getTypeConfig = (type: string | null) => {
+    return NOTE_TYPES.find(t => t.value === type) || NOTE_TYPES[2]
+  }
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+          <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
+          <p className="text-text-secondary">Notlar yükleniyor...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col w-full h-full bg-background-dark overflow-hidden">
-      {/* Top Bar */}
-      <header className="h-16 flex items-center justify-between border-b border-surface-lighter px-6 shrink-0 bg-[#111a22]/95 backdrop-blur-sm z-10">
-         <div className="flex flex-1 max-w-lg">
-           <div className="relative w-full group">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="material-symbols-outlined text-text-secondary">search</span>
-              </div>
-              <input className="block w-full pl-10 pr-3 py-2 rounded-lg bg-surface-dark border-none text-white placeholder-text-secondary focus:ring-2 focus:ring-primary focus:bg-[#111a22] transition-all text-sm" placeholder="Toplantı, not veya müşteri ara..." />
-              <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
-                <kbd className="hidden sm:inline-block px-1.5 py-0.5 rounded border border-surface-lighter bg-[#111a22] text-[10px] text-text-secondary">⌘K</kbd>
-              </div>
-           </div>
-         </div>
-         <div className="flex items-center gap-4 ml-6">
-            <button className="relative p-2 text-text-secondary hover:text-white transition-colors hover:bg-surface-dark rounded-full">
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-[#111a22]"></span>
-            </button>
-            <button className="p-2 text-text-secondary hover:text-white transition-colors hover:bg-surface-dark rounded-full">
-              <span className="material-symbols-outlined">settings</span>
-            </button>
-         </div>
+      {/* Header */}
+      <header className="h-16 flex items-center justify-between border-b border-border-dark px-6 shrink-0 bg-surface-dark">
+        <div className="flex flex-1 max-w-lg">
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="material-symbols-outlined text-text-secondary">search</span>
+            </div>
+            <input
+              className="block w-full pl-10 pr-3 py-2 rounded-lg bg-background-dark border border-border-dark text-white placeholder-text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
+              placeholder="Not veya müşteri ara..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+        <button
+          onClick={handleNewNote}
+          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all ml-4"
+        >
+          <span className="material-symbols-outlined text-[20px]">add</span>
+          <span>Yeni Not</span>
+        </button>
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Controls */}
-        <div className="px-6 py-6 flex flex-col gap-6 shrink-0">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-3xl font-bold text-white tracking-tight">Toplantılar ve Notlar</h2>
-              <p className="text-text-secondary mt-1">Tüm planlamalarını ve toplantı notlarını buradan yönet.</p>
-            </div>
-            <div className="flex items-center gap-3">
-               <button onClick={() => { setSelectedDay(new Date().getDate()); setNoteTitle('Adsız Toplantı'); }} className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all">
-                <span className="material-symbols-outlined text-[20px]">add</span>
-                <span>Yeni Toplantı</span>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Notes List */}
+        <div className="w-[380px] border-r border-border-dark flex flex-col shrink-0">
+          {/* Filters */}
+          <div className="p-4 border-b border-border-dark">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTypeFilter('all')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  typeFilter === 'all'
+                    ? 'bg-primary text-white'
+                    : 'bg-surface-dark text-text-secondary hover:text-white border border-border-dark'
+                }`}
+              >
+                Tümü
               </button>
+              {NOTE_TYPES.map(type => (
+                <button
+                  key={type.value}
+                  onClick={() => setTypeFilter(type.value as NoteTypeFilter)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                    typeFilter === type.value
+                      ? 'bg-primary text-white'
+                      : 'bg-surface-dark text-text-secondary hover:text-white border border-border-dark'
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-sm">{type.icon}</span>
+                  {type.label}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-             <div className="flex items-center bg-surface-dark rounded-lg p-1 border border-surface-lighter">
-               {['Ay', 'Hafta', 'Gün', 'Ajanda'].map((v, i) => (
-                 <button key={v} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${i === 1 ? 'bg-[#111a22] text-white shadow-sm border border-surface-lighter' : 'text-text-secondary hover:text-white'}`}>{v}</button>
-               ))}
-             </div>
-             <div className="flex items-center gap-2">
-                <button className="size-8 flex items-center justify-center rounded-lg hover:bg-surface-dark text-white border border-transparent hover:border-surface-lighter transition-all">
-                  <span className="material-symbols-outlined text-lg">chevron_left</span>
+
+          {/* Notes */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredNotes.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-text-secondary">
+                <span className="material-symbols-rounded text-4xl mb-2">description</span>
+                <p>Henüz not yok</p>
+                <button
+                  onClick={handleNewNote}
+                  className="mt-3 text-primary hover:underline text-sm"
+                >
+                  İlk notunuzu oluşturun
                 </button>
-                <span className="text-white font-semibold text-lg min-w-[140px] text-center">Ekim 2023</span>
-                <button className="size-8 flex items-center justify-center rounded-lg hover:bg-surface-dark text-white border border-transparent hover:border-surface-lighter transition-all">
-                  <span className="material-symbols-outlined text-lg">chevron_right</span>
-                </button>
-             </div>
+              </div>
+            ) : (
+              filteredNotes.map(note => {
+                const typeConfig = getTypeConfig(note.type)
+                const isSelected = selectedNote?.id === note.id
+                return (
+                  <div
+                    key={note.id}
+                    onClick={() => handleSelectNote(note)}
+                    className={`p-4 border-b border-border-dark cursor-pointer transition-colors ${
+                      isSelected
+                        ? 'bg-primary/10 border-l-2 border-l-primary'
+                        : 'hover:bg-surface-dark border-l-2 border-l-transparent'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className={`px-2 py-0.5 rounded text-xs font-medium ${typeConfig.color} border`}>
+                        {typeConfig.label}
+                      </div>
+                      <span className="text-xs text-text-secondary">
+                        {formatDate(note.created_at)}
+                      </span>
+                    </div>
+                    <h3 className="text-white font-semibold mb-1 line-clamp-1">
+                      {note.title || 'Adsız Not'}
+                    </h3>
+                    {note.clients && (
+                      <p className="text-text-secondary text-xs mb-2">
+                        {note.clients.first_name} {note.clients.last_name}
+                        {note.clients.company && ` • ${note.clients.company}`}
+                      </p>
+                    )}
+                    {note.content && (
+                      <p
+                        className="text-text-secondary text-sm line-clamp-2"
+                        dangerouslySetInnerHTML={{
+                          __html: note.content.replace(/<[^>]*>/g, ' ').substring(0, 100)
+                        }}
+                      />
+                    )}
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
 
-        {/* Split View */}
-        <div className="flex-1 flex gap-6 min-h-0 px-6 pb-6 overflow-hidden">
-           {/* Calendar */}
-           <div className="flex-1 flex flex-col bg-surface-dark rounded-xl border border-surface-lighter shadow-sm overflow-hidden min-w-[500px]">
-              <div className="grid grid-cols-7 border-b border-surface-lighter bg-[#1c2936]">
-                {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((d, i) => (
-                  <div key={d} className={`py-3 text-center text-xs font-semibold uppercase tracking-wider ${i > 4 ? 'text-red-400' : 'text-text-secondary'}`}>{d}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 grid-rows-5 flex-1 bg-[#111a22]">
-                {days.map((d, i) => {
-                  const isSelected = d.day === selectedDay && d.isCurrentMonth;
-                  return (
-                  <div 
-                    key={i} 
-                    onClick={() => d.isCurrentMonth && handleDayClick(d.day)}
-                    className={`border-b border-r border-surface-lighter p-2 min-h-[100px] relative group transition-colors cursor-pointer
-                        ${!d.isCurrentMonth ? 'bg-[#111a22]/50 cursor-default' : 'hover:bg-surface-dark/30'} 
-                        ${isSelected ? 'bg-surface-dark/60 ring-inset ring-2 ring-primary/50' : ''}`
-                    }
+        {/* Editor Panel */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {selectedNote ? (
+            <>
+              {/* Note Header */}
+              <div className="p-6 border-b border-border-dark bg-surface-dark">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={noteTitle}
+                      onChange={(e) => setNoteTitle(e.target.value)}
+                      onBlur={handleUpdateNote}
+                      className="w-full bg-transparent text-white text-2xl font-bold border-none focus:outline-none focus:ring-0 placeholder-text-secondary"
+                      placeholder="Not başlığı..."
+                    />
+                  </div>
+                  <button
+                    onClick={handleDeleteNote}
+                    className="p-2 text-text-secondary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    title="Notu sil"
                   >
-                    <span className={`text-sm font-medium ${!d.isCurrentMonth ? 'text-text-secondary/30' : 'text-text-secondary'} ${isSelected ? 'flex items-center justify-center size-6 rounded-full bg-primary text-white shadow-lg' : ''}`}>
-                      {d.day}
-                    </span>
-                    {d.events.map((ev, k) => (
-                      <div key={k} className={`mt-2 px-2 py-1 rounded border-l-2 cursor-pointer transition-colors ${ev.active || isSelected ? 'bg-blue-500/30 border-primary ring-1 ring-primary shadow-lg shadow-primary/10' : `bg-${ev.color}-500/20 border-${ev.color}-500 hover:bg-${ev.color}-500/30`}`}>
-                        <p className={`text-xs font-semibold truncate ${ev.active || isSelected ? 'text-white' : `text-${ev.color}-200`}`}>{ev.title}</p>
-                      </div>
+                    <span className="material-symbols-rounded">delete</span>
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Type Chips */}
+                  <div className="flex gap-2">
+                    {NOTE_TYPES.map(type => (
+                      <button
+                        key={type.value}
+                        onClick={() => {
+                          setNoteType(type.value as 'meeting' | 'technical' | 'general')
+                          setTimeout(handleUpdateNote, 0)
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 border ${
+                          noteType === type.value
+                            ? type.color
+                            : 'bg-surface-dark text-text-secondary border-border-dark hover:text-white'
+                        }`}
+                      >
+                        <span className="material-symbols-rounded text-sm">{type.icon}</span>
+                        {type.label}
+                      </button>
                     ))}
                   </div>
-                )})}
-              </div>
-           </div>
 
-           {/* Editor */}
-           <div className="w-[450px] flex flex-col bg-surface-dark rounded-xl border border-surface-lighter shadow-2xl shrink-0 overflow-hidden ring-1 ring-white/5">
-              <div className="p-4 border-b border-surface-lighter flex items-start justify-between bg-[#1c2936]">
-                 <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="w-2 h-2 rounded-full bg-primary"></span>
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wide">Toplantı Notu</span>
-                    </div>
-                    <input 
-                        className="bg-transparent border-none p-0 text-white text-lg font-bold w-full focus:ring-0 placeholder-gray-500" 
-                        value={noteTitle} 
-                        onChange={(e) => setNoteTitle(e.target.value)}
-                    />
-                    <div className="flex items-center gap-4 mt-2 text-xs text-text-secondary">
-                       <div className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[16px]">schedule</span>
-                          <span>{selectedDay} Eki, 14:30 - 16:00</span>
-                       </div>
-                       <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-[#233648] text-white">
-                          <span className="material-symbols-outlined text-[14px]">folder</span>
-                          <span>Fintech Projesi</span>
-                       </div>
-                    </div>
-                 </div>
-                 <button className="p-1.5 hover:bg-[#233648] rounded text-text-secondary hover:text-white transition-colors"><span className="material-symbols-outlined text-[20px]">close</span></button>
-              </div>
-              
-              <div className="px-3 py-2 bg-[#111a22] border-b border-surface-lighter flex items-center gap-1 overflow-x-auto">
-                 {['format_bold', 'format_italic', 'title', 'format_list_bulleted', 'check_box', 'code'].map((ic, i) => (
-                    <button key={i} className="p-1.5 rounded hover:bg-[#233648] text-text-secondary hover:text-white"><span className="material-symbols-outlined text-[20px]">{ic}</span></button>
-                 ))}
-                 <div className="flex-1"></div>
-                 <button className="px-2 py-1 rounded bg-[#233648] text-xs text-text-secondary hover:text-white">Markdown</button>
+                  <div className="h-6 w-px bg-border-dark" />
+
+                  {/* Client Select */}
+                  <select
+                    value={selectedClientId}
+                    onChange={(e) => {
+                      setSelectedClientId(e.target.value)
+                      setTimeout(handleUpdateNote, 0)
+                    }}
+                    className="px-3 py-1.5 bg-background-dark border border-border-dark rounded-lg text-sm text-white focus:outline-none focus:border-primary"
+                  >
+                    <option value="">Müşteri seçin...</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.first_name} {client.last_name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Date */}
+                  <input
+                    type="date"
+                    value={meetingDate}
+                    onChange={(e) => {
+                      setMeetingDate(e.target.value)
+                      setTimeout(handleUpdateNote, 0)
+                    }}
+                    className="px-3 py-1.5 bg-background-dark border border-border-dark rounded-lg text-sm text-white focus:outline-none focus:border-primary"
+                  />
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 bg-[#111a22] font-mono text-sm">
-                 <div className="prose prose-invert prose-sm max-w-none">
-                    <h1 className="text-white font-bold text-lg mb-2">Gündem</h1>
-                    <ul className="list-disc pl-4 text-gray-300 mb-4">
-                      <li>Önceki sprintin değerlendirilmesi</li>
-                      <li>Backend API hataları</li>
-                      <li>Yeni tasarım onay süreci</li>
-                    </ul>
-                    <h2 className="text-white font-bold text-base mb-2 mt-4">Notlar</h2>
-                    <textarea 
-                        className="w-full bg-transparent text-gray-400 mb-4 resize-none outline-none min-h-[80px]" 
-                        value={noteContent}
-                        onChange={(e) => setNoteContent(e.target.value)}
-                    />
-                    
-                    <h2 className="text-white font-bold text-base mb-2 mt-4 flex items-center justify-between">
-                        Aksiyonlar
-                        <button onClick={() => setActions([...actions, {id: Date.now().toString(), text: 'Yeni görev', completed: false}])} className="text-xs text-primary hover:underline">Ekle +</button>
-                    </h2>
-                    <ul className="space-y-2">
-                       {actions.map(action => (
-                           <li key={action.id} className={`flex items-center gap-2 group cursor-pointer ${action.completed ? 'text-text-secondary line-through opacity-60' : 'text-white'}`} onClick={() => toggleAction(action.id)}>
-                               <span className={`material-symbols-outlined text-[18px] ${action.completed ? 'text-green-500' : 'text-gray-500 group-hover:text-white'}`}>
-                                   {action.completed ? 'check_box' : 'check_box_outline_blank'}
-                               </span> 
-                               <span>{action.text}</span>
-                           </li>
-                       ))}
-                    </ul>
-                 </div>
+              {/* Editor */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <RichTextEditor
+                  content={noteContent}
+                  onChange={(content) => {
+                    setNoteContent(content)
+                  }}
+                  placeholder="Notlarınızı buraya yazın..."
+                />
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={handleUpdateNote}
+                    className="px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <span className="material-symbols-rounded text-lg">save</span>
+                    Kaydet
+                  </button>
+                </div>
               </div>
-
-              <div className="p-4 border-t border-surface-lighter bg-[#1c2936] flex justify-between items-center">
-                 <div className="text-xs text-text-secondary flex items-center">
-                    {isSaved ? (
-                        <><span className="inline-block size-2 rounded-full bg-green-500 mr-1"></span> Kaydedildi</>
-                    ) : (
-                        <><span className="inline-block size-2 rounded-full bg-yellow-500 mr-1 animate-pulse"></span> Kaydediliyor...</>
-                    )}
-                 </div>
-                 <div className="flex gap-2">
-                    <button className="px-3 py-1.5 rounded-lg border border-surface-lighter text-text-secondary hover:text-white hover:bg-[#233648] text-xs font-bold transition-colors">E-posta Olarak Gönder</button>
-                    <button className="px-4 py-1.5 rounded-lg bg-primary hover:bg-blue-600 text-white text-xs font-bold shadow-lg shadow-primary/20 transition-colors">Tamamla</button>
-                 </div>
-              </div>
-
-           </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-text-secondary">
+              <span className="material-symbols-rounded text-6xl mb-4">edit_note</span>
+              <h3 className="text-xl font-semibold text-white mb-2">Not Seçin</h3>
+              <p className="mb-4">Düzenlemek için sol taraftan bir not seçin</p>
+              <button
+                onClick={handleNewNote}
+                className="px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Yeni Not Oluştur
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* New Note Modal */}
+      <Modal
+        isOpen={showNewNoteModal}
+        onClose={() => setShowNewNoteModal(false)}
+        title="Yeni Not"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Başlık</label>
+            <input
+              type="text"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary"
+              placeholder="Not başlığı..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Not Türü</label>
+            <div className="flex gap-2">
+              {NOTE_TYPES.map(type => (
+                <button
+                  key={type.value}
+                  type="button"
+                  onClick={() => setNoteType(type.value as 'meeting' | 'technical' | 'general')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 border ${
+                    noteType === type.value
+                      ? type.color
+                      : 'bg-surface-dark text-text-secondary border-border-dark hover:text-white'
+                  }`}
+                >
+                  <span className="material-symbols-rounded text-lg">{type.icon}</span>
+                  {type.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Müşteri (Opsiyonel)</label>
+            <select
+              value={selectedClientId}
+              onChange={(e) => setSelectedClientId(e.target.value)}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
+            >
+              <option value="">Müşteri seçin...</option>
+              {clients.map(client => (
+                <option key={client.id} value={client.id}>
+                  {client.first_name} {client.last_name} {client.company && `(${client.company})`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Tarih</label>
+            <input
+              type="date"
+              value={meetingDate}
+              onChange={(e) => setMeetingDate(e.target.value)}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowNewNoteModal(false)}
+              className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+            >
+              İptal
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveNewNote}
+              className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-rounded">add</span>
+              Oluştur
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
-  );
+  )
 }

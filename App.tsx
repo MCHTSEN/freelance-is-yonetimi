@@ -6,13 +6,15 @@ import CreateProposal from './screens/CreateProposal';
 import MeetingNotes from './screens/MeetingNotes';
 import CustomerCredentials from './screens/CustomerCredentials';
 import FinanceDashboard from './screens/FinanceDashboard';
+import CodeSnippets from './screens/CodeSnippets';
 
 enum Screen {
   KANBAN = 'KANBAN',
   PROPOSAL = 'PROPOSAL',
   NOTES = 'NOTES',
   CREDENTIALS = 'CREDENTIALS',
-  FINANCE = 'FINANCE'
+  FINANCE = 'FINANCE',
+  SNIPPETS = 'SNIPPETS'
 }
 
 export default function App() {
@@ -64,6 +66,7 @@ export default function App() {
           <NavItem screen={Screen.NOTES} icon="calendar_month" label="Meetings & Notes" />
           <NavItem screen={Screen.CREDENTIALS} icon="lock" label="Customer Credentials" />
           <NavItem screen={Screen.FINANCE} icon="attach_money" label="Finance" />
+          <NavItem screen={Screen.SNIPPETS} icon="code" label="Code Snippets" />
         </div>
 
         <div className="mt-auto flex flex-col gap-4 items-center">
@@ -90,6 +93,7 @@ export default function App() {
         {currentScreen === Screen.NOTES && <MeetingNotes />}
         {currentScreen === Screen.CREDENTIALS && <CustomerCredentials />}
         {currentScreen === Screen.FINANCE && <FinanceDashboard />}
+        {currentScreen === Screen.SNIPPETS && <CodeSnippets />}
       </main>
     </div>
   );
