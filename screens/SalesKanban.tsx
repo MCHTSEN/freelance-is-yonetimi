@@ -9,6 +9,8 @@ import {
   useSensors,
   DragStartEvent,
   DragEndEvent,
+  DragOverEvent,
+  useDroppable,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -22,6 +24,7 @@ import { useClients } from '../hooks/useClients'
 import Modal from '../components/Modal'
 import ClientForm from '../components/ClientForm'
 import PipelineForm from '../components/PipelineForm'
+import type { Client } from '../lib/supabase'
 
 // Kanban Card Component
 interface KanbanCardProps {
@@ -143,17 +146,21 @@ function SortableCard({ item, onDelete }: { item: PipelineWithClient; onDelete: 
   )
 }
 
-// Column Component
+// Droppable Column Component
 interface ColumnProps {
   stage: PipelineStage
   title: string
   items: PipelineWithClient[]
   onAddCard: () => void
   onDeleteCard: (id: string) => void
-  isOver?: boolean
+  isOver: boolean
 }
 
 function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: ColumnProps) {
+  const { setNodeRef } = useDroppable({
+    id: stage,
+  })
+
   return (
     <div className="flex flex-col w-[320px] shrink-0 gap-4">
       <div className="flex items-center justify-between px-2">
@@ -173,12 +180,15 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: Column
         </div>
       </div>
 
-      <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
-        <div
-          className={`flex flex-col gap-3 min-h-[150px] rounded-xl p-2 transition-colors ${
-            isOver ? 'bg-primary/10 border-2 border-dashed border-primary/50' : 'border-2 border-transparent'
-          }`}
-        >
+      <div
+        ref={setNodeRef}
+        className={`flex flex-col gap-3 min-h-[200px] rounded-xl p-2 transition-all duration-200 ${
+          isOver
+            ? 'bg-primary/10 border-2 border-dashed border-primary'
+            : 'border-2 border-transparent hover:border-[#233648]'
+        }`}
+      >
+        <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
             <SortableCard
               key={item.id}
@@ -186,13 +196,15 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: Column
               onDelete={() => onDeleteCard(item.id)}
             />
           ))}
-          {items.length === 0 && (
-            <div className="h-full flex items-center justify-center text-[#233648] text-sm font-medium py-8">
-              Buraya sürükleyin
-            </div>
-          )}
-        </div>
-      </SortableContext>
+        </SortableContext>
+        {items.length === 0 && (
+          <div className={`h-full flex items-center justify-center text-sm font-medium py-8 transition-colors ${
+            isOver ? 'text-primary' : 'text-[#324d67]'
+          }`}>
+            {isOver ? 'Bırakın' : 'Buraya sürükleyin'}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -201,9 +213,11 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: Column
 export default function SalesKanban() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeId, setActiveId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   const [showPipelineModal, setShowPipelineModal] = useState(false)
   const [showClientModal, setShowClientModal] = useState(false)
   const [selectedStage, setSelectedStage] = useState<PipelineStage>('lead')
+  const [preselectedClient, setPreselectedClient] = useState<Client | null>(null)
 
   const { items, loading, updateStage, deleteItem, addItem, getItemsByStage } = usePipeline()
   const { clients, addClient, refetch: refetchClients } = useClients()
@@ -211,7 +225,7 @@ export default function SalesKanban() {
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -241,46 +255,84 @@ export default function SalesKanban() {
     setActiveId(event.active.id as string)
   }
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event
+    if (over) {
+      // Check if over a column or a card in a column
+      const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
+      if (stages.includes(over.id as PipelineStage)) {
+        setOverId(over.id as string)
+      } else {
+        // Find which stage the card belongs to
+        const overItem = items.find(i => i.id === over.id)
+        if (overItem) {
+          setOverId(overItem.stage)
+        }
+      }
+    } else {
+      setOverId(null)
+    }
+  }
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event
     setActiveId(null)
+    setOverId(null)
 
     if (!over) return
 
     const activeItem = items.find(i => i.id === active.id)
     if (!activeItem) return
 
-    // Find which column the item was dropped into
+    // Determine target stage
+    let targetStage: PipelineStage | null = null
     const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
-    for (const stage of stages) {
-      const stageItems = getItemsByStage(stage)
-      const isOverStage = stageItems.some(i => i.id === over.id) || over.id === stage
 
-      if (isOverStage && activeItem.stage !== stage) {
-        try {
-          await updateStage(activeItem.id, stage)
-        } catch (error) {
-          console.error('Failed to update stage:', error)
-        }
-        break
+    // Check if dropped directly on a column
+    if (stages.includes(over.id as PipelineStage)) {
+      targetStage = over.id as PipelineStage
+    } else {
+      // Check if dropped on a card - find which stage that card belongs to
+      const overItem = items.find(i => i.id === over.id)
+      if (overItem) {
+        targetStage = overItem.stage as PipelineStage
+      }
+    }
+
+    if (targetStage && activeItem.stage !== targetStage) {
+      try {
+        await updateStage(activeItem.id, targetStage)
+      } catch (error) {
+        console.error('Failed to update stage:', error)
       }
     }
   }
 
   const handleAddPipeline = (stage: PipelineStage) => {
     setSelectedStage(stage)
+    setPreselectedClient(null)
     setShowPipelineModal(true)
   }
 
   const handlePipelineSubmit = async (data: Parameters<typeof addItem>[0]) => {
     await addItem(data)
     setShowPipelineModal(false)
+    setPreselectedClient(null)
   }
 
   const handleClientSubmit = async (data: Parameters<typeof addClient>[0]) => {
-    await addClient(data)
+    const newClient = await addClient(data)
     await refetchClients()
     setShowClientModal(false)
+
+    // Otomatik olarak pipeline formunu aç ve yeni müşteriyi seç
+    setPreselectedClient(newClient)
+    setShowPipelineModal(true)
+  }
+
+  const handleOpenClientModal = () => {
+    setShowPipelineModal(false)
+    setShowClientModal(true)
   }
 
   if (loading) {
@@ -346,6 +398,7 @@ export default function SalesKanban() {
             sensors={sensors}
             collisionDetection={closestCorners}
             onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
             <div className="flex gap-6 min-w-full h-full items-start">
@@ -362,6 +415,7 @@ export default function SalesKanban() {
                     items={stageItems}
                     onAddCard={() => handleAddPipeline(stage)}
                     onDeleteCard={deleteItem}
+                    isOver={overId === stage}
                   />
                 )
               })}
@@ -369,7 +423,7 @@ export default function SalesKanban() {
 
             <DragOverlay>
               {activeItem ? (
-                <div className="rotate-3">
+                <div className="rotate-3 opacity-90">
                   <KanbanCard item={activeItem} onDelete={() => {}} isDragging />
                 </div>
               ) : null}
@@ -381,18 +435,22 @@ export default function SalesKanban() {
       {/* Pipeline Modal */}
       <Modal
         isOpen={showPipelineModal}
-        onClose={() => setShowPipelineModal(false)}
+        onClose={() => {
+          setShowPipelineModal(false)
+          setPreselectedClient(null)
+        }}
         title="Yeni Pipeline Kartı"
       >
         <PipelineForm
           clients={clients}
           onSubmit={handlePipelineSubmit}
-          onCancel={() => setShowPipelineModal(false)}
-          onAddClient={() => {
+          onCancel={() => {
             setShowPipelineModal(false)
-            setShowClientModal(true)
+            setPreselectedClient(null)
           }}
+          onAddClient={handleOpenClientModal}
           initialStage={selectedStage}
+          preselectedClientId={preselectedClient?.id}
         />
       </Modal>
 
