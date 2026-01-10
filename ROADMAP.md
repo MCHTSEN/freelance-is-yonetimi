@@ -44,20 +44,23 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 - [ ] ~~PDF Export:~~ (ileriye ertelendi)
 - [ ] ~~CreateProposal:~~ (ileriye ertelendi)
 
+### **Faz 5: Dış Entegrasyonlar** ✅ TAMAMLANDI
+- [x] **React Router:** URL tabanlı routing sistemi
+- [x] **Randevu Sistemi:** Public booking sayfası (/booking/:userId)
+- [x] **Google OAuth:** Supabase OAuth ile Google Calendar entegrasyonu
+- [x] **useGoogleCalendar hook:** Takvim olayları çekme, oluşturma
+- [x] **useBookings hook:** Randevu CRUD, müsaitlik hesaplama
+- [x] **Calendar & Bookings ekranı:** Dashboard'da takvim görünümü
+- [x] **Email utility:** Resend entegrasyonu için hazır (lib/email.ts)
+- [x] **bookings ve availability_settings tabloları:** Supabase migration
+
 ---
 
 ## 🚧 Devam Eden / Kalan Fazlar
 
-### **Faz 5: Dış Entegrasyonlar** 📅 GELECEK
-- [ ] **Google Calendar:** Toplantıların çekilmesi ve senkronizasyonu
-- [ ] **Randevu Sistemi:** Müşterilere özel public randevu sayfası (Calendly benzeri)
-- [ ] **E-posta Bildirimleri:** Follow-up hatırlatmaları
-
 ### **Faz 6: Güvenlik ve Optimizasyon** 🔒 GELECEK
 - [ ] **Hassas Veri Şifreleme:** SSH key ve API secret'ların veritabanında şifreli saklanması
 - [ ] **Storage:** Müşteri logoları ve dosya yüklemeleri için Supabase Storage
-- [ ] **Code Splitting:** Bundle boyutunu küçültmek için dinamik import
-- [ ] **PWA Desteği:** Offline kullanım için service worker
 
 ---
 
@@ -69,23 +72,30 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 | Faz 2: CRM | ✅ Tamamlandı | 100% |
 | Faz 3: Bilgi Bankası | ✅ Tamamlandı | 100% |
 | Faz 4: Finans & Zaman | ✅ Tamamlandı | 100% |
-| Faz 5: Entegrasyonlar | 📅 Planlandı | 0% |
+| Faz 5: Entegrasyonlar | ✅ Tamamlandı | 100% |
 | Faz 6: Güvenlik | 📅 Planlandı | 0% |
 
-**Toplam İlerleme: ~67%**
+**Toplam İlerleme: ~83%**
 
 ---
 
 ## 🛠️ Bir Sonraki Kritik Adım
 
-**Önerilen sıra - Faz 5 (Dış Entegrasyonlar):**
-1. Google Calendar API entegrasyonu
-2. Randevu sistemi için public sayfa tasarımı
-3. E-posta bildirim sistemi (Resend veya SendGrid)
+**Önerilen sıra - Faz 6 (Güvenlik ve Optimizasyon):**
+1. Hassas veri şifreleme (credentials tablosu için)
+2. Supabase Storage entegrasyonu (dosya yükleme)
+3. Code splitting ve bundle optimizasyonu
+4. PWA desteği (service worker)
 
 **Ertelenen Özellikler:**
 - PDF Export (CreateProposal için react-pdf entegrasyonu)
 - Teklif oluşturma ekranı Supabase entegrasyonu
+
+**Google OAuth Kurulumu (Faz 5 için):**
+1. Google Cloud Console'da OAuth credentials oluştur
+2. Supabase Dashboard → Authentication → Providers → Google → Enable
+3. Client ID ve Secret ekle
+4. Redirect URI: `https://<project>.supabase.co/auth/v1/callback`
 
 ---
 
@@ -99,6 +109,8 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 - `hooks/useCredentials.ts` - Kimlik bilgisi CRUD
 - `hooks/useInvoices.ts` - Fatura CRUD + kısmi ödeme yönetimi
 - `hooks/useTimeTracking.ts` - Timer ve zaman takibi
+- `hooks/useBookings.ts` - Randevu CRUD + müsaitlik hesaplama
+- `hooks/useGoogleCalendar.ts` - Google Calendar API entegrasyonu
 
 ### Components
 - `components/Modal.tsx` - Yeniden kullanılabilir modal
@@ -109,7 +121,8 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 ### Lib
 - `lib/supabase.ts` - Supabase client ve type exports
 - `lib/database.types.ts` - Auto-generated TypeScript types
-- `lib/AuthContext.tsx` - Auth context provider
+- `lib/AuthContext.tsx` - Auth context provider (+ Google OAuth)
+- `lib/email.ts` - Email gönderim utility (Resend)
 
 ### Screens (Güncellenmiş)
 - `screens/Login.tsx` - Auth ekranı
@@ -118,3 +131,5 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 - `screens/CodeSnippets.tsx` - Snippet yönetimi
 - `screens/CustomerCredentials.tsx` - Tap-to-reveal kimlik bilgileri
 - `screens/FinanceDashboard.tsx` - Fatura takibi, kısmi ödeme, zaman sayacı
+- `screens/PublicBooking.tsx` - Public randevu sayfası
+- `screens/AuthCallback.tsx` - OAuth callback handler

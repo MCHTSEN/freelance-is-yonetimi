@@ -31,3 +31,7 @@ export type InvoicePayment = Database['public']['Tables']['invoice_payments']['R
 export type InvoicePaymentInsert = Database['public']['Tables']['invoice_payments']['Insert']
 export type TimeEntry = Database['public']['Tables']['time_entries']['Row']
 export type TimeEntryInsert = Database['public']['Tables']['time_entries']['Insert']
+export type Booking = Database['public']['Tables']['bookings']['Row']
+export type BookingInsert = Database['public']['Tables']['bookings']['Insert']
+export type AvailabilitySettings = Database['public']['Tables']['availability_settings']['Row']
+export type AvailabilitySettingsInsert = Database['public']['Tables']['availability_settings']['Insert']

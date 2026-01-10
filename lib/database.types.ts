@@ -9,6 +9,90 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      availability_settings: {
+        Row: {
+          blocked_dates: string[] | null
+          buffer_minutes: number | null
+          created_at: string | null
+          default_duration: number | null
+          id: string
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+          working_hours: Json | null
+        }
+        Insert: {
+          blocked_dates?: string[] | null
+          buffer_minutes?: number | null
+          created_at?: string | null
+          default_duration?: number | null
+          id?: string
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+          working_hours?: Json | null
+        }
+        Update: {
+          blocked_dates?: string[] | null
+          buffer_minutes?: number | null
+          created_at?: string | null
+          default_duration?: number | null
+          id?: string
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+          working_hours?: Json | null
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          client_email: string
+          client_name: string
+          client_phone: string | null
+          created_at: string | null
+          duration_minutes: number | null
+          google_event_id: string | null
+          id: string
+          meeting_type: string | null
+          notes: string | null
+          scheduled_at: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          client_email: string
+          client_name: string
+          client_phone?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          google_event_id?: string | null
+          id?: string
+          meeting_type?: string | null
+          notes?: string | null
+          scheduled_at: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          client_email?: string
+          client_name?: string
+          client_phone?: string | null
+          created_at?: string | null
+          duration_minutes?: number | null
+          google_event_id?: string | null
+          id?: string
+          meeting_type?: string | null
+          notes?: string | null
+          scheduled_at?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           avatar_url: string | null

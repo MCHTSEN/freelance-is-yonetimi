@@ -9,6 +9,9 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>
   signUp: (email: string, password: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
+  signInWithGoogle: () => Promise<{ error: Error | null }>
+  getGoogleAccessToken: () => string | null
+  isGoogleConnected: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -52,8 +55,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  // Google OAuth sign in with Calendar scope
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        scopes: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events',
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
+      }
+    })
+    return { error: error as Error | null }
+  }
+
+  // Get Google access token from session
+  const getGoogleAccessToken = (): string | null => {
+    return session?.provider_token || null
+  }
+
+  // Check if user is connected with Google (has provider token)
+  const isGoogleConnected = !!(session?.provider_token && session?.user?.app_metadata?.provider === 'google')
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      loading,
+      signIn,
+      signUp,
+      signOut,
+      signInWithGoogle,
+      getGoogleAccessToken,
+      isGoogleConnected
+    }}>
       {children}
     </AuthContext.Provider>
   )
