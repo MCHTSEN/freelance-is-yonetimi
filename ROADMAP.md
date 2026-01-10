@@ -34,17 +34,19 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 - [x] `hooks/useNotes.ts`, `hooks/useCodeSnippets.ts`, `hooks/useCredentials.ts`
 - [x] `components/RichTextEditor.tsx`
 
+### **Faz 4: Finans ve Zaman Takibi** ✅ TAMAMLANDI
+- [x] **Kısmi Ödeme Sistemi:** `invoice_payments` tablosu ile parça parça ödeme desteği
+- [x] **FinanceDashboard:** Supabase entegrasyonu, gerçek verilerle
+- [x] **Zaman Sayacı:** Proje/müşteri bazlı "Start/Stop" timer
+- [x] **Overdue Filtreleri:** Vadesi geçmiş ödemeleri hesaplayan dinamik filtreler
+- [x] **useInvoices hook:** Fatura CRUD + kısmi ödeme yönetimi
+- [x] **useTimeTracking hook:** Timer başlatma/durdurma, süre hesaplama
+- [ ] ~~PDF Export:~~ (ileriye ertelendi)
+- [ ] ~~CreateProposal:~~ (ileriye ertelendi)
+
 ---
 
 ## 🚧 Devam Eden / Kalan Fazlar
-
-### **Faz 4: Profesyonel Çıktılar ve Finans** 🔜 SIRADA
-- [ ] **PDF Export:** `react-pdf` ile tekliflerin profesyonel dökümana dönüştürülmesi
-- [ ] **CreateProposal ekranı:** Supabase entegrasyonu ve PDF çıktısı
-- [ ] **Fatura Takip Sistemi:** Paid/Unpaid durumlu fatura yönetimi
-- [ ] **FinanceDashboard:** Supabase entegrasyonu, gerçek verilerle
-- [ ] **Zaman Sayacı:** Proje bazlı "Start/Stop" timer
-- [ ] **Overdue Filtreleri:** Vadesi geçmiş ödemeleri hesaplayan dinamik filtreler
 
 ### **Faz 5: Dış Entegrasyonlar** 📅 GELECEK
 - [ ] **Google Calendar:** Toplantıların çekilmesi ve senkronizasyonu
@@ -66,21 +68,24 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 | Faz 1: Altyapı | ✅ Tamamlandı | 100% |
 | Faz 2: CRM | ✅ Tamamlandı | 100% |
 | Faz 3: Bilgi Bankası | ✅ Tamamlandı | 100% |
-| Faz 4: Finans & PDF | 🔜 Sırada | 0% |
+| Faz 4: Finans & Zaman | ✅ Tamamlandı | 100% |
 | Faz 5: Entegrasyonlar | 📅 Planlandı | 0% |
 | Faz 6: Güvenlik | 📅 Planlandı | 0% |
 
-**Toplam İlerleme: ~50%**
+**Toplam İlerleme: ~67%**
 
 ---
 
 ## 🛠️ Bir Sonraki Kritik Adım
 
-**Önerilen sıra - Faz 4:**
-1. CreateProposal ekranını Supabase ile entegre et
-2. `react-pdf` kurulumu ve PDF şablonu oluşturma
-3. FinanceDashboard'u gerçek verilerle çalıştır
-4. Fatura CRUD işlemleri (useInvoices hook)
+**Önerilen sıra - Faz 5 (Dış Entegrasyonlar):**
+1. Google Calendar API entegrasyonu
+2. Randevu sistemi için public sayfa tasarımı
+3. E-posta bildirim sistemi (Resend veya SendGrid)
+
+**Ertelenen Özellikler:**
+- PDF Export (CreateProposal için react-pdf entegrasyonu)
+- Teklif oluşturma ekranı Supabase entegrasyonu
 
 ---
 
@@ -92,6 +97,8 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 - `hooks/useNotes.ts` - Not CRUD
 - `hooks/useCodeSnippets.ts` - Snippet CRUD
 - `hooks/useCredentials.ts` - Kimlik bilgisi CRUD
+- `hooks/useInvoices.ts` - Fatura CRUD + kısmi ödeme yönetimi
+- `hooks/useTimeTracking.ts` - Timer ve zaman takibi
 
 ### Components
 - `components/Modal.tsx` - Yeniden kullanılabilir modal
@@ -110,3 +117,4 @@ Bu doküman, Freelance OS projesinin geliştirme yol haritasını ve mevcut iler
 - `screens/MeetingNotes.tsx` - TipTap ile not editörü
 - `screens/CodeSnippets.tsx` - Snippet yönetimi
 - `screens/CustomerCredentials.tsx` - Tap-to-reveal kimlik bilgileri
+- `screens/FinanceDashboard.tsx` - Fatura takibi, kısmi ödeme, zaman sayacı
