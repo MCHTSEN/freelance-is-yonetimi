@@ -10,6 +10,13 @@ interface PipelineFormProps {
   onAddClient: () => void
   initialStage?: PipelineStage
   preselectedClientId?: string
+  editMode?: boolean
+  initialData?: {
+    estimated_value?: string
+    follow_up_date?: string
+    priority?: string
+    notes?: string
+  }
 }
 
 const PRIORITY_OPTIONS = [
@@ -44,6 +51,8 @@ export default function PipelineForm({
   onAddClient,
   initialStage = 'lead',
   preselectedClientId,
+  editMode = false,
+  initialData,
 }: PipelineFormProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,10 +60,10 @@ export default function PipelineForm({
   const [formData, setFormData] = useState({
     client_id: preselectedClientId || '',
     stage: initialStage as string,
-    estimated_value: '',
-    follow_up_date: '',
-    priority: 'medium',
-    notes: '',
+    estimated_value: initialData?.estimated_value || '',
+    follow_up_date: initialData?.follow_up_date || '',
+    priority: initialData?.priority || 'medium',
+    notes: initialData?.notes || '',
   })
 
   // Update client_id when preselectedClientId changes
@@ -164,9 +173,9 @@ export default function PipelineForm({
         </div>
       </div>
 
-      {/* Tahmini Değer */}
+      {/* Fiyat */}
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Tahmini Değer (₺)</label>
+        <label className="block text-sm text-text-secondary mb-2">Fiyat (₺)</label>
         <input
           type="number"
           value={formData.estimated_value}
@@ -176,6 +185,7 @@ export default function PipelineForm({
           min="0"
           step="100"
         />
+        <p className="text-xs text-text-secondary mt-1">Kazanıldı aşamasına geçince finansal takibe otomatik eklenir</p>
       </div>
 
       {/* Takip Tarihi */}
@@ -253,8 +263,8 @@ export default function PipelineForm({
             <span className="material-symbols-rounded animate-spin">progress_activity</span>
           ) : (
             <>
-              <span className="material-symbols-rounded">add</span>
-              Ekle
+              <span className="material-symbols-rounded">{editMode ? 'save' : 'add'}</span>
+              {editMode ? 'Güncelle' : 'Ekle'}
             </>
           )}
         </button>

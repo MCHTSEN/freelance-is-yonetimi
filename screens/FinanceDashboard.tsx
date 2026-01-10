@@ -302,6 +302,7 @@ export default function FinanceDashboard() {
   const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithDetails | null>(null)
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
   const [timerDescription, setTimerDescription] = useState('')
+  const [timerClientId, setTimerClientId] = useState<string>('')
 
   const stats = calculateStats()
   const timeStatsData = timeStats()
@@ -426,6 +427,11 @@ export default function FinanceDashboard() {
                   <p className="text-2xl font-bold text-green-400 font-mono">
                     {formatDurationDetailed(elapsedSeconds)}
                   </p>
+                  {activeEntry.clients && (
+                    <p className="text-xs text-text-secondary truncate">
+                      {activeEntry.clients.first_name} {activeEntry.clients.last_name}
+                    </p>
+                  )}
                   <button
                     onClick={stopTimer}
                     className="flex items-center justify-center gap-2 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors"
@@ -436,6 +442,18 @@ export default function FinanceDashboard() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
+                  <select
+                    value={timerClientId}
+                    onChange={(e) => setTimerClientId(e.target.value)}
+                    className="w-full px-3 py-2 bg-background-dark border border-border-dark rounded-lg text-white text-sm focus:outline-none focus:border-primary transition-colors"
+                  >
+                    <option value="">Müşteri seçin...</option>
+                    {clients.map(client => (
+                      <option key={client.id} value={client.id}>
+                        {client.first_name} {client.last_name}
+                      </option>
+                    ))}
+                  </select>
                   <input
                     type="text"
                     value={timerDescription}
@@ -444,7 +462,15 @@ export default function FinanceDashboard() {
                     className="w-full px-3 py-2 bg-background-dark border border-border-dark rounded-lg text-white text-sm placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
                   />
                   <button
-                    onClick={() => { startTimer(timerDescription); setTimerDescription('') }}
+                    onClick={() => {
+                      if (!timerClientId) {
+                        alert('Lütfen müşteri seçin')
+                        return
+                      }
+                      startTimer(timerDescription, undefined, timerClientId)
+                      setTimerDescription('')
+                      setTimerClientId('')
+                    }}
                     className="flex items-center justify-center gap-2 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm font-medium rounded-lg transition-colors"
                   >
                     <span className="material-symbols-outlined text-[18px]">play_arrow</span>

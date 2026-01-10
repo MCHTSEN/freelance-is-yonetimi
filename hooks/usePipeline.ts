@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Pipeline, PipelineInsert, Client } from '../lib/supabase'
 
-export type PipelineStage = 'lead' | 'contacted' | 'proposal_sent' | 'negotiation' | 'won' | 'lost'
+export type PipelineStage = 'lead' | 'contacted' | 'meeting' | 'proposal_sent' | 'won'
 
 export interface PipelineWithClient extends Pipeline {
   clients: Client | null
@@ -11,10 +11,9 @@ export interface PipelineWithClient extends Pipeline {
 export const STAGE_CONFIG: Record<PipelineStage, { title: string; order: number }> = {
   lead: { title: 'Lead', order: 1 },
   contacted: { title: 'Görüşüldü', order: 2 },
-  proposal_sent: { title: 'Teklif Gönderildi', order: 3 },
-  negotiation: { title: 'Sözleşme', order: 4 },
+  meeting: { title: 'Toplantı Yapılacak', order: 3 },
+  proposal_sent: { title: 'Teklif Gönderildi', order: 4 },
   won: { title: 'Kazanıldı', order: 5 },
-  lost: { title: 'Kaybedildi', order: 6 },
 }
 
 export function usePipeline() {
@@ -57,6 +56,23 @@ export function usePipeline() {
       .single()
 
     if (error) throw error
+
+    // Sadece "won" aşamasında ekleniyorsa finansal takibe ekle
+    if (item.stage === 'won' && item.estimated_value && item.estimated_value > 0) {
+      try {
+        await supabase.from('invoices').insert({
+          user_id: user.id,
+          client_id: item.client_id || null,
+          amount: item.estimated_value,
+          invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
+          notes: `Pipeline: ${data.id}`,
+          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        })
+      } catch (err) {
+        console.error('Failed to create invoice:', err)
+      }
+    }
+
     setItems(prev => [data as PipelineWithClient, ...prev])
     return data
   }
@@ -75,7 +91,32 @@ export function usePipeline() {
   }
 
   const updateStage = async (id: string, newStage: PipelineStage) => {
-    return updateItem(id, { stage: newStage })
+    const item = items.find(i => i.id === id)
+    const previousStage = item?.stage
+
+    // Aşamayı güncelle
+    const result = await updateItem(id, { stage: newStage })
+
+    // "won" aşamasına geçildiyse ve daha önce "won" değilse fatura oluştur
+    if (newStage === 'won' && previousStage !== 'won' && item?.estimated_value && item.estimated_value > 0) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          await supabase.from('invoices').insert({
+            user_id: user.id,
+            client_id: item.client_id || null,
+            amount: item.estimated_value,
+            invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
+            notes: `Pipeline: ${id}`,
+            due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          })
+        }
+      } catch (err) {
+        console.error('Failed to create invoice on stage change:', err)
+      }
+    }
+
+    return result
   }
 
   const deleteItem = async (id: string) => {

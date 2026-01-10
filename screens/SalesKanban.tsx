@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   DndContext,
   DragOverlay,
@@ -21,19 +21,34 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { usePipeline, STAGE_CONFIG, PipelineStage, PipelineWithClient } from '../hooks/usePipeline'
 import { useClients } from '../hooks/useClients'
+import { supabase } from '../lib/supabase'
 import Modal from '../components/Modal'
 import ClientForm from '../components/ClientForm'
 import PipelineForm from '../components/PipelineForm'
-import type { Client } from '../lib/supabase'
+import type { Client, Booking } from '../lib/supabase'
+
+// Type for upcoming meeting display
+interface UpcomingMeeting {
+  id: string;
+  client_id: string | null;
+  client_name: string;
+  scheduled_at: string;
+  duration_minutes: number;
+  notes: string | null;
+}
 
 // Kanban Card Component
 interface KanbanCardProps {
   item: PipelineWithClient
   onDelete: () => void
+  onEdit: () => void
+  onAddMeeting: () => void
+  onAddNote: () => void
   isDragging?: boolean
+  upcomingMeeting?: UpcomingMeeting | null
 }
 
-function KanbanCard({ item, onDelete, isDragging }: KanbanCardProps) {
+function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDragging, upcomingMeeting }: KanbanCardProps) {
   const clientName = item.clients
     ? `${item.clients.first_name} ${item.clients.last_name}`
     : 'İsimsiz Müşteri'
@@ -61,30 +76,81 @@ function KanbanCard({ item, onDelete, isDragging }: KanbanCardProps) {
     return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value)
   }
 
+  const formatMeetingTime = (dateStr: string) => {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = date.getTime() - now.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+
+    if (diffDays === 0) {
+      if (diffHours <= 0) return 'Şimdi'
+      if (diffHours < 24) return `${diffHours} saat sonra`
+    }
+    if (diffDays === 1) return 'Yarın'
+    if (diffDays < 7) return `${diffDays} gün sonra`
+
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
+  }
+
   return (
     <div
-      className={`group relative bg-[#1a2634] p-4 rounded-xl border border-transparent hover:border-[#324d67] shadow-sm transition-all ${
+      onClick={onEdit}
+      className={`group relative bg-[#1a2634] p-4 rounded-xl border border-transparent hover:border-[#324d67] shadow-sm transition-all cursor-pointer ${
         isDragging ? 'opacity-50 scale-105 shadow-xl' : 'hover:-translate-y-1'
-      } ${item.stage === 'lost' ? 'opacity-50 grayscale' : ''}`}
+      }`}
     >
+      {/* Upcoming Meeting Badge */}
+      {upcomingMeeting && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <div className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg animate-pulse">
+            <span className="material-symbols-outlined text-[12px]">videocam</span>
+            {formatMeetingTime(upcomingMeeting.scheduled_at)}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-start mb-3">
         <div className={`${priority.color} text-xs font-bold px-2 py-1 rounded flex items-center gap-1`}>
           {priority.label}
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            if (window.confirm('Bu kartı silmek istediğinize emin misiniz?')) {
-              onDelete()
-            }
-          }}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-[#92adc9] hover:text-red-400 p-1 -mr-2 -mt-2"
-        >
-          <span className="material-symbols-outlined text-[18px]">delete</span>
-        </button>
+        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddMeeting()
+            }}
+            className="text-[#92adc9] hover:text-green-400 p-1"
+            title="Toplantı Oluştur"
+          >
+            <span className="material-symbols-outlined text-[18px]">event</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddNote()
+            }}
+            className="text-[#92adc9] hover:text-blue-400 p-1"
+            title="Not Ekle"
+          >
+            <span className="material-symbols-outlined text-[18px]">note_add</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (window.confirm('Bu kartı silmek istediğinize emin misiniz?')) {
+                onDelete()
+              }
+            }}
+            className="text-[#92adc9] hover:text-red-400 p-1"
+            title="Sil"
+          >
+            <span className="material-symbols-outlined text-[18px]">delete</span>
+          </button>
+        </div>
       </div>
 
-      <h4 className={`text-white font-bold text-base mb-1 ${item.stage === 'lost' ? 'line-through decoration-slate-500' : ''}`}>
+      <h4 className="text-white font-bold text-base mb-1">
         {clientName}
       </h4>
 
@@ -124,7 +190,21 @@ function KanbanCard({ item, onDelete, isDragging }: KanbanCardProps) {
 }
 
 // Sortable Card Wrapper
-function SortableCard({ item, onDelete }: { item: PipelineWithClient; onDelete: () => void }) {
+function SortableCard({
+  item,
+  onDelete,
+  onEdit,
+  onAddMeeting,
+  onAddNote,
+  upcomingMeeting
+}: {
+  item: PipelineWithClient
+  onDelete: () => void
+  onEdit: () => void
+  onAddMeeting: () => void
+  onAddNote: () => void
+  upcomingMeeting?: UpcomingMeeting | null
+}) {
   const {
     attributes,
     listeners,
@@ -141,7 +221,15 @@ function SortableCard({ item, onDelete }: { item: PipelineWithClient; onDelete: 
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <KanbanCard item={item} onDelete={onDelete} isDragging={isDragging} />
+      <KanbanCard
+        item={item}
+        onDelete={onDelete}
+        onEdit={onEdit}
+        onAddMeeting={onAddMeeting}
+        onAddNote={onAddNote}
+        isDragging={isDragging}
+        upcomingMeeting={upcomingMeeting}
+      />
     </div>
   )
 }
@@ -153,10 +241,14 @@ interface ColumnProps {
   items: PipelineWithClient[]
   onAddCard: () => void
   onDeleteCard: (id: string) => void
+  onEditCard: (item: PipelineWithClient) => void
+  onAddMeeting: (item: PipelineWithClient) => void
+  onAddNote: (item: PipelineWithClient) => void
   isOver: boolean
+  clientMeetings: Map<string, UpcomingMeeting>
 }
 
-function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: ColumnProps) {
+function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAddMeeting, onAddNote, isOver, clientMeetings }: ColumnProps) {
   const { setNodeRef } = useDroppable({
     id: stage,
   })
@@ -194,6 +286,10 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, isOver }: Column
               key={item.id}
               item={item}
               onDelete={() => onDeleteCard(item.id)}
+              onEdit={() => onEditCard(item)}
+              onAddMeeting={() => onAddMeeting(item)}
+              onAddNote={() => onAddNote(item)}
+              upcomingMeeting={item.client_id ? clientMeetings.get(item.client_id) : undefined}
             />
           ))}
         </SortableContext>
@@ -218,9 +314,63 @@ export default function SalesKanban() {
   const [showClientModal, setShowClientModal] = useState(false)
   const [selectedStage, setSelectedStage] = useState<PipelineStage>('lead')
   const [preselectedClient, setPreselectedClient] = useState<Client | null>(null)
+  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeeting[]>([])
+  const [showMeetingsWidget, setShowMeetingsWidget] = useState(true)
 
-  const { items, loading, updateStage, deleteItem, addItem, getItemsByStage } = usePipeline()
+  // Edit modal state
+  const [editingItem, setEditingItem] = useState<PipelineWithClient | null>(null)
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  // Quick meeting modal state
+  const [meetingItem, setMeetingItem] = useState<PipelineWithClient | null>(null)
+  const [showMeetingModal, setShowMeetingModal] = useState(false)
+  const [meetingFormData, setMeetingFormData] = useState({ scheduled_at: '', duration_minutes: 30, notes: '' })
+
+  // Quick note modal state
+  const [noteItem, setNoteItem] = useState<PipelineWithClient | null>(null)
+  const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteContent, setNoteContent] = useState('')
+
+  const { items, loading, updateStage, deleteItem, addItem, updateItem, getItemsByStage } = usePipeline()
   const { clients, addClient, refetch: refetchClients } = useClients()
+
+  // Fetch upcoming meetings
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const now = new Date().toISOString()
+        const { data, error } = await supabase
+          .from('bookings')
+          .select('id, client_id, client_name, scheduled_at, duration_minutes, notes')
+          .gte('scheduled_at', now)
+          .neq('status', 'cancelled')
+          .order('scheduled_at', { ascending: true })
+          .limit(10)
+
+        if (!error && data) {
+          setUpcomingMeetings(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch meetings:', err)
+      }
+    }
+
+    fetchMeetings()
+    // Refresh every minute
+    const interval = setInterval(fetchMeetings, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Create a map of client_id to their next meeting
+  const clientMeetings = useMemo(() => {
+    const map = new Map<string, UpcomingMeeting>()
+    for (const meeting of upcomingMeetings) {
+      if (meeting.client_id && !map.has(meeting.client_id)) {
+        map.set(meeting.client_id, meeting)
+      }
+    }
+    return map
+  }, [upcomingMeetings])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -335,6 +485,81 @@ export default function SalesKanban() {
     setShowClientModal(true)
   }
 
+  // Edit card handler
+  const handleEditCard = (item: PipelineWithClient) => {
+    setEditingItem(item)
+    setShowEditModal(true)
+  }
+
+  // Quick meeting handler
+  const handleAddMeeting = (item: PipelineWithClient) => {
+    setMeetingItem(item)
+    setMeetingFormData({ scheduled_at: '', duration_minutes: 30, notes: '' })
+    setShowMeetingModal(true)
+  }
+
+  const handleMeetingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!meetingItem || !meetingFormData.scheduled_at) return
+
+    try {
+      const clientName = meetingItem.clients
+        ? `${meetingItem.clients.first_name} ${meetingItem.clients.last_name}`
+        : 'Bilinmeyen Müşteri'
+      const clientEmail = meetingItem.clients?.email || `${meetingItem.client_id}@client.local`
+
+      await supabase.from('bookings').insert({
+        user_id: (await supabase.auth.getUser()).data.user?.id || '',
+        client_id: meetingItem.client_id || null,
+        client_name: clientName,
+        client_email: clientEmail,
+        scheduled_at: meetingFormData.scheduled_at,
+        duration_minutes: meetingFormData.duration_minutes,
+        notes: meetingFormData.notes,
+        status: 'confirmed'
+      })
+
+      // Refresh meetings
+      const now = new Date().toISOString()
+      const { data } = await supabase
+        .from('bookings')
+        .select('id, client_id, client_name, scheduled_at, duration_minutes, notes')
+        .gte('scheduled_at', now)
+        .neq('status', 'cancelled')
+        .order('scheduled_at', { ascending: true })
+        .limit(10)
+
+      if (data) setUpcomingMeetings(data)
+
+      setShowMeetingModal(false)
+      setMeetingItem(null)
+    } catch (err) {
+      console.error('Meeting creation failed:', err)
+      alert('Toplantı oluşturulamadı!')
+    }
+  }
+
+  // Quick note handler
+  const handleAddNote = (item: PipelineWithClient) => {
+    setNoteItem(item)
+    setNoteContent(item.notes || '')
+    setShowNoteModal(true)
+  }
+
+  const handleNoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!noteItem) return
+
+    try {
+      await updateItem(noteItem.id, { notes: noteContent })
+      setShowNoteModal(false)
+      setNoteItem(null)
+    } catch (err) {
+      console.error('Note update failed:', err)
+      alert('Not kaydedilemedi!')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background-dark">
@@ -372,6 +597,57 @@ export default function SalesKanban() {
           </div>
         </div>
       </header>
+
+      {/* Upcoming Meetings Widget */}
+      {showMeetingsWidget && upcomingMeetings.length > 0 && (
+        <div className="mx-6 mt-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-500/20 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-green-400">event</span>
+              <h3 className="text-white font-semibold">Yaklaşan Toplantılar</h3>
+              <span className="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded-full">
+                {upcomingMeetings.length}
+              </span>
+            </div>
+            <button
+              onClick={() => setShowMeetingsWidget(false)}
+              className="text-text-secondary hover:text-white transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {upcomingMeetings.slice(0, 5).map(meeting => {
+              const date = new Date(meeting.scheduled_at)
+              const isToday = new Date().toDateString() === date.toDateString()
+              const isTomorrow = new Date(Date.now() + 86400000).toDateString() === date.toDateString()
+
+              return (
+                <div
+                  key={meeting.id}
+                  className="flex-shrink-0 bg-background-dark/50 rounded-lg p-3 border border-green-500/10 hover:border-green-500/30 transition-colors min-w-[200px]"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="size-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs font-bold">
+                      {meeting.client_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </div>
+                    <span className="text-white font-medium text-sm truncate">{meeting.client_name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={`font-bold ${isToday ? 'text-green-400' : isTomorrow ? 'text-yellow-400' : 'text-text-secondary'}`}>
+                      {isToday ? 'Bugün' : isTomorrow ? 'Yarın' : date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
+                    </span>
+                    <span className="text-text-secondary">
+                      {date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className="text-text-secondary">({meeting.duration_minutes}dk)</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Main Board */}
       <div className="flex-1 flex flex-col p-6 overflow-hidden">
@@ -415,7 +691,11 @@ export default function SalesKanban() {
                     items={stageItems}
                     onAddCard={() => handleAddPipeline(stage)}
                     onDeleteCard={deleteItem}
+                    onEditCard={handleEditCard}
+                    onAddMeeting={handleAddMeeting}
+                    onAddNote={handleAddNote}
                     isOver={overId === stage}
+                    clientMeetings={clientMeetings}
                   />
                 )
               })}
@@ -464,6 +744,188 @@ export default function SalesKanban() {
           onSubmit={handleClientSubmit}
           onCancel={() => setShowClientModal(false)}
         />
+      </Modal>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => { setShowEditModal(false); setEditingItem(null) }}
+        title="Kartı Düzenle"
+      >
+        {editingItem && (
+          <PipelineForm
+            clients={clients}
+            onSubmit={async (data) => {
+              await updateItem(editingItem.id, data)
+              setShowEditModal(false)
+              setEditingItem(null)
+            }}
+            onCancel={() => { setShowEditModal(false); setEditingItem(null) }}
+            onAddClient={handleOpenClientModal}
+            initialStage={editingItem.stage as PipelineStage}
+            preselectedClientId={editingItem.client_id || undefined}
+            editMode
+            initialData={{
+              estimated_value: editingItem.estimated_value?.toString() || '',
+              follow_up_date: editingItem.follow_up_date || '',
+              priority: editingItem.priority || 'medium',
+              notes: editingItem.notes || '',
+            }}
+          />
+        )}
+      </Modal>
+
+      {/* Quick Meeting Modal */}
+      <Modal
+        isOpen={showMeetingModal}
+        onClose={() => { setShowMeetingModal(false); setMeetingItem(null) }}
+        title={`Toplantı Oluştur - ${meetingItem?.clients ? `${meetingItem.clients.first_name} ${meetingItem.clients.last_name}` : ''}`}
+      >
+        <form onSubmit={handleMeetingSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Tarih</label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[
+                { label: 'Bugün', date: new Date() },
+                { label: 'Yarın', date: new Date(Date.now() + 86400000) },
+                { label: '2 Gün Sonra', date: new Date(Date.now() + 2 * 86400000) },
+              ].map(({ label, date }) => {
+                const dateStr = date.toISOString().split('T')[0]
+                const isSelected = meetingFormData.scheduled_at.startsWith(dateStr)
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => {
+                      const currentTime = meetingFormData.scheduled_at.split('T')[1] || '10:00'
+                      setMeetingFormData(prev => ({ ...prev, scheduled_at: `${dateStr}T${currentTime}` }))
+                    }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      isSelected
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white/10 text-text-secondary hover:bg-white/20 hover:text-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+            <input
+              type="date"
+              value={meetingFormData.scheduled_at.split('T')[0] || ''}
+              onChange={(e) => {
+                const currentTime = meetingFormData.scheduled_at.split('T')[1] || '10:00'
+                setMeetingFormData(prev => ({ ...prev, scheduled_at: `${e.target.value}T${currentTime}` }))
+              }}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Saat</label>
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00', '18:00'].map(time => {
+                const isSelected = meetingFormData.scheduled_at.includes(`T${time}`)
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => {
+                      const currentDate = meetingFormData.scheduled_at.split('T')[0] || new Date().toISOString().split('T')[0]
+                      setMeetingFormData(prev => ({ ...prev, scheduled_at: `${currentDate}T${time}` }))
+                    }}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      isSelected
+                        ? 'bg-green-600 text-white'
+                        : 'bg-white/10 text-text-secondary hover:bg-white/20 hover:text-white'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Süre</label>
+            <select
+              value={meetingFormData.duration_minutes}
+              onChange={(e) => setMeetingFormData(prev => ({ ...prev, duration_minutes: Number(e.target.value) }))}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
+            >
+              <option value={15}>15 dakika</option>
+              <option value={30}>30 dakika</option>
+              <option value={45}>45 dakika</option>
+              <option value={60}>1 saat</option>
+              <option value={90}>1.5 saat</option>
+              <option value={120}>2 saat</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Notlar</label>
+            <textarea
+              value={meetingFormData.notes}
+              onChange={(e) => setMeetingFormData(prev => ({ ...prev, notes: e.target.value }))}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary resize-none"
+              rows={3}
+              placeholder="Toplantı konusu..."
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => { setShowMeetingModal(false); setMeetingItem(null) }}
+              className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+            >
+              İptal
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[20px]">event</span>
+              Toplantı Oluştur
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Quick Note Modal */}
+      <Modal
+        isOpen={showNoteModal}
+        onClose={() => { setShowNoteModal(false); setNoteItem(null) }}
+        title={`Not Ekle - ${noteItem?.clients ? `${noteItem.clients.first_name} ${noteItem.clients.last_name}` : ''}`}
+      >
+        <form onSubmit={handleNoteSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-text-secondary mb-2">Not</label>
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary resize-none"
+              rows={5}
+              placeholder="Müşteri hakkında notlar..."
+              autoFocus
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => { setShowNoteModal(false); setNoteItem(null) }}
+              className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+            >
+              İptal
+            </button>
+            <button
+              type="submit"
+              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-[20px]">save</span>
+              Kaydet
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   )

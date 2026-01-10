@@ -48,6 +48,7 @@ export type Database = {
       bookings: {
         Row: {
           client_email: string
+          client_id: string | null
           client_name: string
           client_phone: string | null
           created_at: string | null
@@ -63,6 +64,7 @@ export type Database = {
         }
         Insert: {
           client_email: string
+          client_id?: string | null
           client_name: string
           client_phone?: string | null
           created_at?: string | null
@@ -78,6 +80,7 @@ export type Database = {
         }
         Update: {
           client_email?: string
+          client_id?: string | null
           client_name?: string
           client_phone?: string | null
           created_at?: string | null
@@ -91,7 +94,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       clients: {
         Row: {
