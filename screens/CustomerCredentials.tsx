@@ -1,13 +1,13 @@
 import { useState } from 'react'
-import { useCredentials, type CredentialWithClient, type CredentialType } from '../hooks/useCredentials'
-import { useClients } from '../hooks/useClients'
 import Modal from '../components/Modal'
+import { useClients } from '../hooks/useClients'
+import { useCredentials, type CredentialType, type CredentialWithClient } from '../hooks/useCredentials'
 
-const CREDENTIAL_TYPES: { value: CredentialType; label: string; icon: string; color: string }[] = [
-  { value: 'web', label: 'Web Login', icon: 'language', color: 'blue' },
-  { value: 'ssh', label: 'SSH', icon: 'terminal', color: 'orange' },
-  { value: 'db', label: 'Database', icon: 'database', color: 'purple' },
-  { value: 'api', label: 'API', icon: 'api', color: 'emerald' },
+const CREDENTIAL_TYPES: { value: CredentialType; label: string; icon: string; color: string; bg: string }[] = [
+  { value: 'web', label: 'Web Entry', icon: 'language', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  { value: 'ssh', label: 'Terminal / SSH', icon: 'terminal', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+  { value: 'db', label: 'Database', icon: 'database', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { value: 'api', label: 'API / Service', icon: 'api', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
 ]
 
 function CredentialForm({
@@ -18,17 +18,7 @@ function CredentialForm({
   preselectedClientId,
 }: {
   clients: { id: string; first_name: string; last_name: string; company: string | null }[]
-  onSubmit: (data: {
-    client_id: string | null
-    type: CredentialType
-    title: string
-    username: string | null
-    password: string | null
-    url: string | null
-    host: string | null
-    port: string | null
-    notes: string | null
-  }) => Promise<void>
+  onSubmit: (data: any) => Promise<void>
   onCancel: () => void
   initialData?: CredentialWithClient
   preselectedClientId?: string
@@ -37,13 +27,11 @@ function CredentialForm({
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     client_id: initialData?.client_id || preselectedClientId || '',
-    type: (initialData?.type as CredentialType) || 'web',
-    title: initialData?.title || '',
+    category: initialData?.category || 'web',
+    service_name: initialData?.service_name || '',
     username: initialData?.username || '',
-    password: initialData?.password || '',
+    password_encrypted: initialData?.password_encrypted || '',
     url: initialData?.url || '',
-    host: initialData?.host || '',
-    port: initialData?.port || '',
     notes: initialData?.notes || '',
   })
 
@@ -55,190 +43,149 @@ function CredentialForm({
     try {
       await onSubmit({
         client_id: formData.client_id || null,
-        type: formData.type,
-        title: formData.title,
+        category: formData.category,
+        service_name: formData.service_name,
         username: formData.username || null,
-        password: formData.password || null,
+        password_encrypted: formData.password_encrypted || null,
         url: formData.url || null,
-        host: formData.host || null,
-        port: formData.port || null,
         notes: formData.notes || null,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Müşteri</label>
-        <select
-          value={formData.client_id}
-          onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary transition-colors"
-        >
-          <option value="">Müşteri seçin...</option>
-          {clients.map(client => (
-            <option key={client.id} value={client.id}>
-              {client.first_name} {client.last_name} {client.company && `(${client.company})`}
-            </option>
-          ))}
-        </select>
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Client Connection</label>
+          <select
+            value={formData.client_id}
+            onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
+            className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
+          >
+            <option value="" className="bg-slate-900">General / No Client</option>
+            {clients.map(client => (
+              <option key={client.id} value={client.id} className="bg-slate-900">
+                {client.first_name} {client.last_name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Tür</label>
-        <div className="flex flex-wrap gap-2">
-          {CREDENTIAL_TYPES.map(type => (
-            <button
-              key={type.value}
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, type: type.value }))}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
-                formData.type === type.value
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-dark text-text-secondary hover:bg-[#233648] hover:text-white border border-border-dark'
-              }`}
-            >
-              <span className="material-symbols-outlined text-[18px]">{type.icon}</span>
-              {type.label}
-            </button>
-          ))}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Protocol Type</label>
+          <select
+            value={formData.category || 'web'}
+            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
+          >
+            {CREDENTIAL_TYPES.map(type => (
+              <option key={type.value} value={type.value} className="bg-slate-900">{type.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Başlık *</label>
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Resource Title</label>
         <input
           type="text"
-          value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-          placeholder="Örn: WordPress Admin, Production Server"
+          value={formData.service_name}
+          onChange={(e) => setFormData(prev => ({ ...prev, service_name: e.target.value }))}
+          className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-bold"
+          placeholder="e.g. AWS Production Dashboard"
           required
         />
       </div>
 
-      {(formData.type === 'web' || formData.type === 'api') && (
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">URL</label>
-          <input
-            type="url"
-            value={formData.url}
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Endpoint URL / Host</label>
+        <div className="relative">
+           <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">link</span>
+           <input
+            type="text"
+            value={formData.url || ''}
             onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-            placeholder="https://example.com/admin"
+            className="w-full pl-12 pr-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-primary text-sm focus:outline-none focus:border-primary/50 transition-all font-mono"
+            placeholder="https://console.aws.amazon.com/..."
           />
         </div>
-      )}
+      </div>
 
-      {(formData.type === 'ssh' || formData.type === 'db') && (
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Host</label>
-            <input
-              type="text"
-              value={formData.host}
-              onChange={(e) => setFormData(prev => ({ ...prev, host: e.target.value }))}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-              placeholder="192.168.1.1"
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Port</label>
-            <input
-              type="text"
-              value={formData.port}
-              onChange={(e) => setFormData(prev => ({ ...prev, port: e.target.value }))}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-              placeholder={formData.type === 'ssh' ? '22' : '3306'}
-            />
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+            Identity / Username
+          </label>
+          <input
+            type="text"
+            value={formData.username || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+            className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-mono"
+            placeholder="admin"
+          />
         </div>
-      )}
-
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">
-          {formData.type === 'api' ? 'API Key / Client ID' : 'Kullanıcı Adı'}
-        </label>
-        <input
-          type="text"
-          value={formData.username}
-          onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors font-mono"
-          placeholder={formData.type === 'api' ? 'pk_live_...' : 'admin'}
-        />
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-rose-500/80 ml-1">
+            Secret / Password
+          </label>
+          <input
+            type="password"
+            value={formData.password_encrypted || ''}
+            onChange={(e) => setFormData(prev => ({ ...prev, password_encrypted: e.target.value }))}
+            className="w-full px-4 py-3 bg-rose-500/5 border border-rose-500/10 rounded-xl text-rose-400 text-sm focus:outline-none focus:border-rose-500/50 font-mono"
+            placeholder="••••••••••"
+          />
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">
-          {formData.type === 'api' ? 'API Secret' : 'Şifre'}
-          <span className="text-rose-400 ml-2 text-xs">Hassas veri</span>
-        </label>
-        <input
-          type="password"
-          value={formData.password}
-          onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-rose-900/30 rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-rose-500 transition-colors font-mono"
-          placeholder="••••••••••"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Notlar</label>
+      <div className="space-y-2">
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Security Notes</label>
         <textarea
-          value={formData.notes}
+          value={formData.notes || ''}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors resize-none"
-          placeholder="Ek notlar..."
-          rows={2}
+          className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-slate-300 text-sm focus:outline-none focus:border-primary/50 transition-all font-medium resize-none"
+          placeholder="Access restrictions, rotation policy, etc..."
+          rows={3}
         />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3">
+          <span className="material-symbols-rounded text-rose-500 text-[20px]">error</span>
+          <p className="text-rose-400 text-xs font-bold uppercase tracking-widest">{error}</p>
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-4 pt-2">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+          className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-widest rounded-2xl transition-all"
         >
-          İptal
+          Cancel
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="flex-1 py-4 bg-primary hover:bg-primary-dark text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {loading ? (
             <span className="material-symbols-rounded animate-spin">progress_activity</span>
           ) : (
             <>
-              <span className="material-symbols-rounded">{initialData ? 'save' : 'add'}</span>
-              {initialData ? 'Kaydet' : 'Ekle'}
+              <span className="material-symbols-rounded font-black">{initialData ? 'verified_user' : 'encrypted'}</span>
+              {initialData ? 'Update Vault' : 'Secure in Vault'}
             </>
           )}
         </button>
       </div>
     </form>
   )
-}
-
-interface CredentialCardProps {
-  cred: CredentialWithClient
-  visibleSecrets: Record<string, boolean>
-  toggleVisibility: (id: string) => void
-  copiedId: string | null
-  copyToClipboard: (text: string, id: string) => void
-  onEdit: () => void
-  onDelete: () => void
 }
 
 const CredentialCard = ({
@@ -249,157 +196,109 @@ const CredentialCard = ({
   copyToClipboard,
   onEdit,
   onDelete,
-}: CredentialCardProps) => {
-  const typeConfig = CREDENTIAL_TYPES.find(t => t.value === cred.type) || CREDENTIAL_TYPES[0]
+}: {
+  cred: CredentialWithClient
+  visibleSecrets: Record<string, boolean>
+  toggleVisibility: (id: string) => void
+  copiedId: string | null
+  copyToClipboard: (text: string, id: string) => void
+  onEdit: () => void
+  onDelete: () => void
+}) => {
+  const typeConfig = CREDENTIAL_TYPES.find(t => t.value === (cred.category as CredentialType)) || CREDENTIAL_TYPES[0]
 
   return (
-    <div className="bg-surface-dark border border-border-dark rounded-xl p-5 shadow-sm hover:border-primary/30 transition-all group">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className={`size-10 rounded-lg flex items-center justify-center bg-${typeConfig.color}-500/10 text-${typeConfig.color}-400`}>
-            <span className="material-symbols-outlined text-[20px]">{typeConfig.icon}</span>
+    <div className="group relative">
+      {/* Decorative Glow */}
+      <div className={`absolute -inset-0.5 rounded-[2rem] bg-gradient-to-br transition-all duration-500 opacity-0 blur group-hover:opacity-100 ${typeConfig.bg.replace('bg-', 'from-').replace('/10', '/30')}`} />
+      
+      <div className="relative flex flex-col h-full bg-[#0a0f1a] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 group-hover:translate-y-[-4px] group-hover:border-white/10">
+        {/* Card Header */}
+        <div className="p-6 pb-4 flex items-start justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`size-12 rounded-2xl flex items-center justify-center ${typeConfig.bg} ${typeConfig.color} shadow-inner`}>
+              <span className="material-symbols-rounded text-2xl">{typeConfig.icon}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{typeConfig.label}</span>
+              <h3 className="text-white font-black tracking-tight leading-tight">{cred.service_name}</h3>
+            </div>
           </div>
-          <div>
-            <h3 className="text-white font-bold text-base leading-tight">{cred.title}</h3>
-            <span className="text-text-secondary text-xs font-medium uppercase tracking-wide">
-              {typeConfig.label}
-            </span>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <button onClick={onEdit} className="size-8 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-all flex items-center justify-center">
+              <span className="material-symbols-rounded text-[18px]">edit_square</span>
+            </button>
+            <button onClick={onDelete} className="size-8 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-all flex items-center justify-center">
+              <span className="material-symbols-rounded text-[18px]">delete</span>
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={onEdit}
-            className="text-text-secondary hover:text-white transition-colors p-1"
-          >
-            <span className="material-symbols-outlined text-[18px]">edit</span>
-          </button>
-          <button
-            onClick={onDelete}
-            className="text-text-secondary hover:text-red-400 transition-colors p-1"
-          >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
-          </button>
-        </div>
-      </div>
 
-      <div className="space-y-3">
-        {cred.url && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold text-[#587593]">URL</label>
-            <a
-              href={cred.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary hover:underline text-sm truncate flex items-center gap-1"
-            >
-              {cred.url} <span className="material-symbols-outlined text-[12px]">open_in_new</span>
-            </a>
-          </div>
-        )}
+        {/* Content Section */}
+        <div className="px-6 pb-6 pt-2 space-y-4">
+          {cred.url && (
+            <div className="space-y-1.5">
+              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Gateway Endpoint</label>
+              <a
+                href={cred.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-primary font-mono bg-primary/5 border border-primary/10 px-4 py-2.5 rounded-xl hover:bg-primary hover:text-white transition-all overflow-hidden"
+              >
+                <span className="material-symbols-rounded text-[14px]">open_in_new</span>
+                <span className="truncate">{cred.url}</span>
+              </a>
+            </div>
+          )}
 
-        {cred.host && (
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase font-bold text-[#587593]">Host</label>
-              <div className="group/field flex items-center justify-between bg-[#111a22] rounded px-2 py-1.5 border border-transparent hover:border-border-dark transition-colors">
-                <span className="text-slate-300 text-sm font-mono truncate">{cred.host}</span>
-                <button
-                  onClick={() => copyToClipboard(cred.host!, `${cred.id}-host`)}
-                  className="opacity-0 group-hover/field:opacity-100 text-text-secondary hover:text-white transition-opacity"
-                >
-                  <span className="material-symbols-outlined text-[14px]">
-                    {copiedId === `${cred.id}-host` ? 'check' : 'content_copy'}
-                  </span>
-                </button>
+          <div className="space-y-3 pt-2">
+            {cred.username && (
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Identity / UID</label>
+                <div onClick={() => copyToClipboard(cred.username!, `${cred.id}-user`)} className="bg-white/[0.02] border border-white/5 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-between group/field">
+                  <span className="text-white text-sm font-mono tracking-tight">{cred.username}</span>
+                  <span className="material-symbols-rounded text-[14px] opacity-0 group-hover/field:opacity-100">{copiedId === `${cred.id}-user` ? 'done' : 'content_copy'}</span>
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase font-bold text-[#587593]">Port</label>
-              <span className="text-slate-300 text-sm font-mono bg-[#111a22] rounded px-2 py-1.5">
-                {cred.port}
-              </span>
-            </div>
-          </div>
-        )}
+            )}
 
-        {cred.username && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold text-[#587593]">
-              {cred.type === 'api' ? 'API Key / ID' : 'Kullanıcı Adı'}
-            </label>
-            <div className="group/field flex items-center justify-between bg-[#111a22] rounded px-3 py-2 border border-transparent hover:border-border-dark transition-colors">
-              <span className="text-white text-sm font-mono truncate select-all">{cred.username}</span>
-              <button
-                onClick={() => copyToClipboard(cred.username!, `${cred.id}-user`)}
-                className="opacity-0 group-hover/field:opacity-100 text-text-secondary hover:text-white transition-opacity"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  {copiedId === `${cred.id}-user` ? 'check' : 'content_copy'}
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {cred.password && (
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase font-bold text-[#587593]">
-              {cred.type === 'api' ? 'API Secret' : 'Şifre'}
-            </label>
-            <div
-              className="group/field relative flex items-center justify-between bg-[#111a22] rounded px-3 py-2 border border-transparent hover:border-border-dark transition-colors overflow-hidden cursor-pointer"
-              onClick={() => toggleVisibility(`${cred.id}-pass`)}
-            >
-              {!visibleSecrets[`${cred.id}-pass`] && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111a22]/90 backdrop-blur-sm">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
-                    <span className="material-symbols-outlined text-[14px]">visibility</span>
-                    Görmek için tıkla
-                  </span>
+            {cred.password_encrypted && (
+              <div className="space-y-1.5">
+                <label className="text-[9px] font-black uppercase tracking-widest text-rose-500/60">Secret / Token</label>
+                <div
+                  className="relative h-11 bg-rose-500/5 border border-rose-500/10 rounded-xl overflow-hidden cursor-pointer group/pass"
+                  onClick={() => !visibleSecrets[`${cred.id}-pass`] && toggleVisibility(`${cred.id}-pass`)}
+                >
+                  <div className={`absolute inset-0 flex items-center justify-between px-4 transition-all duration-300 ${visibleSecrets[`${cred.id}-pass`] ? 'opacity-100' : 'opacity-0 translate-y-2'}`}>
+                    <span className="text-rose-400 text-sm font-mono truncate mr-8">{cred.password_encrypted}</span>
+                    <div className="flex items-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); toggleVisibility(`${cred.id}-pass`) }} className="text-rose-500/60 hover:text-rose-400">
+                        <span className="material-symbols-rounded text-[16px]">visibility_off</span>
+                      </button>
+                      <button onClick={(e) => { e.stopPropagation(); copyToClipboard(cred.password_encrypted!, `${cred.id}-pass`) }} className="text-rose-500/60 hover:text-rose-400">
+                        <span className="material-symbols-rounded text-[16px]">{copiedId === `${cred.id}-pass` ? 'done' : 'content_copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {!visibleSecrets[`${cred.id}-pass`] && (
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 text-rose-500/40 group-hover/pass:text-rose-400 transition-colors">
+                       <span className="material-symbols-rounded text-[18px]">lock</span>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Unlock Protocol</span>
+                    </div>
+                  )}
                 </div>
-              )}
-              <span
-                className={`text-sm font-mono truncate transition-all ${
-                  visibleSecrets[`${cred.id}-pass`] ? 'text-white' : 'blur-md text-slate-500 select-none'
-                }`}
-              >
-                {cred.password}
-              </span>
-
-              {visibleSecrets[`${cred.id}-pass`] && (
-                <div className="flex items-center gap-2 pl-2 bg-[#111a22]">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleVisibility(`${cred.id}-pass`)
-                    }}
-                    className="text-text-secondary hover:text-white transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">visibility_off</span>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      copyToClipboard(cred.password!, `${cred.id}-pass`)
-                    }}
-                    className="text-text-secondary hover:text-white transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">
-                      {copiedId === `${cred.id}-pass` ? 'check' : 'content_copy'}
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
 }
 
 export default function CustomerCredentials() {
-  const { credentials, loading, addCredential, updateCredential, deleteCredential } = useCredentials()
+  const { credentials, loading, addCredential, updateCredential, deleteCredential, getCredentialsByClient } = useCredentials()
   const { clients } = useClients()
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -408,25 +307,20 @@ export default function CustomerCredentials() {
   const [showForm, setShowForm] = useState(false)
   const [editingCredential, setEditingCredential] = useState<CredentialWithClient | null>(null)
 
-  // Get unique clients from credentials
   const clientsWithCredentials = clients.filter(client =>
     credentials.some(cred => cred.client_id === client.id)
   )
 
-  // Filter credentials based on selected client and search
   const filteredCredentials = credentials.filter(cred => {
     const matchesClient = !selectedClientId || cred.client_id === selectedClientId
     const matchesSearch = searchQuery === '' ||
-      cred.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cred.service_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       cred.username?.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesClient && matchesSearch
   })
 
   const toggleVisibility = (id: string) => {
-    setVisibleSecrets(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }))
+    setVisibleSecrets(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
   const copyToClipboard = (text: string, id: string) => {
@@ -435,24 +329,23 @@ export default function CustomerCredentials() {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
-  const handleAdd = async (data: Parameters<typeof addCredential>[0]) => {
+  const handleAdd = async (data: any) => {
     await addCredential(data)
     setShowForm(false)
   }
 
-  const handleEdit = async (data: Parameters<typeof updateCredential>[1]) => {
+  const handleEdit = async (data: any) => {
     if (!editingCredential) return
     await updateCredential(editingCredential.id, data)
     setEditingCredential(null)
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bu kimlik bilgisi silinsin mi?')) return
+    if (!confirm('This action will permanently delete these credentials from the vault. Proceed?')) return
     await deleteCredential(id)
   }
 
-  const getCredentialsByType = (type: CredentialType) =>
-    filteredCredentials.filter(c => c.type === type)
+  const getCredentialsByType = (type: CredentialType) => filteredCredentials.filter(c => (c.category as CredentialType) === type)
 
   if (loading) {
     return (
@@ -463,231 +356,145 @@ export default function CustomerCredentials() {
   }
 
   return (
-    <div className="flex w-full h-full">
-      {/* Sidebar */}
-      <aside className="w-80 flex flex-col border-r border-border-dark bg-surface-dark shrink-0">
-        <div className="p-4 border-b border-border-dark space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-white">Müşteriler</h2>
-            <button
-              onClick={() => setShowForm(true)}
-              className="text-primary hover:text-blue-400"
-            >
-              <span className="material-symbols-outlined">add_circle</span>
-            </button>
+    <div className="flex w-full h-full overflow-hidden">
+      {/* Glassmorphic Sidebar */}
+      <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col gap-1 mb-2">
+            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Security Center</span>
+            <h2 className="text-white text-2xl font-black tracking-tight">Identity Vault</h2>
           </div>
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[20px]">
-              search
-            </span>
-            <input
-              className="w-full bg-[#192633] text-white placeholder-text-secondary text-sm rounded-lg border border-border-dark focus:border-primary focus:ring-1 focus:ring-primary pl-10 pr-3 py-2.5 outline-none transition-all"
-              placeholder="Ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
+                placeholder="Search assets..."
+              />
+            </div>
+            <button
+               onClick={() => setShowForm(true)}
+               className="size-11 bg-primary hover:bg-primary-dark text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-primary/20 active:scale-90"
+            >
+               <span className="material-symbols-rounded font-black">add</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
-          {/* All Credentials */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-1">
           <div
             onClick={() => setSelectedClientId(null)}
-            className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${
-              selectedClientId === null
-                ? 'bg-[#1f2e3d] border border-primary/30 shadow-md'
-                : 'hover:bg-[#1f2e3d] border border-transparent'
+            className={`group flex items-center gap-4 px-4 py-4 rounded-[1.25rem] cursor-pointer transition-all border ${
+              selectedClientId === null ? 'bg-white/10 border-primary/40 shadow-xl' : 'hover:bg-white/5 border-transparent'
             }`}
           >
-            <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-              <span className="material-symbols-outlined text-[20px]">folder</span>
+            <div className={`size-10 rounded-xl flex items-center justify-center ${selectedClientId === null ? 'bg-primary text-white' : 'bg-white/5 text-slate-500 group-hover:text-white transition-colors'}`}>
+              <span className="material-symbols-rounded text-xl font-black">vpn_lock</span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm font-bold truncate ${selectedClientId === null ? 'text-white' : 'text-slate-300'}`}>
-                Tüm Kimlik Bilgileri
-              </p>
-              <p className="text-text-secondary text-xs truncate">{credentials.length} kayıt</p>
+            <div className="flex flex-col">
+              <span className="text-white text-xs font-black">Global Vault</span>
+              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{credentials.length} Records</span>
             </div>
           </div>
 
-          {/* Clients with credentials */}
-          {clientsWithCredentials.map(client => {
-            const clientCredCount = credentials.filter(c => c.client_id === client.id).length
-            const initials = `${client.first_name[0]}${client.last_name[0]}`
+          <div className="py-2 px-4">
+             <div className="h-px w-full bg-white/5" />
+          </div>
 
-            return (
-              <div
-                key={client.id}
-                onClick={() => setSelectedClientId(client.id)}
-                className={`group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${
-                  selectedClientId === client.id
-                    ? 'bg-[#1f2e3d] border border-primary/30 shadow-md'
-                    : 'hover:bg-[#1f2e3d] border border-transparent'
-                }`}
-              >
-                <div className="size-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                  {initials}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-bold truncate ${selectedClientId === client.id ? 'text-white' : 'text-slate-300'}`}>
-                    {client.first_name} {client.last_name}
-                  </p>
-                  <p className="text-text-secondary text-xs truncate">
-                    {client.company || `${clientCredCount} kimlik bilgisi`}
-                  </p>
-                </div>
-                {selectedClientId === client.id && (
-                  <span className="material-symbols-outlined text-primary text-[20px]">chevron_right</span>
-                )}
+          {clientsWithCredentials.map(client => (
+            <div
+              key={client.id}
+              onClick={() => setSelectedClientId(client.id)}
+              className={`group flex items-center gap-4 px-4 py-4 rounded-[1.25rem] cursor-pointer transition-all border ${
+                selectedClientId === client.id ? 'bg-white/10 border-primary/40 shadow-xl' : 'hover:bg-white/5 border-transparent'
+              }`}
+            >
+              <div className={`size-10 rounded-xl flex items-center justify-center text-xs font-black ${selectedClientId === client.id ? 'bg-primary text-white' : 'bg-white/5 text-slate-500 group-hover:text-white transition-colors'}`}>
+                {client.first_name[0]}{client.last_name[0]}
               </div>
-            )
-          })}
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-white text-xs font-bold truncate">{client.first_name} {client.last_name}</span>
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{getCredentialsByClient(client.id).length} Records</span>
+              </div>
+            </div>
+          ))}
         </div>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-background-dark min-w-0 overflow-hidden">
-        {/* Header */}
-        <header className="px-8 py-6 border-b border-border-dark bg-surface-dark/50 backdrop-blur-sm flex items-center justify-between shrink-0">
-          <div>
-            <h1 className="text-2xl font-black text-white leading-tight tracking-tight">
-              {selectedClientId
-                ? `${clients.find(c => c.id === selectedClientId)?.first_name} ${clients.find(c => c.id === selectedClientId)?.last_name}`
-                : 'Tüm Kimlik Bilgileri'}
-            </h1>
-            <p className="text-text-secondary text-sm">
-              {filteredCredentials.length} kimlik bilgisi
-            </p>
-          </div>
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex h-10 items-center justify-center gap-2 px-5 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-colors shadow-lg shadow-primary/20"
-          >
-            <span className="material-symbols-outlined text-[18px]">add</span>
-            Yeni Ekle
-          </button>
+      <div className="flex-1 flex flex-col bg-transparent overflow-hidden">
+        <header className="px-10 py-10 border-b border-white/5 flex items-center justify-between">
+           <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                 <h1 className="text-4xl font-black text-white tracking-tight">
+                   {selectedClientId ? clients.find(c => c.id === selectedClientId)?.company || 'Secure Client Entity' : 'Master Infrastructure'}
+                 </h1>
+                 <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest animate-pulse">
+                    Live Encryption
+                 </div>
+              </div>
+              <p className="text-slate-500 text-xs font-medium ml-1">
+                Encryption active • {filteredCredentials.length} protected resources
+              </p>
+           </div>
+           <button
+             onClick={() => setShowForm(true)}
+             className="flex items-center gap-3 px-8 h-12 bg-primary hover:bg-primary-dark text-white rounded-[1rem] text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95"
+           >
+             <span className="material-symbols-rounded text-[20px] font-black">add_moderator</span>
+             New Protocol
+           </button>
         </header>
 
-        {/* Credentials Grid */}
-        <div className="flex-1 overflow-y-auto px-8 py-8">
-          <div className="max-w-6xl mx-auto">
+        <div className="flex-1 overflow-y-auto px-10 py-10 pb-32">
+          <div className="max-w-7xl mx-auto">
             {filteredCredentials.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <span className="material-symbols-rounded text-text-secondary text-6xl mb-4">lock</span>
-                <p className="text-text-secondary text-lg mb-4">Henüz kimlik bilgisi yok</p>
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors flex items-center gap-2"
-                >
-                  <span className="material-symbols-rounded">add</span>
-                  İlk Kimlik Bilgisini Ekle
-                </button>
-              </div>
+               <div className="flex flex-col items-center justify-center py-24 opacity-30">
+                  <span className="material-symbols-rounded text-8xl mb-6">lock_reset</span>
+                  <p className="text-xl font-black uppercase tracking-[0.3em]">No Secure Protocols Found</p>
+               </div>
             ) : (
-              <>
-                {/* Web Logins */}
-                {getCredentialsByType('web').length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-text-secondary">language</span>
-                      Web Erişimi
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {getCredentialsByType('web').map(cred => (
-                        <CredentialCard
-                          key={cred.id}
-                          cred={cred}
-                          visibleSecrets={visibleSecrets}
-                          toggleVisibility={toggleVisibility}
-                          copiedId={copiedId}
-                          copyToClipboard={copyToClipboard}
-                          onEdit={() => setEditingCredential(cred)}
-                          onDelete={() => handleDelete(cred.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* SSH */}
-                {getCredentialsByType('ssh').length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-text-secondary">dns</span>
-                      Sunucu & SSH
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {getCredentialsByType('ssh').map(cred => (
-                        <CredentialCard
-                          key={cred.id}
-                          cred={cred}
-                          visibleSecrets={visibleSecrets}
-                          toggleVisibility={toggleVisibility}
-                          copiedId={copiedId}
-                          copyToClipboard={copyToClipboard}
-                          onEdit={() => setEditingCredential(cred)}
-                          onDelete={() => handleDelete(cred.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Databases */}
-                {getCredentialsByType('db').length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-text-secondary">database</span>
-                      Veritabanı
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {getCredentialsByType('db').map(cred => (
-                        <CredentialCard
-                          key={cred.id}
-                          cred={cred}
-                          visibleSecrets={visibleSecrets}
-                          toggleVisibility={toggleVisibility}
-                          copiedId={copiedId}
-                          copyToClipboard={copyToClipboard}
-                          onEdit={() => setEditingCredential(cred)}
-                          onDelete={() => handleDelete(cred.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* APIs */}
-                {getCredentialsByType('api').length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="text-white text-lg font-bold mb-4 flex items-center gap-2">
-                      <span className="material-symbols-outlined text-text-secondary">api</span>
-                      API Anahtarları
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                      {getCredentialsByType('api').map(cred => (
-                        <CredentialCard
-                          key={cred.id}
-                          cred={cred}
-                          visibleSecrets={visibleSecrets}
-                          toggleVisibility={toggleVisibility}
-                          copiedId={copiedId}
-                          copyToClipboard={copyToClipboard}
-                          onEdit={() => setEditingCredential(cred)}
-                          onDelete={() => handleDelete(cred.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+               <div className="space-y-12">
+                  {CREDENTIAL_TYPES.map(type => {
+                    const typeCreds = getCredentialsByType(type.value)
+                    if (typeCreds.length === 0) return null
+                    return (
+                      <section key={type.value} className="space-y-6">
+                        <div className="flex items-center gap-4 mb-2">
+                           <div className={`h-px flex-1 bg-gradient-to-r from-transparent to-white/5`} />
+                           <h2 className={`text-[10px] font-black uppercase tracking-[0.4em] ${type.color} flex items-center gap-2`}>
+                             <span className="material-symbols-rounded text-sm">{type.icon}</span>
+                             {type.label} Channels
+                           </h2>
+                           <div className={`h-px flex-1 bg-gradient-to-l from-transparent to-white/5`} />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                          {typeCreds.map(cred => (
+                            <CredentialCard
+                              key={cred.id}
+                              cred={cred}
+                              visibleSecrets={visibleSecrets}
+                              toggleVisibility={toggleVisibility}
+                              copiedId={copiedId}
+                              copyToClipboard={copyToClipboard}
+                              onEdit={() => setEditingCredential(cred)}
+                              onDelete={() => handleDelete(cred.id)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )
+                  })}
+               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Add Modal */}
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Yeni Kimlik Bilgisi">
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Initialize Secure Protocol">
         <CredentialForm
           clients={clients}
           onSubmit={handleAdd}
@@ -696,8 +503,7 @@ export default function CustomerCredentials() {
         />
       </Modal>
 
-      {/* Edit Modal */}
-      <Modal isOpen={!!editingCredential} onClose={() => setEditingCredential(null)} title="Kimlik Bilgisi Düzenle">
+      <Modal isOpen={!!editingCredential} onClose={() => setEditingCredential(null)} title="Update Vault Structure">
         {editingCredential && (
           <CredentialForm
             clients={clients}

@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { AvailabilitySettings, Booking, BookingInsert } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
-import type { Booking, BookingInsert, AvailabilitySettings } from '../lib/supabase'
 
 export type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed'
 
@@ -178,7 +178,7 @@ export function useBookings() {
     const dayNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const
     const dayName = dayNames[date.getDay()]
 
-    const workingHours = availabilitySettings?.working_hours as WorkingHoursMap | null
+    const workingHours = (availabilitySettings?.working_hours as unknown) as WorkingHoursMap | null
     const dayHours = workingHours?.[dayName]
 
     if (!dayHours) {

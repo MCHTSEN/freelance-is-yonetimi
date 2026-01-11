@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { PipelineStage } from '../hooks/usePipeline'
 import { STAGE_CONFIG } from '../hooks/usePipeline'
 import type { Client, PipelineInsert } from '../lib/supabase'
+import FormattedPriceInput from './FormattedPriceInput'
 
 interface PipelineFormProps {
   clients: Client[]
@@ -177,13 +178,11 @@ export default function PipelineForm({
         {/* Fiyat */}
         <div>
           <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tahmini Değer (₺)</label>
-          <input
-            type="number"
+          <FormattedPriceInput
             value={formData.estimated_value}
-            onChange={(e) => setFormData(prev => ({ ...prev, estimated_value: e.target.value }))}
+            onChange={(val) => setFormData(prev => ({ ...prev, estimated_value: val }))}
             className="w-full px-5 py-2.5 bg-surface-dark/50 border border-glass-border rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 font-mono text-sm"
-            placeholder="0.00"
-            min="0"
+            placeholder="0"
           />
         </div>
       </div>

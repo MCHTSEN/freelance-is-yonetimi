@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useCodeSnippets, type CodeSnippetWithProject } from '../hooks/useCodeSnippets'
 import Modal from '../components/Modal'
+import { useCodeSnippets, type CodeSnippetWithProject } from '../hooks/useCodeSnippets'
 
 const LANGUAGE_OPTIONS = [
   { value: 'javascript', label: 'JavaScript', color: 'yellow' },
@@ -25,7 +25,6 @@ function SnippetForm({
     code: string
     language: string
     description: string | null
-    env_vars: Record<string, string> | null
   }) => Promise<void>
   onCancel: () => void
   initialData?: CodeSnippetWithProject
@@ -37,7 +36,6 @@ function SnippetForm({
     code: initialData?.code || '',
     language: initialData?.language || 'javascript',
     description: initialData?.description || '',
-    env_vars: initialData?.env_vars ? JSON.stringify(initialData.env_vars, null, 2) : '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,21 +44,11 @@ function SnippetForm({
     setLoading(true)
 
     try {
-      let envVars: Record<string, string> | null = null
-      if (formData.env_vars.trim()) {
-        try {
-          envVars = JSON.parse(formData.env_vars)
-        } catch {
-          throw new Error('Env vars geçerli JSON formatında olmalı')
-        }
-      }
-
       await onSubmit({
         title: formData.title,
         code: formData.code,
         language: formData.language,
         description: formData.description || null,
-        env_vars: envVars,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
@@ -126,20 +114,6 @@ function SnippetForm({
         />
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">
-          Environment Variables (JSON)
-          <span className="text-rose-400 ml-2 text-xs">Hassas veriler</span>
-        </label>
-        <textarea
-          value={formData.env_vars}
-          onChange={(e) => setFormData(prev => ({ ...prev, env_vars: e.target.value }))}
-          className="w-full px-4 py-3 bg-[#0d1117] border border-rose-900/30 rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-rose-500 transition-colors resize-none font-mono text-sm"
-          placeholder='{"API_KEY": "xxx", "SECRET": "yyy"}'
-          rows={4}
-        />
-      </div>
-
       {error && (
         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
           <p className="text-red-400 text-sm">{error}</p>
@@ -175,7 +149,6 @@ function SnippetForm({
 
 export default function CodeSnippets() {
   const { snippets, loading, addSnippet, updateSnippet, deleteSnippet } = useCodeSnippets()
-  const [revealed, setRevealed] = useState(false)
   const [activeSnippetId, setActiveSnippetId] = useState<string | null>(null)
   const [isCopied, setIsCopied] = useState(false)
   const [showForm, setShowForm] = useState(false)
@@ -183,7 +156,7 @@ export default function CodeSnippets() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filterLang, setFilterLang] = useState<string | null>(null)
 
-  const activeSnippet = snippets.find(s => s.id === activeSnippetId) || snippets[0]
+  const activeSnippet = (activeSnippetId ? snippets.find(s => s.id === activeSnippetId) : snippets[0]) || null
 
   const filteredSnippets = snippets.filter(snippet => {
     const matchesSearch = searchQuery === '' ||
@@ -205,15 +178,12 @@ export default function CodeSnippets() {
     code: string
     language: string
     description: string | null
-    env_vars: Record<string, string> | null
   }) => {
     const newSnippet = await addSnippet({
       title: data.title,
       code: data.code,
       language: data.language,
       description: data.description,
-      env_vars: data.env_vars,
-      project_id: null,
     })
     setShowForm(false)
     setActiveSnippetId(newSnippet.id)
@@ -224,7 +194,6 @@ export default function CodeSnippets() {
     code: string
     language: string
     description: string | null
-    env_vars: Record<string, string> | null
   }) => {
     if (!editingSnippet) return
     await updateSnippet(editingSnippet.id, data)
@@ -238,10 +207,6 @@ export default function CodeSnippets() {
     setActiveSnippetId(null)
   }
 
-  const getLangColor = (lang: string) => {
-    return LANGUAGE_OPTIONS.find(l => l.value === lang)?.color || 'gray'
-  }
-
   if (loading) {
     return (
       <div className="flex w-full h-full items-center justify-center">
@@ -251,42 +216,48 @@ export default function CodeSnippets() {
   }
 
   return (
-    <div className="flex w-full h-full">
-      {/* Sidebar */}
-      <aside className="w-80 flex flex-col border-r border-border-dark bg-surface-dark shrink-0">
-        <div className="p-4 border-b border-border-dark space-y-3">
+    <div className="flex w-full h-full overflow-hidden">
+      {/* Glassmorphic Sidebar */}
+      <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
+        <div className="p-6 space-y-4">
+          <div className="flex flex-col gap-1 mb-4">
+            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Developer Vault</span>
+            <h2 className="text-white text-2xl font-black tracking-tight">Snippets</h2>
+          </div>
+
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-[20px]">search</span>
+              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#192633] text-white placeholder-text-secondary text-sm rounded-lg border border-border-dark focus:border-primary focus:ring-1 focus:ring-primary pl-10 pr-3 py-2.5 outline-none transition-all"
-                placeholder="Snippet ara..."
+                className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
+                placeholder="Search repository..."
               />
             </div>
             <button
               onClick={() => setShowForm(true)}
-              className="size-10 bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center justify-center transition-colors"
+              className="size-11 bg-primary hover:bg-primary-dark text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-primary/20 active:scale-90"
             >
-              <span className="material-symbols-rounded">add</span>
+              <span className="material-symbols-rounded font-black">add</span>
             </button>
           </div>
+          
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
             <button
               onClick={() => setFilterLang(null)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                !filterLang ? 'bg-primary text-white' : 'bg-border-dark text-text-secondary hover:text-white'
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                !filterLang ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
               }`}
             >
-              Tümü
+              All
             </button>
             {LANGUAGE_OPTIONS.slice(0, 5).map(lang => (
               <button
                 key={lang.value}
                 onClick={() => setFilterLang(filterLang === lang.value ? null : lang.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  filterLang === lang.value ? 'bg-primary text-white' : 'bg-border-dark text-text-secondary hover:text-white'
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                  filterLang === lang.value ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
                 }`}
               >
                 {lang.label}
@@ -295,43 +266,41 @@ export default function CodeSnippets() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
           {filteredSnippets.length === 0 ? (
-            <div className="text-center py-8">
-              <span className="material-symbols-rounded text-text-secondary text-4xl mb-2">code_off</span>
-              <p className="text-text-secondary text-sm">Snippet bulunamadı</p>
+            <div className="text-center py-12 px-4 opacity-30">
+              <span className="material-symbols-rounded text-6xl mb-4">folder_off</span>
+              <p className="text-sm font-black uppercase tracking-widest">No matching assets</p>
             </div>
           ) : (
             filteredSnippets.map(snippet => (
               <div
                 key={snippet.id}
-                onClick={() => { setActiveSnippetId(snippet.id); setRevealed(false) }}
-                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
-                  activeSnippetId === snippet.id || (!activeSnippetId && snippets[0]?.id === snippet.id)
-                    ? 'bg-[#1f2e3d] border border-primary/30 shadow-sm relative overflow-hidden'
-                    : 'hover:bg-border-dark/50'
+                onClick={() => setActiveSnippetId(snippet.id)}
+                className={`group flex items-center gap-4 px-4 py-4 rounded-[1.25rem] cursor-pointer transition-all border ${
+                  activeSnippet?.id === snippet.id
+                    ? 'bg-white/10 border-primary/40 shadow-xl'
+                    : 'hover:bg-white/5 border-transparent'
                 }`}
               >
-                {(activeSnippetId === snippet.id || (!activeSnippetId && snippets[0]?.id === snippet.id)) && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
-                )}
-                <span className={`material-symbols-outlined text-[20px] ${
-                  activeSnippetId === snippet.id || (!activeSnippetId && snippets[0]?.id === snippet.id)
-                    ? 'text-primary'
-                    : 'text-text-secondary'
+                <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${
+                  activeSnippet?.id === snippet.id
+                    ? 'bg-primary text-white'
+                    : 'bg-white/5 text-slate-500 group-hover:bg-white/10 group-hover:text-slate-300'
                 }`}>
-                  code
-                </span>
+                   <span className="material-symbols-rounded text-[20px] font-light">code_blocks</span>
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold truncate ${
-                    activeSnippetId === snippet.id || (!activeSnippetId && snippets[0]?.id === snippet.id)
+                  <p className={`text-sm font-bold truncate tracking-tight transition-colors ${
+                    activeSnippet?.id === snippet.id
                       ? 'text-white'
-                      : 'text-slate-300'
+                      : 'text-slate-400 group-hover:text-slate-200'
                   }`}>
                     {snippet.title}
                   </p>
-                  <p className="text-text-secondary text-xs truncate">{snippet.language}</p>
+                  <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-0.5">{snippet.language}</p>
                 </div>
+                {activeSnippet?.id === snippet.id && <div className="size-1.5 rounded-full bg-primary animate-pulse" />}
               </div>
             ))
           )}
@@ -340,106 +309,82 @@ export default function CodeSnippets() {
 
       {/* Editor */}
       {activeSnippet ? (
-        <div className="flex-1 flex flex-col bg-background-dark min-w-0 relative">
-          <div className="flex items-center justify-between px-8 py-4 border-b border-border-dark bg-surface-dark/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex-1 flex flex-col bg-transparent min-w-0 relative h-full">
+          <div className="flex items-center justify-between px-10 py-8 border-b border-white/5 bg-background-dark/30 backdrop-blur-md sticky top-0 z-30">
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-white tracking-tight">{activeSnippet.title}</h1>
-                <span className={`px-2 py-0.5 rounded bg-${getLangColor(activeSnippet.language)}-500/10 text-${getLangColor(activeSnippet.language)}-400 border border-${getLangColor(activeSnippet.language)}-500/20 text-[10px] font-bold uppercase tracking-wide`}>
-                  {activeSnippet.language}
+                <h1 className="text-3xl font-black text-white tracking-tight">{activeSnippet.title}</h1>
+                <span className={`px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-[10px] font-black uppercase tracking-widest`}>
+                   {activeSnippet.language}
                 </span>
               </div>
+              <p className="text-slate-500 text-xs font-medium">
+                Updated on {activeSnippet.created_at ? new Date(activeSnippet.created_at).toLocaleDateString() : 'Unknown'}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setEditingSnippet(activeSnippet)}
-                className="flex items-center justify-center size-9 rounded text-text-secondary hover:bg-border-dark hover:text-white transition-colors"
-              >
-                <span className="material-symbols-outlined text-[20px]">edit</span>
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex items-center justify-center size-9 rounded text-text-secondary hover:bg-red-500/10 hover:text-red-400 transition-colors"
-              >
-                <span className="material-symbols-outlined text-[20px]">delete</span>
-              </button>
-              <div className="h-6 w-px bg-border-dark mx-1" />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-2 py-1.5 bg-white/5 rounded-xl border border-white/5">
+                <button
+                  onClick={() => setEditingSnippet(activeSnippet)}
+                  className="flex items-center justify-center size-9 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                  title="Düzenle"
+                >
+                  <span className="material-symbols-rounded text-[20px]">edit_square</span>
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center justify-center size-9 rounded-lg text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-all active:scale-95"
+                  title="Sil"
+                >
+                  <span className="material-symbols-rounded text-[20px]">delete</span>
+                </button>
+              </div>
+              
               <button
                 onClick={handleCopy}
-                className={`flex items-center justify-center gap-2 px-4 h-9 rounded text-sm font-bold transition-all ${
-                  isCopied ? 'bg-green-500 text-white' : 'bg-white text-slate-900 hover:opacity-90'
+                className={`flex items-center justify-center gap-3 px-8 h-12 rounded-[1rem] text-sm font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${
+                  isCopied 
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+                    : 'bg-white text-slate-900 hover:bg-slate-100 shadow-white/5'
                 }`}
               >
-                <span className="material-symbols-outlined text-[18px]">{isCopied ? 'check' : 'content_copy'}</span>
-                {isCopied ? 'Kopyalandı!' : 'Kopyala'}
+                <span className="material-symbols-rounded text-[20px] font-black">{isCopied ? 'done_all' : 'content_copy'}</span>
+                {isCopied ? 'Copied' : 'Copy'}
               </button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-8 py-8 md:px-12 lg:px-20">
-            <div className="max-w-4xl mx-auto space-y-6">
+          <div className="flex-1 overflow-y-auto px-10 py-10">
+            <div className="max-w-5xl mx-auto space-y-10">
               {activeSnippet.description && (
-                <p className="text-slate-300 leading-relaxed">{activeSnippet.description}</p>
+                <div className="relative p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                   <p className="text-slate-400 leading-relaxed text-sm italic">"{activeSnippet.description}"</p>
+                </div>
               )}
 
-              <div className="rounded-xl overflow-hidden border border-border-dark bg-[#0d1117] shadow-sm">
-                <div className="flex items-center justify-between px-4 py-2 bg-[#161b22] border-b border-slate-800">
-                  <span className="text-xs font-mono text-slate-400">{activeSnippet.language}</span>
+              <div className="rounded-[2.5rem] overflow-hidden border border-white/10 bg-[#0d1117] shadow-2xl relative">
+                <div className="flex items-center justify-between px-6 py-4 bg-[#161b22] border-b border-white/5">
+                   <div className="flex gap-1.5">
+                      <div className="size-3 rounded-full bg-rose-500/50" />
+                      <div className="size-3 rounded-full bg-amber-500/50" />
+                      <div className="size-3 rounded-full bg-emerald-500/50" />
+                   </div>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{activeSnippet.language}</span>
                 </div>
-                <div className="p-4 overflow-x-auto">
-                  <pre className="font-mono text-sm leading-6">
-                    <code>{activeSnippet.code}</code>
+                <div className="p-8 overflow-x-auto selection:bg-primary/30">
+                  <pre className="font-mono text-sm leading-7">
+                    <code className="text-slate-300">{activeSnippet.code}</code>
                   </pre>
                 </div>
               </div>
-
-              {activeSnippet.env_vars && Object.keys(activeSnippet.env_vars).length > 0 && (
-                <>
-                  <p className="text-slate-300 leading-relaxed pt-2">
-                    Environment variables: <strong className="text-rose-500">Hassas veriler, paylaşmayın.</strong>
-                  </p>
-
-                  <div className="group relative rounded-xl border border-rose-900/30 bg-rose-900/10 p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-1.5 rounded bg-rose-900/40 text-rose-400">
-                        <span className="material-symbols-outlined text-[20px]">lock</span>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-white">Korunan Environment Variables</h3>
-                        <p className="text-xs text-text-secondary">Görmek için tıklayın</p>
-                      </div>
-                    </div>
-                    <div
-                      className="relative rounded-lg bg-[#0d1117] border border-slate-800 overflow-hidden min-h-[100px]"
-                      onClick={() => setRevealed(!revealed)}
-                    >
-                      {!revealed && (
-                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#0d1117]/80 backdrop-blur-sm cursor-pointer hover:bg-[#0d1117]/60 transition-all">
-                          <span className="material-symbols-outlined text-slate-400 text-3xl mb-2">visibility_off</span>
-                          <span className="text-sm font-medium text-slate-300">Görmek için tıkla</span>
-                        </div>
-                      )}
-                      <div className={`p-4 font-mono text-sm space-y-2 select-none ${revealed ? '' : 'filter blur-sm'}`}>
-                        {Object.entries(activeSnippet.env_vars as Record<string, string>).map(([key, value]) => (
-                          <div key={key} className="flex gap-4">
-                            <span className="text-sky-400">{key}</span>
-                            <span className="text-slate-400">=</span>
-                            <span className="text-green-300">{value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
           </div>
 
-          <div className="h-8 border-t border-border-dark bg-surface-dark flex items-center justify-between px-4 text-[11px] text-text-secondary select-none">
+          <div className="h-8 border-t border-white/5 bg-white/5 flex items-center justify-between px-4 text-[11px] text-slate-500 select-none">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">schedule</span>
-                {new Date(activeSnippet.created_at).toLocaleDateString('tr-TR')}
+                {activeSnippet.created_at ? new Date(activeSnippet.created_at).toLocaleDateString('tr-TR') : 'Unknown'}
               </span>
             </div>
             <div className="flex items-center gap-4">
@@ -449,8 +394,8 @@ export default function CodeSnippets() {
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center bg-background-dark">
-          <span className="material-symbols-rounded text-text-secondary text-6xl mb-4">code</span>
-          <p className="text-text-secondary text-lg mb-4">Henüz snippet yok</p>
+          <span className="material-symbols-rounded text-slate-600 text-6xl mb-4">code</span>
+          <p className="text-slate-500 text-lg mb-4">Henüz snippet yok</p>
           <button
             onClick={() => setShowForm(true)}
             className="px-6 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors flex items-center gap-2"

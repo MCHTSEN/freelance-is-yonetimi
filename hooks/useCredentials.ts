@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { Client, Credential, CredentialInsert } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
-import type { Credential, CredentialInsert, Client } from '../lib/supabase'
 
 export type CredentialType = 'web' | 'ssh' | 'db' | 'api'
 
@@ -80,7 +80,7 @@ export function useCredentials() {
   }, [credentials])
 
   const getCredentialsByType = useCallback((type: CredentialType) => {
-    return credentials.filter(c => c.type === type)
+    return credentials.filter(c => c.category === type)
   }, [credentials])
 
   return {

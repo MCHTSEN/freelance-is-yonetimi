@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { Client, Note, NoteInsert, Project } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
-import type { Note, NoteInsert, Client, Project } from '../lib/supabase'
 
 export type NoteType = 'meeting' | 'technical' | 'general'
 
@@ -27,7 +27,7 @@ export function useNotes() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setNotes(data as NoteWithRelations[] || [])
+      setNotes((data as any) as NoteWithRelations[] || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {

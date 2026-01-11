@@ -77,8 +77,8 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
   return (
     <div
       onClick={onEdit}
-      className={`group relative bg-surface-dark/40 backdrop-blur-sm border border-glass-border p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
-        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-surface-dark/60 hover:border-primary/30'
+      className={`group relative bg-[#111827] border border-white/10 p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
+        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-[#1f2937] hover:border-primary/50'
       }`}
     >
       {/* High-end glass shadow effect on hover */}
@@ -134,7 +134,9 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
         {upcomingMeeting ? (
           <div className="flex items-center gap-2 text-green-400 text-xs font-medium">
             <span className="material-symbols-rounded text-[16px]">schedule</span>
-            <span className="animate-pulse">Meeting soon</span>
+            <span className="animate-pulse">
+              Meeting at {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-slate-500 text-xs">
@@ -528,42 +530,77 @@ export default function SalesKanban() {
   return (
     <div className="flex flex-col w-full h-full bg-transparent overflow-hidden px-8 py-6">
       {/* Dynamic Header */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 shrink-0">
+      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-12 shrink-0">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-1">
             <span className="material-symbols-rounded text-primary">analytics</span>
             <span className="text-primary text-[10px] uppercase font-black tracking-[0.2em]">Management Console</span>
           </div>
           <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Project Pipeline</h1>
-          <p className="text-slate-500 text-base font-light max-w-lg">
+          <p className="text-slate-500 text-base font-light max-w-lg mt-2">
             Track your journey from potential leads to successful collaborations.
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <button
-              onClick={() => handleAddPipeline('lead')}
-              className="relative flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 group overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-              <span className="material-symbols-rounded font-bold">add_circle</span>
-              <span>Create New Deal</span>
-            </button>
+        <div className="flex flex-wrap items-center gap-6">
+          {/* Next Meeting Square Widget */}
+          {upcomingMeetings.length > 0 && (
+            <div className="size-32 bg-glass-bg border border-glass-border rounded-3xl p-4 flex flex-col justify-between relative group hover:border-green-500/30 transition-all shadow-glass overflow-hidden">
+               <div className="absolute top-0 right-0 p-2 opacity-20">
+                  <span className="material-symbols-rounded text-green-400">schedule</span>
+               </div>
+               <div className="relative z-10">
+                  <p className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">Next Up</p>
+                  <p className="text-white text-sm font-bold truncate">{upcomingMeetings[0].client_name}</p>
+               </div>
+               <div className="relative z-10 mt-auto">
+                  <p className="text-slate-300 text-base font-black">
+                    {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    {new Date(upcomingMeetings[0].scheduled_at).toDateString() === new Date().toDateString() ? 'Today' : 'Upcoming'}
+                  </p>
+               </div>
+            </div>
+          )}
+
+          {/* Active Deals / Stats Square Widget */}
+          <div className="size-32 bg-glass-bg border border-glass-border rounded-3xl p-4 flex flex-col justify-between relative group hover:border-primary/30 transition-all shadow-glass">
+             <div className="absolute top-0 right-0 p-2 opacity-20">
+                <span className="material-symbols-rounded text-primary">rocket_launch</span>
+             </div>
+             <div>
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Active</p>
+                <p className="text-white text-3xl font-black">{items.length}</p>
+             </div>
+             <p className="text-[10px] text-slate-500 font-medium mt-auto">Live Deals</p>
           </div>
-          
-          <div className="flex bg-surface-dark/40 backdrop-blur-md rounded-2xl border border-glass-border p-1">
-            <label className="flex items-center px-4 py-2 gap-2 cursor-text group">
-              <span className="material-symbols-rounded text-slate-500 group-focus-within:text-primary transition-colors">search</span>
-              <input
-                type="text"
-                placeholder="Find anything..."
-                className="bg-transparent border-none focus:ring-0 text-sm text-white placeholder-slate-500 w-40 focus:w-60 transition-all duration-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </label>
+
+          <div className="flex flex-col gap-4">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              <button
+                onClick={() => handleAddPipeline('lead')}
+                className="relative flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 group overflow-hidden"
+              >
+                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                <span className="material-symbols-rounded font-bold">add_circle</span>
+                <span>Create New Deal</span>
+              </button>
+            </div>
+            
+            <div className="flex bg-surface-dark/40 backdrop-blur-md rounded-2xl border border-glass-border p-1">
+              <label className="flex items-center px-4 py-2 gap-2 cursor-text group">
+                <span className="material-symbols-rounded text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+                <input
+                  type="text"
+                  placeholder="Find anything..."
+                  className="bg-transparent border-none focus:ring-0 text-sm text-white placeholder-slate-500 w-40 focus:w-60 transition-all duration-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </label>
+            </div>
           </div>
         </div>
       </header>

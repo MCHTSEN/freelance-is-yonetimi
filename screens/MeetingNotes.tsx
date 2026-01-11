@@ -1,15 +1,15 @@
-import { useState, useMemo } from 'react'
-import { useNotes, NoteWithRelations } from '../hooks/useNotes'
-import { useClients } from '../hooks/useClients'
-import RichTextEditor from '../components/RichTextEditor'
+import { useMemo, useState } from 'react'
 import Modal from '../components/Modal'
+import RichTextEditor from '../components/RichTextEditor'
+import { useClients } from '../hooks/useClients'
+import { NoteWithRelations, useNotes } from '../hooks/useNotes'
 
 type NoteTypeFilter = 'all' | 'meeting' | 'technical' | 'general'
 
 const NOTE_TYPES = [
   { value: 'meeting', label: 'Toplantı', icon: 'groups', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-  { value: 'technical', label: 'Teknik', icon: 'code', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
-  { value: 'general', label: 'Genel', icon: 'description', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+  { value: 'technical', label: 'Teknik', icon: 'code_blocks', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+  { value: 'general', label: 'Genel', icon: 'description', color: 'bg-slate-500/20 text-slate-300 border-slate-500/30' },
 ]
 
 export default function MeetingNotes() {
@@ -124,330 +124,345 @@ export default function MeetingNotes() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background-dark">
-        <div className="flex flex-col items-center gap-4">
-          <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
-          <p className="text-text-secondary">Notlar yükleniyor...</p>
-        </div>
+      <div className="flex w-full h-full items-center justify-center">
+        <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-background-dark overflow-hidden">
-      {/* Header */}
-      <header className="h-16 flex items-center justify-between border-b border-border-dark px-6 shrink-0 bg-surface-dark">
-        <div className="flex flex-1 max-w-lg">
-          <div className="relative w-full">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-text-secondary">search</span>
-            </div>
-            <input
-              className="block w-full pl-10 pr-3 py-2 rounded-lg bg-background-dark border border-border-dark text-white placeholder-text-secondary focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-sm"
-              placeholder="Not veya müşteri ara..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="flex w-full h-full overflow-hidden">
+      {/* Glassmorphic Sidebar */}
+      <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
+        <div className="p-6 space-y-6">
+          <div className="flex flex-col gap-1 mb-2">
+            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Knowledge Base</span>
+            <h2 className="text-white text-2xl font-black tracking-tight">Meeting Notes</h2>
           </div>
-        </div>
-        <button
-          onClick={handleNewNote}
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-bold rounded-lg shadow-lg shadow-blue-500/20 transition-all ml-4"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Yeni Not</span>
-        </button>
-      </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Notes List */}
-        <div className="w-[380px] border-r border-border-dark flex flex-col shrink-0">
-          {/* Filters */}
-          <div className="p-4 border-b border-border-dark">
-            <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
+              <input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
+                placeholder="Search notes..."
+              />
+            </div>
+            <button
+              onClick={handleNewNote}
+              className="size-11 bg-primary hover:bg-primary-dark text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-primary/20 active:scale-90"
+            >
+              <span className="material-symbols-rounded font-black">add</span>
+            </button>
+          </div>
+          
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <button
+              onClick={() => setTypeFilter('all')}
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
+                typeFilter === 'all' ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
+              }`}
+            >
+              All
+            </button>
+            {NOTE_TYPES.map(type => (
               <button
-                onClick={() => setTypeFilter('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  typeFilter === 'all'
-                    ? 'bg-primary text-white'
-                    : 'bg-surface-dark text-text-secondary hover:text-white border border-border-dark'
+                key={type.value}
+                onClick={() => setTypeFilter(type.value as NoteTypeFilter)}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border flex items-center gap-2 ${
+                  typeFilter === type.value ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
                 }`}
               >
-                Tümü
+                <span className="material-symbols-rounded text-[14px]">{type.icon}</span>
+                {type.label}
               </button>
-              {NOTE_TYPES.map(type => (
-                <button
-                  key={type.value}
-                  onClick={() => setTypeFilter(type.value as NoteTypeFilter)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                    typeFilter === type.value
-                      ? 'bg-primary text-white'
-                      : 'bg-surface-dark text-text-secondary hover:text-white border border-border-dark'
-                  }`}
-                >
-                  <span className="material-symbols-rounded text-sm">{type.icon}</span>
-                  {type.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="flex-1 overflow-y-auto">
-            {filteredNotes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-text-secondary">
-                <span className="material-symbols-rounded text-4xl mb-2">description</span>
-                <p>Henüz not yok</p>
-                <button
-                  onClick={handleNewNote}
-                  className="mt-3 text-primary hover:underline text-sm"
-                >
-                  İlk notunuzu oluşturun
-                </button>
-              </div>
-            ) : (
-              filteredNotes.map(note => {
-                const typeConfig = getTypeConfig(note.type)
-                const isSelected = selectedNote?.id === note.id
-                return (
-                  <div
-                    key={note.id}
-                    onClick={() => handleSelectNote(note)}
-                    className={`p-4 border-b border-border-dark cursor-pointer transition-colors ${
-                      isSelected
-                        ? 'bg-primary/10 border-l-2 border-l-primary'
-                        : 'hover:bg-surface-dark border-l-2 border-l-transparent'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <div className={`px-2 py-0.5 rounded text-xs font-medium ${typeConfig.color} border`}>
-                        {typeConfig.label}
-                      </div>
-                      <span className="text-xs text-text-secondary">
-                        {formatDate(note.created_at)}
-                      </span>
-                    </div>
-                    <h3 className="text-white font-semibold mb-1 line-clamp-1">
-                      {note.title || 'Adsız Not'}
-                    </h3>
-                    {note.clients && (
-                      <p className="text-text-secondary text-xs mb-2">
-                        {note.clients.first_name} {note.clients.last_name}
-                        {note.clients.company && ` • ${note.clients.company}`}
-                      </p>
-                    )}
-                    {note.content && (
-                      <p
-                        className="text-text-secondary text-sm line-clamp-2"
-                        dangerouslySetInnerHTML={{
-                          __html: note.content.replace(/<[^>]*>/g, ' ').substring(0, 100)
-                        }}
-                      />
-                    )}
-                  </div>
-                )
-              })
-            )}
+            ))}
           </div>
         </div>
 
-        {/* Editor Panel */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {selectedNote ? (
-            <>
-              {/* Note Header */}
-              <div className="p-6 border-b border-border-dark bg-surface-dark">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={noteTitle}
-                      onChange={(e) => setNoteTitle(e.target.value)}
-                      onBlur={handleUpdateNote}
-                      className="w-full bg-transparent text-white text-2xl font-bold border-none focus:outline-none focus:ring-0 placeholder-text-secondary"
-                      placeholder="Not başlığı..."
-                    />
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {filteredNotes.length === 0 ? (
+            <div className="text-center py-12 px-4 opacity-30">
+              <span className="material-symbols-rounded text-6xl mb-4">description_off</span>
+              <p className="text-sm font-black uppercase tracking-widest">No assets found</p>
+            </div>
+          ) : (
+            filteredNotes.map(note => {
+              const typeConfig = getTypeConfig(note.type)
+              const isSelected = selectedNote?.id === note.id
+              return (
+                <div
+                  key={note.id}
+                  onClick={() => handleSelectNote(note)}
+                  className={`group flex flex-col gap-3 px-5 py-5 rounded-[1.5rem] cursor-pointer transition-all border ${
+                    isSelected
+                      ? 'bg-white/10 border-primary/40 shadow-xl'
+                      : 'hover:bg-white/5 border-transparent'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${typeConfig.color}`}>
+                      {typeConfig.label}
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-bold">
+                      {formatDate(note.created_at)}
+                    </span>
                   </div>
+                  
+                  <div>
+                    <h3 className={`text-sm font-bold truncate tracking-tight transition-colors ${
+                      isSelected ? 'text-white' : 'text-slate-300 group-hover:text-white'
+                    }`}>
+                      {note.title || 'Untitled Note'}
+                    </h3>
+                    {note.clients ? (
+                      <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-1 opacity-80">
+                        {note.clients.first_name} {note.clients.last_name}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">General</p>
+                    )}
+                  </div>
+                  
+                  {note.content && (
+                    <div
+                      className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: note.content.replace(/<[^>]*>/g, ' ').substring(0, 100)
+                      }}
+                    />
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
+      </aside>
+
+      {/* Editor Panel */}
+      <div className="flex-1 flex flex-col min-w-0 relative h-full">
+        {selectedNote ? (
+          <>
+            {/* Note Header */}
+            <div className="flex items-center justify-between px-10 py-8 border-b border-white/5 bg-background-dark/30 backdrop-blur-md sticky top-0 z-30">
+              <div className="flex-1 mr-8">
+                <input
+                  type="text"
+                  value={noteTitle}
+                  onChange={(e) => setNoteTitle(e.target.value)}
+                  onBlur={handleUpdateNote}
+                  className="w-full bg-transparent text-3xl font-black text-white tracking-tight border-none focus:outline-none focus:ring-0 placeholder-slate-700"
+                  placeholder="Note title..."
+                />
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-2 py-1.5 bg-white/5 rounded-xl border border-white/5">
                   <button
                     onClick={handleDeleteNote}
-                    className="p-2 text-text-secondary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                    title="Notu sil"
+                    className="flex items-center justify-center size-9 rounded-lg text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-all active:scale-95"
+                    title="Delete Note"
                   >
-                    <span className="material-symbols-rounded">delete</span>
+                    <span className="material-symbols-rounded text-[20px]">delete</span>
                   </button>
                 </div>
+                
+                <button
+                  onClick={handleUpdateNote}
+                  className="flex items-center justify-center gap-3 px-8 h-12 bg-primary hover:bg-primary-dark text-white rounded-[1rem] text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95"
+                >
+                  <span className="material-symbols-rounded text-[20px] font-black">save</span>
+                  Save Note
+                </button>
+              </div>
+            </div>
 
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* Type Chips */}
-                  <div className="flex gap-2">
-                    {NOTE_TYPES.map(type => (
-                      <button
-                        key={type.value}
-                        onClick={() => {
-                          setNoteType(type.value as 'meeting' | 'technical' | 'general')
-                          setTimeout(handleUpdateNote, 0)
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 border ${
-                          noteType === type.value
-                            ? type.color
-                            : 'bg-surface-dark text-text-secondary border-border-dark hover:text-white'
-                        }`}
-                      >
-                        <span className="material-symbols-rounded text-sm">{type.icon}</span>
-                        {type.label}
-                      </button>
-                    ))}
+            <div className="flex-1 overflow-y-auto px-10 py-10">
+              <div className="max-w-5xl mx-auto space-y-8">
+                <div className="flex items-center gap-6 p-6 bg-white/[0.02] border border-white/5 rounded-[2rem]">
+                  <div className="flex-1 space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                       <span className="material-symbols-rounded text-sm">settings</span> Metadata
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {/* Note Type Select */}
+                      <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/5">
+                        <span className="material-symbols-rounded text-slate-500 text-[18px]">category</span>
+                        <select
+                          value={noteType}
+                          onChange={(e) => {
+                            setNoteType(e.target.value as 'meeting' | 'technical' | 'general')
+                            setTimeout(handleUpdateNote, 0)
+                          }}
+                          className="bg-transparent text-xs font-bold text-slate-300 focus:outline-none appearance-none pr-4"
+                        >
+                          {NOTE_TYPES.map(t => (
+                            <option key={t.value} value={t.value} className="bg-slate-900">{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Client Select */}
+                      <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/5">
+                        <span className="material-symbols-rounded text-slate-500 text-[18px]">person</span>
+                        <select
+                          value={selectedClientId}
+                          onChange={(e) => {
+                            setSelectedClientId(e.target.value)
+                            setTimeout(handleUpdateNote, 0)
+                          }}
+                          className="bg-transparent text-xs font-bold text-slate-300 focus:outline-none appearance-none pr-4"
+                        >
+                          <option value="" className="bg-slate-900">Select Client</option>
+                          {clients.map(client => (
+                            <option key={client.id} value={client.id} className="bg-slate-900">
+                              {client.first_name} {client.last_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Date Picker */}
+                      <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl border border-white/5">
+                        <span className="material-symbols-rounded text-slate-500 text-[18px]">event</span>
+                        <input
+                          type="date"
+                          value={meetingDate}
+                          onChange={(e) => {
+                            setMeetingDate(e.target.value)
+                            setTimeout(handleUpdateNote, 0)
+                          }}
+                          className="bg-transparent text-xs font-bold text-slate-300 focus:outline-none [color-scheme:dark]"
+                        />
+                      </div>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="h-6 w-px bg-border-dark" />
-
-                  {/* Client Select */}
-                  <select
-                    value={selectedClientId}
-                    onChange={(e) => {
-                      setSelectedClientId(e.target.value)
-                      setTimeout(handleUpdateNote, 0)
-                    }}
-                    className="px-3 py-1.5 bg-background-dark border border-border-dark rounded-lg text-sm text-white focus:outline-none focus:border-primary"
-                  >
-                    <option value="">Müşteri seçin...</option>
-                    {clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.first_name} {client.last_name}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Date */}
-                  <input
-                    type="date"
-                    value={meetingDate}
-                    onChange={(e) => {
-                      setMeetingDate(e.target.value)
-                      setTimeout(handleUpdateNote, 0)
-                    }}
-                    className="px-3 py-1.5 bg-background-dark border border-border-dark rounded-lg text-sm text-white focus:outline-none focus:border-primary"
+                <div className="relative">
+                  <RichTextEditor
+                    content={noteContent}
+                    onChange={(content) => setNoteContent(content)}
+                    placeholder="Start documenting your session..."
                   />
                 </div>
               </div>
-
-              {/* Editor */}
-              <div className="flex-1 overflow-y-auto p-6">
-                <RichTextEditor
-                  content={noteContent}
-                  onChange={(content) => {
-                    setNoteContent(content)
-                  }}
-                  placeholder="Notlarınızı buraya yazın..."
-                />
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={handleUpdateNote}
-                    className="px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    <span className="material-symbols-rounded text-lg">save</span>
-                    Kaydet
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-text-secondary">
-              <span className="material-symbols-rounded text-6xl mb-4">edit_note</span>
-              <h3 className="text-xl font-semibold text-white mb-2">Not Seçin</h3>
-              <p className="mb-4">Düzenlemek için sol taraftan bir not seçin</p>
-              <button
-                onClick={handleNewNote}
-                className="px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
-              >
-                Yeni Not Oluştur
-              </button>
             </div>
-          )}
-        </div>
+
+            <div className="h-8 border-t border-white/5 bg-white/5 flex items-center justify-between px-4 text-[11px] text-slate-500 select-none">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1">
+                  <span className="material-symbols-outlined text-[14px]">history</span>
+                  Last synced: {new Date().toLocaleTimeString()}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+                <span>Sync Active</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center bg-background-dark/30">
+            <div className="relative mb-8">
+               <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
+               <span className="material-symbols-rounded text-slate-600 text-[120px] relative z-10">edit_note</span>
+            </div>
+            <h3 className="text-3xl font-black text-white mb-2 tracking-tight">Select an Asset</h3>
+            <p className="text-slate-500 mb-8 max-w-sm text-center font-medium">Capture ideas, meeting minutes, or technical documentation in your premium workspace.</p>
+            <button
+              onClick={handleNewNote}
+              className="px-10 py-4 bg-white text-slate-900 hover:bg-slate-100 font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-white/5 active:scale-95"
+            >
+              Initialize New Note
+            </button>
+          </div>
+        )}
       </div>
 
       {/* New Note Modal */}
       <Modal
         isOpen={showNewNoteModal}
         onClose={() => setShowNewNoteModal(false)}
-        title="Yeni Not"
+        title="Initialize New Asset"
       >
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Başlık</label>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Asset Title</label>
             <input
               type="text"
               value={noteTitle}
               onChange={(e) => setNoteTitle(e.target.value)}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary"
-              placeholder="Not başlığı..."
+              className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-bold"
+              placeholder="e.g. System Architecture Update"
             />
           </div>
 
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Not Türü</label>
-            <div className="flex gap-2">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Category</label>
+            <div className="grid grid-cols-3 gap-3">
               {NOTE_TYPES.map(type => (
                 <button
                   key={type.value}
                   type="button"
                   onClick={() => setNoteType(type.value as 'meeting' | 'technical' | 'general')}
-                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 border ${
+                  className={`px-3 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex flex-col items-center gap-3 border ${
                     noteType === type.value
-                      ? type.color
-                      : 'bg-surface-dark text-text-secondary border-border-dark hover:text-white'
+                      ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
+                      : 'bg-white/5 text-slate-500 border-white/5 hover:text-white'
                   }`}
                 >
-                  <span className="material-symbols-rounded text-lg">{type.icon}</span>
+                  <span className="material-symbols-rounded text-2xl">{type.icon}</span>
                   {type.label}
                 </button>
               ))}
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Müşteri (Opsiyonel)</label>
-            <select
-              value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
-            >
-              <option value="">Müşteri seçin...</option>
-              {clients.map(client => (
-                <option key={client.id} value={client.id}>
-                  {client.first_name} {client.last_name} {client.company && `(${client.company})`}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Client Connection</label>
+                <select
+                  value={selectedClientId}
+                  onChange={(e) => setSelectedClientId(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
+                >
+                  <option value="" className="bg-slate-900">None</option>
+                  {clients.map(client => (
+                    <option key={client.id} value={client.id} className="bg-slate-900">
+                      {client.first_name} {client.last_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Timestamp</label>
+                <input
+                  type="date"
+                  value={meetingDate}
+                  onChange={(e) => setMeetingDate(e.target.value)}
+                  className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold [color-scheme:dark]"
+                />
+              </div>
           </div>
 
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Tarih</label>
-            <input
-              type="date"
-              value={meetingDate}
-              onChange={(e) => setMeetingDate(e.target.value)}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-4">
             <button
               type="button"
               onClick={() => setShowNewNoteModal(false)}
-              className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+              className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-widest rounded-2xl transition-all"
             >
-              İptal
+              Discard
             </button>
             <button
               type="button"
               onClick={handleSaveNewNote}
-              className="flex-1 py-3 bg-primary hover:bg-primary/90 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-primary hover:bg-primary-dark text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
             >
-              <span className="material-symbols-rounded">add</span>
-              Oluştur
+              <span className="material-symbols-rounded font-black">add</span>
+              Initialize Note
             </button>
           </div>
         </div>

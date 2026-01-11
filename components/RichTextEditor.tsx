@@ -1,7 +1,7 @@
-import { useEditor, EditorContent } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
-import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import Placeholder from '@tiptap/extension-placeholder'
+import { EditorContent, useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 
 const lowlight = createLowlight(common)
@@ -27,14 +27,17 @@ const MenuButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`p-2 rounded-lg transition-colors ${
+    className={`group relative flex items-center justify-center size-9 rounded-xl transition-all duration-300 ${
       isActive
-        ? 'bg-primary/20 text-primary'
-        : 'text-text-secondary hover:bg-surface-dark hover:text-white'
+        ? 'bg-primary text-white shadow-lg shadow-primary/30 scale-105'
+        : 'text-slate-500 hover:bg-white/10 hover:text-white'
     }`}
     title={title}
   >
-    <span className="material-symbols-rounded text-lg">{icon}</span>
+    <span className="material-symbols-rounded text-[20px]">{icon}</span>
+    {isActive && (
+       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white shadow-[0_0_8px_white]" />
+    )}
   </button>
 )
 
@@ -63,7 +66,7 @@ export default function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert prose-sm max-w-none focus:outline-none min-h-[200px] px-4 py-3',
+        class: 'prose prose-invert prose-sm max-w-none focus:outline-none min-h-[300px] px-8 py-6 selection:bg-primary/30',
       },
     },
   })
@@ -73,10 +76,10 @@ export default function RichTextEditor({
   }
 
   return (
-    <div className="border border-border-dark rounded-xl overflow-hidden bg-background-dark">
-      {/* Toolbar */}
+    <div className="border border-white/5 rounded-3xl overflow-hidden bg-white/[0.02] backdrop-blur-3xl shadow-2xl">
+      {/* Premium Toolbar */}
       {editable && (
-        <div className="flex items-center gap-1 p-2 border-b border-border-dark bg-surface-dark">
+        <div className="flex items-center gap-1.5 p-3 border-b border-white/5 bg-white/5 backdrop-blur-xl">
           <MenuButton
             onClick={() => editor.chain().focus().toggleBold().run()}
             isActive={editor.isActive('bold')}
@@ -96,7 +99,7 @@ export default function RichTextEditor({
             title="Üstü çizili"
           />
 
-          <div className="w-px h-6 bg-border-dark mx-1" />
+          <div className="w-px h-6 bg-white/10 mx-2" />
 
           <MenuButton
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
@@ -117,22 +120,22 @@ export default function RichTextEditor({
             title="Numaralı liste"
           />
 
-          <div className="w-px h-6 bg-border-dark mx-1" />
+          <div className="w-px h-6 bg-white/10 mx-2" />
 
           <MenuButton
             onClick={() => editor.chain().focus().toggleCodeBlock().run()}
             isActive={editor.isActive('codeBlock')}
-            icon="code"
+            icon="code_blocks"
             title="Kod bloğu"
           />
           <MenuButton
             onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            isActive={editor.isActive('blockquote')}
+            isActive={editor.isActive('format_quote')}
             icon="format_quote"
             title="Alıntı"
           />
 
-          <div className="w-px h-6 bg-border-dark mx-1" />
+          <div className="w-px h-6 bg-white/10 mx-2" />
 
           <MenuButton
             onClick={() => editor.chain().focus().undo().run()}
@@ -154,50 +157,59 @@ export default function RichTextEditor({
         .ProseMirror p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
-          color: #6b8ba3;
+          color: #475569;
           pointer-events: none;
           height: 0;
+          font-style: italic;
         }
         .ProseMirror {
-          min-height: 200px;
+          min-height: 300px;
+          outline: none !important;
         }
         .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 {
           color: white;
-          font-weight: 700;
+          font-weight: 900;
           margin-top: 1.5em;
           margin-bottom: 0.5em;
+          letter-spacing: -0.025em;
         }
         .ProseMirror h2 {
-          font-size: 1.25rem;
+          font-size: 1.5rem;
         }
         .ProseMirror p {
-          color: #c4d6e8;
-          margin-bottom: 0.75em;
+          color: #94a3b8;
+          margin-bottom: 1em;
+          line-height: 1.8;
+          font-size: 0.95rem;
         }
         .ProseMirror ul, .ProseMirror ol {
-          padding-left: 1.5em;
-          margin-bottom: 0.75em;
+          padding-left: 2em;
+          margin-bottom: 1em;
+          color: #94a3b8;
         }
         .ProseMirror li {
-          color: #c4d6e8;
+          margin-bottom: 0.5em;
         }
         .ProseMirror blockquote {
-          border-left: 3px solid #3b82f6;
-          padding-left: 1em;
-          margin-left: 0;
-          color: #92adc9;
+          border-left: 4px solid #3b82f6;
+          padding: 1rem 1.5rem;
+          margin: 1.5rem 0;
+          background: rgba(59, 130, 246, 0.05);
+          border-radius: 0 1rem 1rem 0;
+          color: #cbd5e1;
           font-style: italic;
         }
         .ProseMirror pre {
-          background: #0d141c;
-          border-radius: 0.5rem;
-          padding: 1rem;
-          margin-bottom: 0.75em;
+          background: #0d1117;
+          border: 1px solid rgba(255,255,255,0.05);
+          border-radius: 1.5rem;
+          padding: 1.5rem;
+          margin: 1.5rem 0;
           overflow-x: auto;
         }
         .ProseMirror code {
           font-family: 'Fira Code', monospace;
-          font-size: 0.875rem;
+          font-size: 0.85rem;
           color: #e2e8f0;
         }
         .ProseMirror pre code {
@@ -206,42 +218,22 @@ export default function RichTextEditor({
           padding: 0;
         }
         .ProseMirror :not(pre) > code {
-          background: #233648;
-          padding: 0.2em 0.4em;
-          border-radius: 0.25rem;
-          color: #f472b6;
+          background: rgba(255,255,255,0.05);
+          padding: 0.3em 0.6em;
+          border-radius: 0.5rem;
+          color: #c084fc;
+          font-weight: 500;
         }
         .ProseMirror strong {
           color: white;
-          font-weight: 700;
-        }
-        .ProseMirror em {
-          color: #c4d6e8;
-        }
-        .ProseMirror s {
-          color: #6b8ba3;
+          font-weight: 900;
         }
         /* Syntax highlighting */
-        .hljs-comment,
-        .hljs-quote {
-          color: #6b8ba3;
-        }
-        .hljs-keyword,
-        .hljs-selector-tag {
-          color: #c678dd;
-        }
-        .hljs-string,
-        .hljs-attr {
-          color: #98c379;
-        }
-        .hljs-number,
-        .hljs-literal {
-          color: #d19a66;
-        }
-        .hljs-name,
-        .hljs-title {
-          color: #61afef;
-        }
+        .hljs-comment { color: #475569; }
+        .hljs-keyword { color: #c084fc; }
+        .hljs-string { color: #4ade80; }
+        .hljs-number { color: #fbbf24; }
+        .hljs-title { color: #60a5fa; }
       `}</style>
     </div>
   )

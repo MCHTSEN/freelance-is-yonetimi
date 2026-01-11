@@ -1,8 +1,9 @@
-import { useState, useMemo } from 'react'
-import { useInvoices, type InvoiceWithDetails, PAYMENT_METHODS, type PaymentMethod } from '../hooks/useInvoices'
-import { useTimeTracking, formatDuration, formatDurationDetailed } from '../hooks/useTimeTracking'
-import { useClients } from '../hooks/useClients'
+import { useMemo, useState } from 'react'
+import FormattedPriceInput from '../components/FormattedPriceInput'
 import Modal from '../components/Modal'
+import { useClients } from '../hooks/useClients'
+import { PAYMENT_METHODS, useInvoices, type InvoiceWithDetails, type PaymentMethod } from '../hooks/useInvoices'
+import { formatDurationDetailed, useTimeTracking } from '../hooks/useTimeTracking'
 
 type FilterType = 'all' | 'overdue' | 'partial' | 'unpaid' | 'paid'
 
@@ -80,15 +81,12 @@ function InvoiceForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-text-secondary mb-2">Tutar (₺) *</label>
-          <input
-            type="number"
+          <FormattedPriceInput
             value={formData.amount}
-            onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+            onChange={(val) => setFormData(prev => ({ ...prev, amount: val }))}
             className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-            placeholder="10000"
+            placeholder="10.000"
             required
-            min="0"
-            step="0.01"
           />
         </div>
         <div>
@@ -215,16 +213,12 @@ function PaymentForm({
 
       <div>
         <label className="block text-sm text-text-secondary mb-2">Ödeme Tutarı (₺) *</label>
-        <input
-          type="number"
+        <FormattedPriceInput
           value={formData.amount}
-          onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+          onChange={(val) => setFormData(prev => ({ ...prev, amount: val }))}
           className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
           placeholder="0"
           required
-          min="0.01"
-          max={invoice.remaining}
-          step="0.01"
         />
       </div>
 
@@ -356,148 +350,134 @@ export default function FinanceDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-background-dark" onClick={() => setActionMenuOpen(null)}>
-      <div className="px-6 py-8 md:px-10 flex flex-wrap items-end justify-between gap-4 shrink-0">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-transparent" onClick={() => setActionMenuOpen(null)}>
+      <header className="px-10 py-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 shrink-0 relative z-20">
         <div className="flex flex-col gap-1">
-          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white">Finansal Takip</h2>
-          <p className="text-text-secondary text-sm md:text-base">Nakit akışınızı yönetin ve ödenmemiş faturaları takip edin.</p>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="material-symbols-rounded text-primary">payments</span>
+            <span className="text-secondary text-[10px] uppercase font-black tracking-[0.2em] opacity-70">Financial Console</span>
+          </div>
+          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Revenue Control</h1>
+          <p className="text-slate-500 text-base font-light max-w-lg mt-2">
+            Automate your billing cycle and monitor your financial growth.
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowInvoiceForm(true)}
-            className="flex items-center gap-2 h-10 px-5 bg-primary hover:bg-blue-600 text-white text-sm font-bold rounded-lg transition-all shadow-lg shadow-blue-500/20 active:scale-95 transform"
-          >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            <span>Yeni Fatura</span>
-          </button>
+
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <button
+              onClick={() => setShowInvoiceForm(true)}
+              className="relative flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 group overflow-hidden"
+            >
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              <span className="material-symbols-rounded font-bold">add_notes</span>
+              <span>Create New Invoice</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
       <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10">
         <div className="max-w-7xl mx-auto flex flex-col gap-8">
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="flex flex-col gap-3 p-5 rounded-xl border border-border-dark bg-surface-dark shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-text-secondary text-sm font-medium">Toplam Alacak</p>
-                <span className="material-symbols-outlined text-emerald-500 bg-emerald-500/10 p-1 rounded">trending_up</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-white">₺{stats.totalReceivable.toLocaleString()}</p>
-                <span className="text-text-secondary text-xs">{stats.pendingCount} fatura</span>
-              </div>
+          {/* Visual Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+            {/* Main Receivable Widget */}
+            <div className="col-span-1 lg:col-span-1 h-36 bg-glass-bg border border-glass-border rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-emerald-500/30 transition-all shadow-glass overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <span className="material-symbols-rounded text-7xl text-emerald-500">account_balance_wallet</span>
+               </div>
+               <div>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Total Receivable</p>
+                  <p className="text-white text-4xl font-black tracking-tighter">₺{stats.totalReceivable.toLocaleString()}</p>
+               </div>
+               <p className="text-[10px] text-slate-500 font-medium">{stats.pendingCount} active invoices</p>
             </div>
 
-            <div className="flex flex-col gap-3 p-5 rounded-xl border border-red-900/30 bg-red-900/10 shadow-sm relative overflow-hidden">
-              <div className="absolute right-0 top-0 p-4 opacity-10">
-                <span className="material-symbols-outlined text-6xl text-red-500">warning</span>
-              </div>
-              <div className="flex items-center justify-between z-10">
-                <p className="text-red-400 text-sm font-medium">Vadesi Geçmiş</p>
-                <span className="material-symbols-outlined text-red-500">error</span>
-              </div>
-              <div className="flex items-baseline gap-2 z-10">
-                <p className="text-2xl font-bold text-red-400">₺{stats.totalOverdue.toLocaleString()}</p>
-                {stats.overdueCount > 0 && (
-                  <span className="text-red-400 text-xs font-medium">Acil!</span>
-                )}
-              </div>
+            {/* Overdue Widget */}
+            <div className="size-full h-36 bg-glass-bg border border-glass-border rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-rose-500/30 transition-all shadow-glass overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <span className="material-symbols-rounded text-7xl text-rose-500">priority_high</span>
+               </div>
+               <div>
+                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Overdue</p>
+                  <p className="text-white text-3xl font-black tracking-tighter text-rose-400">₺{stats.totalOverdue.toLocaleString()}</p>
+               </div>
+               <p className="text-[10px] text-slate-500 font-medium">Immediate attention needed</p>
             </div>
 
-            <div className="flex flex-col gap-3 p-5 rounded-xl border border-border-dark bg-surface-dark shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-text-secondary text-sm font-medium">Bu Hafta Gelecek</p>
-                <span className="material-symbols-outlined text-primary bg-primary/10 p-1 rounded">calendar_today</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-white">₺{stats.dueThisWeek.toLocaleString()}</p>
-              </div>
+            {/* This Week Widget */}
+            <div className="size-full h-36 bg-glass-bg border border-glass-border rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/30 transition-all shadow-glass overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <span className="material-symbols-rounded text-7xl text-primary">event_upcoming</span>
+               </div>
+               <div>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Coming This Week</p>
+                  <p className="text-white text-3xl font-black tracking-tighter">₺{stats.dueThisWeek.toLocaleString()}</p>
+               </div>
+               <p className="text-[10px] text-slate-500 font-medium">Estimated cash flow</p>
             </div>
 
-            {/* Timer Widget */}
-            <div className="flex flex-col gap-3 p-5 rounded-xl border border-border-dark bg-surface-dark shadow-sm">
-              <div className="flex items-center justify-between">
-                <p className="text-text-secondary text-sm font-medium">Zaman Takibi</p>
-                <span className={`material-symbols-outlined ${activeEntry ? 'text-green-500 animate-pulse' : 'text-text-secondary'} bg-green-500/10 p-1 rounded`}>
-                  timer
-                </span>
-              </div>
-              {activeEntry ? (
-                <div className="flex flex-col gap-2">
-                  <p className="text-2xl font-bold text-green-400 font-mono">
-                    {formatDurationDetailed(elapsedSeconds)}
-                  </p>
-                  {activeEntry.clients && (
-                    <p className="text-xs text-text-secondary truncate">
-                      {activeEntry.clients.first_name} {activeEntry.clients.last_name}
-                    </p>
-                  )}
-                  <button
-                    onClick={stopTimer}
-                    className="flex items-center justify-center gap-2 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">stop</span>
-                    Durdur
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  <select
-                    value={timerClientId}
-                    onChange={(e) => setTimerClientId(e.target.value)}
-                    className="w-full px-3 py-2 bg-background-dark border border-border-dark rounded-lg text-white text-sm focus:outline-none focus:border-primary transition-colors"
-                  >
-                    <option value="">Müşteri seçin...</option>
-                    {clients.map(client => (
-                      <option key={client.id} value={client.id}>
-                        {client.first_name} {client.last_name}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    value={timerDescription}
-                    onChange={(e) => setTimerDescription(e.target.value)}
-                    placeholder="Ne üzerinde çalışıyorsun?"
-                    className="w-full px-3 py-2 bg-background-dark border border-border-dark rounded-lg text-white text-sm placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-                  />
-                  <button
-                    onClick={() => {
-                      if (!timerClientId) {
-                        alert('Lütfen müşteri seçin')
-                        return
-                      }
-                      startTimer(timerDescription, undefined, timerClientId)
-                      setTimerDescription('')
-                      setTimerClientId('')
-                    }}
-                    className="flex items-center justify-center gap-2 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 text-sm font-medium rounded-lg transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">play_arrow</span>
-                    Başlat
-                  </button>
-                </div>
-              )}
-              <p className="text-text-secondary text-xs">
-                Bugün: {timeStatsData.todayFormatted}
-              </p>
+            {/* Timer Console Widget */}
+            <div className="size-full h-36 bg-[#111827] border border-primary/20 rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/50 transition-all shadow-premium overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-5">
+                  <span className="material-symbols-rounded text-7xl text-primary animate-pulse">timer</span>
+               </div>
+               
+               {activeEntry ? (
+                 <div className="flex flex-col h-full">
+                    <div className="flex justify-between items-start mb-1">
+                       <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Active Session</p>
+                       <span className="size-2 rounded-full bg-green-500 animate-ping" />
+                    </div>
+                    <p className="text-white text-2xl font-black font-mono tracking-tight my-auto">{formatDurationDetailed(elapsedSeconds)}</p>
+                    <div className="flex items-center justify-between group/row mt-auto">
+                       <span className="text-[10px] text-slate-500 truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Project'}</span>
+                       <button onClick={stopTimer} className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">Stop</button>
+                    </div>
+                 </div>
+               ) : (
+                 <div className="flex flex-col h-full">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Time Tracking</p>
+                    <div className="mt-auto flex flex-col gap-2">
+                       <div className="flex gap-2">
+                          <select 
+                             value={timerClientId} 
+                             onChange={(e) => setTimerClientId(e.target.value)}
+                             className="flex-1 bg-white/5 border border-white/5 rounded-xl text-[10px] text-slate-300 px-2 py-1.5 focus:outline-none focus:border-primary/50 appearance-none"
+                          >
+                             <option value="">Client...</option>
+                             {clients.map(c => <option key={c.id} value={c.id}>{c.first_name}</option>)}
+                          </select>
+                          <button 
+                             onClick={() => timerClientId && startTimer(timerDescription, undefined, timerClientId)}
+                             className="size-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+                          >
+                             <span className="material-symbols-rounded font-black">play_arrow</span>
+                          </button>
+                       </div>
+                       <p className="text-[10px] text-slate-600 font-medium">Daily total: {timeStatsData.todayFormatted}</p>
+                    </div>
+                 </div>
+               )}
             </div>
           </div>
 
           {/* Filters & Table */}
           <div className="flex flex-col gap-4">
-            <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
+            <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar">
               {FILTERS.map((f) => (
                 <button
                   key={f.value}
                   onClick={() => setFilter(f.value)}
-                  className={`flex items-center justify-center gap-2 h-9 px-4 rounded-full border text-sm font-medium transition-colors shrink-0 ${
+                  className={`flex items-center justify-center gap-3 h-11 px-6 rounded-2xl border text-xs font-black uppercase tracking-widest transition-all shrink-0 ${
                     filter === f.value
-                      ? 'bg-white text-slate-900 border-white'
-                      : 'bg-surface-dark border-border-dark text-slate-300 hover:bg-[#1f2b36]'
+                      ? 'bg-white text-slate-900 border-white shadow-xl shadow-white/5'
+                      : 'bg-white/5 border-glass-border text-slate-400 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  {f.color && <span className={`size-2 rounded-full bg-${f.color}-500`}></span>}
+                  {f.color && <span className={`size-1.5 rounded-full ${f.value === 'overdue' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'bg-' + f.color + '-500'}`}></span>}
                   {f.label}
                 </button>
               ))}
@@ -529,67 +509,70 @@ export default function FinanceDashboard() {
                         : '?'
 
                       return (
-                        <tr key={inv.id} className="group hover:bg-[#1f2b36] transition-colors">
-                          <td className="py-4 px-6">
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusStyle(inv.status)}`}>
-                              {getStatusLabel(inv.status)}
-                            </span>
+                        <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
+                          <td className="py-6 px-8">
+                             <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(inv.status)}`}>
+                                <span className={`size-1.5 rounded-full ${inv.status === 'overdue' ? 'bg-rose-500 animate-pulse' : 'bg-current'}`} />
+                                {getStatusLabel(inv.status)}
+                             </span>
                           </td>
-                          <td className="py-4 px-6 text-slate-400 font-mono">
-                            {inv.invoice_number || '-'}
+                          <td className="py-6 px-8 text-slate-400 font-mono text-xs">
+                             #{inv.invoice_number || '---'}
                           </td>
-                          <td className="py-4 px-6 font-medium text-white">
-                            <div className="flex items-center gap-2">
-                              <div className="size-6 rounded bg-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">
-                                {initials}
-                              </div>
-                              {clientName}
-                            </div>
+                          <td className="py-6 px-8 font-bold text-white">
+                             <div className="flex items-center gap-3">
+                                <div className="size-8 rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-black shadow-inner uppercase">
+                                   {initials}
+                                </div>
+                                <div className="flex flex-col">
+                                   <span className="text-sm">{clientName}</span>
+                                   <span className="text-[10px] text-slate-500 font-medium">Standard Project</span>
+                                </div>
+                             </div>
                           </td>
-                          <td className="py-4 px-6 text-slate-400">
-                            {inv.due_date
-                              ? new Date(inv.due_date).toLocaleDateString('tr-TR')
-                              : '-'}
+                          <td className="py-6 px-8 text-slate-400 text-xs">
+                             {inv.due_date ? new Date(inv.due_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                           </td>
-                          <td className="py-4 px-6 text-right font-bold text-white">
-                            ₺{inv.amount.toLocaleString()}
+                          <td className="py-6 px-8 text-right font-black text-white text-base">
+                             ₺{inv.amount.toLocaleString()}
                           </td>
-                          <td className="py-4 px-6">
-                            <div className="flex flex-col gap-1">
-                              <div className="h-2 bg-border-dark rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all ${
-                                    progress >= 100 ? 'bg-green-500' :
-                                    progress > 0 ? 'bg-amber-500' : 'bg-slate-600'
-                                  }`}
-                                  style={{ width: `${Math.min(progress, 100)}%` }}
-                                />
-                              </div>
-                              <span className="text-[10px] text-text-secondary">
-                                {progress.toFixed(0)}%
-                              </span>
-                            </div>
+                          <td className="py-6 px-8">
+                             <div className="w-32 flex flex-col gap-2">
+                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                   <div
+                                      className={`h-full rounded-full transition-all duration-1000 ${
+                                         progress >= 100 ? 'bg-emerald-500' :
+                                         progress > 0 ? 'bg-amber-400' : 'bg-slate-700'
+                                      }`}
+                                      style={{ width: `${Math.min(progress, 100)}%` }}
+                                   />
+                                </div>
+                                <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none">
+                                   {progress.toFixed(0)}% Collected
+                                </span>
+                             </div>
                           </td>
-                          <td className="py-4 px-6 text-right font-bold text-white">
-                            ₺{inv.remaining.toLocaleString()}
+                          <td className="py-6 px-8 text-right font-black text-white text-base">
+                             <span className={inv.remaining > 0 ? 'text-rose-400/80' : 'text-slate-500'}>
+                                ₺{inv.remaining.toLocaleString()}
+                             </span>
                           </td>
-                          <td className="py-4 px-6 text-center relative">
-                            <div className="flex items-center justify-end gap-2">
-                              {inv.status !== 'paid' && (
+                          <td className="py-6 px-8 text-center relative">
+                             <div className="flex items-center justify-end gap-3">
+                                {inv.status !== 'paid' && (
+                                   <button
+                                      onClick={() => setPaymentInvoice(inv)}
+                                      className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 rounded-xl hover:bg-emerald-500 hover:text-slate-900 border border-emerald-500/20 transition-all active:scale-95"
+                                   >
+                                      Pay
+                                   </button>
+                                )}
                                 <button
-                                  onClick={() => setPaymentInvoice(inv)}
-                                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-green-400 bg-green-500/10 rounded hover:bg-green-500/20 transition-colors"
+                                   onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === inv.id ? null : inv.id) }}
+                                   className="size-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all"
                                 >
-                                  <span className="material-symbols-outlined text-[14px]">payments</span>
-                                  Ödeme
+                                   <span className="material-symbols-rounded text-[18px]">more_horiz</span>
                                 </button>
-                              )}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === inv.id ? null : inv.id) }}
-                                className="p-1.5 rounded hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-                              >
-                                <span className="material-symbols-outlined text-[20px]">more_vert</span>
-                              </button>
 
                               {actionMenuOpen === inv.id && (
                                 <div className="absolute right-8 top-10 w-32 bg-surface-lighter border border-border-dark shadow-xl rounded-lg z-20 py-1 flex flex-col items-start">

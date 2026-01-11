@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { useCallback, useEffect, useState } from 'react'
 import type { CodeSnippet, CodeSnippetInsert, Project } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 export interface CodeSnippetWithProject extends CodeSnippet {
   projects: Project | null
@@ -23,7 +23,7 @@ export function useCodeSnippets() {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setSnippets(data as CodeSnippetWithProject[] || [])
+      setSnippets((data as any) as CodeSnippetWithProject[] || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
@@ -46,7 +46,7 @@ export function useCodeSnippets() {
       .single()
 
     if (error) throw error
-    setSnippets(prev => [data as CodeSnippetWithProject, ...prev])
+    setSnippets(prev => [(data as any) as CodeSnippetWithProject, ...prev])
     return data
   }
 
@@ -59,7 +59,7 @@ export function useCodeSnippets() {
       .single()
 
     if (error) throw error
-    setSnippets(prev => prev.map(s => s.id === id ? data as CodeSnippetWithProject : s))
+    setSnippets(prev => prev.map(s => s.id === id ? (data as any) as CodeSnippetWithProject : s))
     return data
   }
 

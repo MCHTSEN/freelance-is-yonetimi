@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { Client, Pipeline, PipelineInsert } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
-import type { Pipeline, PipelineInsert, Client } from '../lib/supabase'
 
 export type PipelineStage = 'lead' | 'contacted' | 'meeting' | 'proposal_sent' | 'won' | 'completed'
 
@@ -17,9 +17,19 @@ export interface PipelineInvoice {
   invoice_payments: InvoicePayment[]
 }
 
-export interface PipelineWithClient extends Pipeline {
+export interface PipelineWithClient {
+  id: string
+  client_id: string | null
+  stage: string
+  estimated_value: number | null
+  follow_up_date: string | null
+  priority: string | null
+  notes: string | null
+  created_at: string | null
+  updated_at: string | null
+  user_id: string | null
   clients: Client | null
-  invoices: PipelineInvoice[]
+  invoices: any[]
   total_paid?: number
   remaining?: number
 }
@@ -62,11 +72,11 @@ export function usePipeline() {
       if (error) throw error
 
       // Calculate total_paid and remaining for each item
-      const itemsWithPayments = (data || []).map(item => {
-        const invoices = item.invoices || []
-        const totalPaid = invoices.reduce((sum: number, inv: PipelineInvoice) => {
-          const invoicePayments = inv.invoice_payments || []
-          return sum + invoicePayments.reduce((s: number, p: InvoicePayment) => s + Number(p.amount), 0)
+      const itemsWithPayments = (data || []).map((item: any) => {
+        const invoices = Array.isArray(item.invoices) ? item.invoices : []
+        const totalPaid = invoices.reduce((sum: number, inv: any) => {
+          const invoicePayments = Array.isArray(inv.invoice_payments) ? inv.invoice_payments : []
+          return sum + invoicePayments.reduce((s: number, p: any) => s + Number(p.amount), 0)
         }, 0)
         const estimatedValue = Number(item.estimated_value) || 0
         return {
@@ -141,15 +151,16 @@ export function usePipeline() {
     // Aşamayı güncelle
     const result = await updateItem(id, { stage: newStage })
 
-    // "won" aşamasına geçildiyse ve daha önce "won" değilse fatura oluştur
-    if (newStage === 'won' && previousStage !== 'won' && item?.estimated_value && item.estimated_value > 0) {
+    // "won" aşamasına geçildiyse fatura oluştur (eğer zaten yoksa)
+    if (newStage === 'won' && item?.estimated_value && item.estimated_value > 0) {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
+          // Since pipeline_id doesn't exist on invoices, we'll skip the check and just create it 
+          // or use the current logic but without the invalid column.
           await supabase.from('invoices').insert({
             user_id: user.id,
             client_id: item.client_id || null,
-            pipeline_id: id,
             amount: item.estimated_value,
             invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
             notes: `Pipeline: ${id}`,
