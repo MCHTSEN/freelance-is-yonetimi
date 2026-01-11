@@ -49,14 +49,13 @@ export default function ClientForm({ onSubmit, onCancel, initialData }: ClientFo
           />
         </div>
         <div>
-          <label className="block text-sm text-text-secondary mb-2">Soyad *</label>
+          <label className="block text-sm text-text-secondary mb-2">Soyad</label>
           <input
             type="text"
             value={formData.last_name}
             onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
             className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
             placeholder="Yılmaz"
-            required
           />
         </div>
       </div>

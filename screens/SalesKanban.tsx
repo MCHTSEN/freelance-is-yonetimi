@@ -50,11 +50,15 @@ interface KanbanCardProps {
 
 function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDragging, upcomingMeeting }: KanbanCardProps) {
   const clientName = item.clients
-    ? `${item.clients.first_name} ${item.clients.last_name}`
+    ? item.clients.company
+      ? `${item.clients.first_name} (${item.clients.company})`
+      : item.clients.first_name
     : 'İsimsiz Müşteri'
 
   const initials = item.clients
-    ? `${item.clients.first_name[0]}${item.clients.last_name[0]}`
+    ? item.clients.company
+      ? `${item.clients.first_name[0]}${item.clients.company[0]}`
+      : item.clients.first_name.slice(0, 2).toUpperCase()
     : '??'
 
   const priorityConfig = {
@@ -154,16 +158,22 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
         {clientName}
       </h4>
 
-      {item.clients?.company && (
-        <p className="text-[#92adc9] text-sm mb-2">{item.clients.company}</p>
-      )}
-
       {item.notes && (
         <p className="text-[#6b8ba3] text-sm mb-3 line-clamp-2">{item.notes}</p>
       )}
 
       {item.estimated_value && (
-        <p className="text-primary text-sm font-bold mb-3">{formatCurrency(item.estimated_value)}</p>
+        <div className="mb-3">
+          <p className="text-primary text-sm font-bold">{formatCurrency(item.estimated_value)}</p>
+          {item.total_paid !== undefined && item.total_paid > 0 && (
+            <p className="text-xs text-text-secondary mt-0.5">
+              <span className="text-green-400">Ödenen: {formatCurrency(item.total_paid)}</span>
+              {item.remaining !== undefined && item.remaining > 0 && (
+                <span className="text-yellow-400 ml-2">Kalan: {formatCurrency(item.remaining)}</span>
+              )}
+            </p>
+          )}
+        </div>
       )}
 
       {item.follow_up_date && (

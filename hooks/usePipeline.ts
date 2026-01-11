@@ -2,10 +2,26 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Pipeline, PipelineInsert, Client } from '../lib/supabase'
 
-export type PipelineStage = 'lead' | 'contacted' | 'meeting' | 'proposal_sent' | 'won'
+export type PipelineStage = 'lead' | 'contacted' | 'meeting' | 'proposal_sent' | 'won' | 'completed'
+
+export interface InvoicePayment {
+  id: string
+  amount: number
+  payment_date: string
+}
+
+export interface PipelineInvoice {
+  id: string
+  amount: number
+  is_paid: boolean
+  invoice_payments: InvoicePayment[]
+}
 
 export interface PipelineWithClient extends Pipeline {
   clients: Client | null
+  invoices: PipelineInvoice[]
+  total_paid?: number
+  remaining?: number
 }
 
 export const STAGE_CONFIG: Record<PipelineStage, { title: string; order: number }> = {
@@ -14,6 +30,7 @@ export const STAGE_CONFIG: Record<PipelineStage, { title: string; order: number 
   meeting: { title: 'Toplantı Yapılacak', order: 3 },
   proposal_sent: { title: 'Teklif Gönderildi', order: 4 },
   won: { title: 'Kazanıldı', order: 5 },
+  completed: { title: 'Bitti', order: 6 },
 }
 
 export function usePipeline() {
@@ -28,12 +45,38 @@ export function usePipeline() {
         .from('pipeline')
         .select(`
           *,
-          clients (*)
+          clients (*),
+          invoices (
+            id,
+            amount,
+            is_paid,
+            invoice_payments (
+              id,
+              amount,
+              payment_date
+            )
+          )
         `)
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setItems(data as PipelineWithClient[] || [])
+
+      // Calculate total_paid and remaining for each item
+      const itemsWithPayments = (data || []).map(item => {
+        const invoices = item.invoices || []
+        const totalPaid = invoices.reduce((sum: number, inv: PipelineInvoice) => {
+          const invoicePayments = inv.invoice_payments || []
+          return sum + invoicePayments.reduce((s: number, p: InvoicePayment) => s + Number(p.amount), 0)
+        }, 0)
+        const estimatedValue = Number(item.estimated_value) || 0
+        return {
+          ...item,
+          total_paid: totalPaid,
+          remaining: estimatedValue - totalPaid,
+        }
+      })
+
+      setItems(itemsWithPayments as PipelineWithClient[])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
@@ -63,6 +106,7 @@ export function usePipeline() {
         await supabase.from('invoices').insert({
           user_id: user.id,
           client_id: item.client_id || null,
+          pipeline_id: data.id,
           amount: item.estimated_value,
           invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
           notes: `Pipeline: ${data.id}`,
@@ -105,6 +149,7 @@ export function usePipeline() {
           await supabase.from('invoices').insert({
             user_id: user.id,
             client_id: item.client_id || null,
+            pipeline_id: id,
             amount: item.estimated_value,
             invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
             notes: `Pipeline: ${id}`,
