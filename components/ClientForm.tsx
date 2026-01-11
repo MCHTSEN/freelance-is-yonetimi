@@ -35,101 +35,101 @@ export default function ClientForm({ onSubmit, onCancel, initialData }: ClientFo
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-text-secondary mb-2">Ad *</label>
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Ad *</label>
           <input
             type="text"
             value={formData.first_name}
             onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-            placeholder="Ahmet"
+            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
+            placeholder="John"
             required
           />
         </div>
         <div>
-          <label className="block text-sm text-text-secondary mb-2">Soyad</label>
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Soyad</label>
           <input
             type="text"
             value={formData.last_name}
             onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-            placeholder="Yılmaz"
+            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
+            placeholder="Doe"
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Şirket</label>
+        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Şirket Ünvanı</label>
         <input
           type="text"
           value={formData.company}
           onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-          placeholder="ABC Teknoloji A.Ş."
+          className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
+          placeholder="Lumina Creative Studio"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-text-secondary mb-2">E-posta</label>
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">E-posta</label>
           <input
             type="email"
             value={formData.email}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-            placeholder="ahmet@sirket.com"
+            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all"
+            placeholder="hello@example.com"
           />
         </div>
         <div>
-          <label className="block text-sm text-text-secondary mb-2">Telefon</label>
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Telefon</label>
           <input
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-            placeholder="+90 555 123 4567"
+            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all"
+            placeholder="+90 5..."
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Notlar</label>
+        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Müşteri Notları</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors resize-none"
-          placeholder="Müşteri hakkında notlar..."
+          className="w-full px-5 py-4 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all resize-none text-sm italic"
+          placeholder="Müşteri ve beklentileri hakkında detaylar..."
           rows={3}
         />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
+          <p className="text-rose-400 text-xs font-bold text-center uppercase tracking-widest">{error}</p>
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+          className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-glass-border"
         >
           İptal
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="flex-[1.5] py-4 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
         >
           {loading ? (
             <span className="material-symbols-rounded animate-spin">progress_activity</span>
           ) : (
             <>
-              <span className="material-symbols-rounded">save</span>
-              Kaydet
+              <span className="material-symbols-rounded font-black">person_add</span>
+              <span className="uppercase tracking-widest">Müşteriyi Kaydet</span>
             </>
           )}
         </button>

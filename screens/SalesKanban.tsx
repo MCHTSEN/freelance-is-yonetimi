@@ -1,31 +1,31 @@
-import { useState, useMemo, useEffect } from 'react'
 import {
-  DndContext,
-  DragOverlay,
-  closestCorners,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragStartEvent,
-  DragEndEvent,
-  DragOverEvent,
-  useDroppable,
+    closestCorners,
+    DndContext,
+    DragEndEvent,
+    DragOverEvent,
+    DragOverlay,
+    DragStartEvent,
+    KeyboardSensor,
+    PointerSensor,
+    useDroppable,
+    useSensor,
+    useSensors,
 } from '@dnd-kit/core'
 import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { usePipeline, STAGE_CONFIG, PipelineStage, PipelineWithClient } from '../hooks/usePipeline'
-import { useClients } from '../hooks/useClients'
-import { supabase } from '../lib/supabase'
-import Modal from '../components/Modal'
+import { useEffect, useMemo, useState } from 'react'
 import ClientForm from '../components/ClientForm'
+import Modal from '../components/Modal'
 import PipelineForm from '../components/PipelineForm'
-import type { Client, Booking } from '../lib/supabase'
+import { useClients } from '../hooks/useClients'
+import { PipelineStage, PipelineWithClient, STAGE_CONFIG, usePipeline } from '../hooks/usePipeline'
+import type { Client } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 // Type for upcoming meeting display
 interface UpcomingMeeting {
@@ -52,149 +52,110 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
   const clientName = item.clients
     ? item.clients.company
       ? `${item.clients.first_name} (${item.clients.company})`
-      : item.clients.first_name
+      : `${item.clients.first_name} ${item.clients.last_name || ''}`
     : 'İsimsiz Müşteri'
 
   const initials = item.clients
     ? item.clients.company
       ? `${item.clients.first_name[0]}${item.clients.company[0]}`
-      : item.clients.first_name.slice(0, 2).toUpperCase()
+      : `${item.clients.first_name[0]}${item.clients.last_name?.[0] || ''}`.toUpperCase()
     : '??'
 
   const priorityConfig = {
-    high: { color: 'bg-red-500/20 text-red-300', label: 'Yüksek' },
-    medium: { color: 'bg-yellow-500/20 text-yellow-300', label: 'Orta' },
-    low: { color: 'bg-gray-500/20 text-gray-300', label: 'Düşük' },
+    high: { color: 'bg-rose-500/10 text-rose-400 border-rose-500/20', label: 'Yüksek', dot: 'bg-rose-500' },
+    medium: { color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: 'Orta', dot: 'bg-amber-500' },
+    low: { color: 'bg-slate-500/10 text-slate-400 border-slate-500/20', label: 'Düşük', dot: 'bg-slate-400' },
   }
 
   const priority = priorityConfig[item.priority as keyof typeof priorityConfig] || priorityConfig.medium
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
-  }
 
   const formatCurrency = (value: number | null) => {
     if (!value) return null
     return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value)
   }
 
-  const formatMeetingTime = (dateStr: string) => {
-    const date = new Date(dateStr)
-    const now = new Date()
-    const diffMs = date.getTime() - now.getTime()
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
-
-    if (diffDays === 0) {
-      if (diffHours <= 0) return 'Şimdi'
-      if (diffHours < 24) return `${diffHours} saat sonra`
-    }
-    if (diffDays === 1) return 'Yarın'
-    if (diffDays < 7) return `${diffDays} gün sonra`
-
-    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })
-  }
-
   return (
     <div
       onClick={onEdit}
-      className={`group relative bg-[#1a2634] p-4 rounded-xl border border-transparent hover:border-[#324d67] shadow-sm transition-all cursor-pointer ${
-        isDragging ? 'opacity-50 scale-105 shadow-xl' : 'hover:-translate-y-1'
+      className={`group relative bg-surface-dark/40 backdrop-blur-sm border border-glass-border p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
+        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-surface-dark/60 hover:border-primary/30'
       }`}
     >
-      {/* Upcoming Meeting Badge */}
-      {upcomingMeeting && (
-        <div className="absolute -top-2 -right-2 z-10">
-          <div className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 shadow-lg animate-pulse">
-            <span className="material-symbols-outlined text-[12px]">videocam</span>
-            {formatMeetingTime(upcomingMeeting.scheduled_at)}
-          </div>
-        </div>
-      )}
+      {/* High-end glass shadow effect on hover */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-      <div className="flex justify-between items-start mb-3">
-        <div className={`${priority.color} text-xs font-bold px-2 py-1 rounded flex items-center gap-1`}>
+      {/* Header Info */}
+      <div className="flex justify-between items-start mb-4 relative z-10">
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${priority.color}`}>
+          <span className={`size-1.5 rounded-full ${priority.dot} animate-pulse`} />
           {priority.label}
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-2">
+        
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onAddMeeting()
-            }}
-            className="text-[#92adc9] hover:text-green-400 p-1"
-            title="Toplantı Oluştur"
+            onClick={(e) => { e.stopPropagation(); onAddMeeting(); }}
+            className="size-8 rounded-lg bg-white/5 hover:bg-green-500/20 text-slate-400 hover:text-green-400 flex items-center justify-center transition-colors"
+            title="Toplantı"
           >
-            <span className="material-symbols-outlined text-[18px]">event</span>
+            <span className="material-symbols-rounded text-[18px]">videocam</span>
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onAddNote()
-            }}
-            className="text-[#92adc9] hover:text-blue-400 p-1"
-            title="Not Ekle"
+            onClick={(e) => { e.stopPropagation(); onAddNote(); }}
+            className="size-8 rounded-lg bg-white/5 hover:bg-primary/20 text-slate-400 hover:text-primary flex items-center justify-center transition-colors"
+            title="Not"
           >
-            <span className="material-symbols-outlined text-[18px]">note_add</span>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              if (window.confirm('Bu kartı silmek istediğinize emin misiniz?')) {
-                onDelete()
-              }
-            }}
-            className="text-[#92adc9] hover:text-red-400 p-1"
-            title="Sil"
-          >
-            <span className="material-symbols-outlined text-[18px]">delete</span>
+            <span className="material-symbols-rounded text-[18px]">edit_note</span>
           </button>
         </div>
       </div>
 
-      <h4 className="text-white font-bold text-base mb-1">
-        {clientName}
-      </h4>
-
-      {item.notes && (
-        <p className="text-[#6b8ba3] text-sm mb-3 line-clamp-2">{item.notes}</p>
-      )}
-
-      {item.estimated_value && (
-        <div className="mb-3">
-          <p className="text-primary text-sm font-bold">{formatCurrency(item.estimated_value)}</p>
-          {item.total_paid !== undefined && item.total_paid > 0 && (
-            <p className="text-xs text-text-secondary mt-0.5">
-              <span className="text-green-400">Ödenen: {formatCurrency(item.total_paid)}</span>
-              {item.remaining !== undefined && item.remaining > 0 && (
-                <span className="text-yellow-400 ml-2">Kalan: {formatCurrency(item.remaining)}</span>
-              )}
-            </p>
+      {/* Client Identity */}
+      <div className="flex items-center gap-3 mb-4 relative z-10">
+        <div className="size-10 rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-inner">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-white font-semibold text-base truncate tracking-tight">{clientName}</h4>
+          {item.estimated_value && (
+            <p className="text-slate-400 text-sm font-medium">{formatCurrency(item.estimated_value)}</p>
           )}
         </div>
+      </div>
+
+      {/* Status & Notes */}
+      {item.notes && (
+        <p className="text-slate-500 text-sm mb-4 line-clamp-2 italic font-light relative z-10">
+          "{item.notes}"
+        </p>
       )}
 
-      {item.follow_up_date && (
-        <div className="flex items-center justify-between border-t border-[#324d67] pt-3 mt-2">
-          <div className="flex items-center gap-2 text-[#92adc9] text-xs">
-            <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-            <span>{formatDate(item.follow_up_date)}</span>
+      {/* Progress or Meeting Info */}
+      <div className="flex items-center justify-between border-t border-glass-border pt-4 relative z-10">
+        {upcomingMeeting ? (
+          <div className="flex items-center gap-2 text-green-400 text-xs font-medium">
+            <span className="material-symbols-rounded text-[16px]">schedule</span>
+            <span className="animate-pulse">Meeting soon</span>
           </div>
-          <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30">
-            {initials}
+        ) : (
+          <div className="flex items-center gap-2 text-slate-500 text-xs">
+            <span className="material-symbols-rounded text-[16px] font-light">calendar_today</span>
+            <span>{item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'No follow-up'}</span>
           </div>
-        </div>
-      )}
-
-      {!item.follow_up_date && (
-        <div className="flex justify-end mt-2">
-          <div className="size-6 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary border border-primary/30">
-            {initials}
+        )}
+        
+        {item.total_paid && item.total_paid > 0 ? (
+          <div className="flex items-center gap-1">
+            <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-green-500 rounded-full" 
+                style={{ width: `${Math.min((item.total_paid / (item.estimated_value || 1)) * 100, 100)}%` }} 
+              />
+            </div>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="size-2 rounded-full bg-slate-700" />
+        )}
+      </div>
     </div>
   )
 }
@@ -227,6 +188,7 @@ function SortableCard({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    zIndex: isDragging ? 100 : 1,
   }
 
   return (
@@ -264,30 +226,27 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAd
   })
 
   return (
-    <div className="flex flex-col w-[320px] shrink-0 gap-4">
-      <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2">
-          <h3 className="font-bold text-sm text-[#92adc9] uppercase tracking-wider">{title}</h3>
-          <span className="bg-[#233648] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+    <div className="flex flex-col w-[340px] shrink-0 h-full">
+      <div className="flex items-center justify-between mb-6 px-1">
+        <div className="flex items-center gap-3">
+          <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
+          <h3 className="font-bold text-sm text-slate-300 uppercase tracking-[0.1em]">{title}</h3>
+          <span className="text-[10px] text-slate-500 font-mono bg-white/5 px-2 py-0.5 rounded-full">
             {items.length}
           </span>
         </div>
-        <div className="flex gap-1">
-          <button
-            onClick={onAddCard}
-            className="text-[#92adc9] hover:text-white transition-colors"
-          >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-          </button>
-        </div>
+        <button
+          onClick={onAddCard}
+          className="size-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center border border-white/5"
+        >
+          <span className="material-symbols-rounded text-[20px]">add</span>
+        </button>
       </div>
 
       <div
         ref={setNodeRef}
-        className={`flex flex-col gap-3 min-h-[200px] rounded-xl p-2 transition-all duration-200 ${
-          isOver
-            ? 'bg-primary/10 border-2 border-dashed border-primary'
-            : 'border-2 border-transparent hover:border-[#233648]'
+        className={`flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar rounded-3xl p-3 transition-all duration-300 border-2 border-transparent ${
+          isOver ? 'bg-primary/5 border-primary/20 scale-[0.99] border-dashed shadow-inner' : 'bg-transparent'
         }`}
       >
         <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
@@ -303,11 +262,13 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAd
             />
           ))}
         </SortableContext>
+        
         {items.length === 0 && (
-          <div className={`h-full flex items-center justify-center text-sm font-medium py-8 transition-colors ${
-            isOver ? 'text-primary' : 'text-[#324d67]'
-          }`}>
-            {isOver ? 'Bırakın' : 'Buraya sürükleyin'}
+          <div className="flex-1 flex flex-col items-center justify-center p-10 opacity-20 group">
+             <div className="size-16 rounded-3xl border-2 border-dashed border-slate-500 flex items-center justify-center mb-4 group-hover:border-primary transition-colors">
+                <span className="material-symbols-rounded text-3xl">add</span>
+             </div>
+             <p className="text-xs font-medium uppercase tracking-widest text-center">Empty Stage</p>
           </div>
         )}
       </div>
@@ -325,7 +286,6 @@ export default function SalesKanban() {
   const [selectedStage, setSelectedStage] = useState<PipelineStage>('lead')
   const [preselectedClient, setPreselectedClient] = useState<Client | null>(null)
   const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeeting[]>([])
-  const [showMeetingsWidget, setShowMeetingsWidget] = useState(true)
 
   // Edit modal state
   const [editingItem, setEditingItem] = useState<PipelineWithClient | null>(null)
@@ -366,7 +326,6 @@ export default function SalesKanban() {
     }
 
     fetchMeetings()
-    // Refresh every minute
     const interval = setInterval(fetchMeetings, 60000)
     return () => clearInterval(interval)
   }, [])
@@ -383,14 +342,8 @@ export default function SalesKanban() {
   }, [upcomingMeetings])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
   const activeItem = useMemo(
@@ -418,12 +371,10 @@ export default function SalesKanban() {
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event
     if (over) {
-      // Check if over a column or a card in a column
       const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
       if (stages.includes(over.id as PipelineStage)) {
         setOverId(over.id as string)
       } else {
-        // Find which stage the card belongs to
         const overItem = items.find(i => i.id === over.id)
         if (overItem) {
           setOverId(overItem.stage)
@@ -444,15 +395,12 @@ export default function SalesKanban() {
     const activeItem = items.find(i => i.id === active.id)
     if (!activeItem) return
 
-    // Determine target stage
     let targetStage: PipelineStage | null = null
     const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
 
-    // Check if dropped directly on a column
     if (stages.includes(over.id as PipelineStage)) {
       targetStage = over.id as PipelineStage
     } else {
-      // Check if dropped on a card - find which stage that card belongs to
       const overItem = items.find(i => i.id === over.id)
       if (overItem) {
         targetStage = overItem.stage as PipelineStage
@@ -477,7 +425,6 @@ export default function SalesKanban() {
   const handlePipelineSubmit = async (data: Parameters<typeof addItem>[0]) => {
     await addItem(data)
     setShowPipelineModal(false)
-    setPreselectedClient(null)
   }
 
   const handleClientSubmit = async (data: Parameters<typeof addClient>[0]) => {
@@ -485,7 +432,6 @@ export default function SalesKanban() {
     await refetchClients()
     setShowClientModal(false)
 
-    // Otomatik olarak pipeline formunu aç ve yeni müşteriyi seç
     setPreselectedClient(newClient)
     setShowPipelineModal(true)
   }
@@ -529,7 +475,6 @@ export default function SalesKanban() {
         status: 'confirmed'
       })
 
-      // Refresh meetings
       const now = new Date().toISOString()
       const { data } = await supabase
         .from('bookings')
@@ -540,7 +485,6 @@ export default function SalesKanban() {
         .limit(10)
 
       if (data) setUpcomingMeetings(data)
-
       setShowMeetingModal(false)
       setMeetingItem(null)
     } catch (err) {
@@ -572,154 +516,99 @@ export default function SalesKanban() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-background-dark">
-        <div className="flex flex-col items-center gap-4">
-          <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
-          <p className="text-text-secondary">Pipeline yükleniyor...</p>
+      <div className="flex-1 flex items-center justify-center bg-transparent">
+        <div className="flex flex-col items-center gap-6">
+          <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Initializing OS...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-background-dark">
-      {/* Header */}
-      <header className="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#233648] px-10 py-3 bg-background-dark shrink-0">
-        <div className="flex items-center gap-8">
-          <h2 className="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Personal OS</h2>
-          <label className="flex flex-col min-w-40 !h-10 max-w-64">
-            <div className="flex w-full flex-1 items-stretch rounded-lg h-full">
-              <div className="text-[#92adc9] flex border-none bg-[#233648] items-center justify-center pl-4 rounded-l-lg border-r-0">
-                <span className="material-symbols-outlined text-[24px]">search</span>
-              </div>
+    <div className="flex flex-col w-full h-full bg-transparent overflow-hidden px-8 py-6">
+      {/* Dynamic Header */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 shrink-0">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="material-symbols-rounded text-primary">analytics</span>
+            <span className="text-primary text-[10px] uppercase font-black tracking-[0.2em]">Management Console</span>
+          </div>
+          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Project Pipeline</h1>
+          <p className="text-slate-500 text-base font-light max-w-lg">
+            Track your journey from potential leads to successful collaborations.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            <button
+              onClick={() => handleAddPipeline('lead')}
+              className="relative flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 group overflow-hidden"
+            >
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+              <span className="material-symbols-rounded font-bold">add_circle</span>
+              <span>Create New Deal</span>
+            </button>
+          </div>
+          
+          <div className="flex bg-surface-dark/40 backdrop-blur-md rounded-2xl border border-glass-border p-1">
+            <label className="flex items-center px-4 py-2 gap-2 cursor-text group">
+              <span className="material-symbols-rounded text-slate-500 group-focus-within:text-primary transition-colors">search</span>
               <input
-                className="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#233648] focus:border-none h-full placeholder:text-[#92adc9] px-4 rounded-l-none border-l-0 pl-2 text-base font-normal leading-normal"
-                placeholder="Ara..."
+                type="text"
+                placeholder="Find anything..."
+                className="bg-transparent border-none focus:ring-0 text-sm text-white placeholder-slate-500 w-40 focus:w-60 transition-all duration-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
-            </div>
-          </label>
-        </div>
-        <div className="flex flex-1 justify-end gap-8">
-          <div className="flex items-center gap-9">
-            <span className="text-white text-sm font-bold border-b-2 border-primary pb-0.5">Müşteriler</span>
+            </label>
           </div>
         </div>
       </header>
 
-      {/* Upcoming Meetings Widget */}
-      {showMeetingsWidget && upcomingMeetings.length > 0 && (
-        <div className="mx-6 mt-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl border border-green-500/20 p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-green-400">event</span>
-              <h3 className="text-white font-semibold">Yaklaşan Toplantılar</h3>
-              <span className="bg-green-500/20 text-green-400 text-xs font-bold px-2 py-0.5 rounded-full">
-                {upcomingMeetings.length}
-              </span>
-            </div>
-            <button
-              onClick={() => setShowMeetingsWidget(false)}
-              className="text-text-secondary hover:text-white transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">close</span>
-            </button>
-          </div>
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {upcomingMeetings.slice(0, 5).map(meeting => {
-              const date = new Date(meeting.scheduled_at)
-              const isToday = new Date().toDateString() === date.toDateString()
-              const isTomorrow = new Date(Date.now() + 86400000).toDateString() === date.toDateString()
+      {/* Main Board Container */}
+      <div className="flex-1 overflow-x-auto pb-8 custom-scrollbar">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="flex gap-8 min-w-full h-full pb-4">
+            {(Object.entries(STAGE_CONFIG) as [PipelineStage, typeof STAGE_CONFIG[PipelineStage]][]).map(([stage, config]) => {
+              const stageItems = searchQuery
+                ? filteredItems.filter(i => i.stage === stage)
+                : getItemsByStage(stage)
 
               return (
-                <div
-                  key={meeting.id}
-                  className="flex-shrink-0 bg-background-dark/50 rounded-lg p-3 border border-green-500/10 hover:border-green-500/30 transition-colors min-w-[200px]"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="size-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs font-bold">
-                      {meeting.client_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <span className="text-white font-medium text-sm truncate">{meeting.client_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className={`font-bold ${isToday ? 'text-green-400' : isTomorrow ? 'text-yellow-400' : 'text-text-secondary'}`}>
-                      {isToday ? 'Bugün' : isTomorrow ? 'Yarın' : date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}
-                    </span>
-                    <span className="text-text-secondary">
-                      {date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <span className="text-text-secondary">({meeting.duration_minutes}dk)</span>
-                  </div>
-                </div>
+                <Column
+                  key={stage}
+                  stage={stage}
+                  title={config.title}
+                  items={stageItems}
+                  onAddCard={() => handleAddPipeline(stage)}
+                  onDeleteCard={deleteItem}
+                  onEditCard={handleEditCard}
+                  onAddMeeting={handleAddMeeting}
+                  onAddNote={handleAddNote}
+                  isOver={overId === stage}
+                  clientMeetings={clientMeetings}
+                />
               )
             })}
           </div>
-        </div>
-      )}
 
-      {/* Main Board */}
-      <div className="flex-1 flex flex-col p-6 overflow-hidden">
-        <div className="flex flex-col gap-6 mb-6 shrink-0">
-          <div className="flex flex-wrap justify-between items-center gap-4">
-            <div className="flex min-w-72 flex-col gap-1">
-              <h1 className="text-white text-3xl font-black leading-tight tracking-[-0.033em]">Satış Süreci</h1>
-              <p className="text-[#92adc9] text-base font-normal leading-normal">
-                Müşteri adaylarını ve teklif durumlarını yönetin
-              </p>
-            </div>
-            <button
-              onClick={() => handleAddPipeline('lead')}
-              className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-6 bg-primary hover:bg-blue-600 transition-colors text-white text-sm font-bold leading-normal tracking-[0.015em] shadow-lg shadow-blue-900/20 active:transform active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[20px] mr-2">add</span>
-              <span className="truncate">Yeni Müşteri/Teklif Ekle</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-x-auto pb-4">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-          >
-            <div className="flex gap-6 min-w-full h-full items-start">
-              {(Object.entries(STAGE_CONFIG) as [PipelineStage, typeof STAGE_CONFIG[PipelineStage]][]).map(([stage, config]) => {
-                const stageItems = searchQuery
-                  ? filteredItems.filter(i => i.stage === stage)
-                  : getItemsByStage(stage)
-
-                return (
-                  <Column
-                    key={stage}
-                    stage={stage}
-                    title={config.title}
-                    items={stageItems}
-                    onAddCard={() => handleAddPipeline(stage)}
-                    onDeleteCard={deleteItem}
-                    onEditCard={handleEditCard}
-                    onAddMeeting={handleAddMeeting}
-                    onAddNote={handleAddNote}
-                    isOver={overId === stage}
-                    clientMeetings={clientMeetings}
-                  />
-                )
-              })}
-            </div>
-
-            <DragOverlay>
-              {activeItem ? (
-                <div className="rotate-3 opacity-90">
-                  <KanbanCard item={activeItem} onDelete={() => {}} isDragging />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        </div>
+          <DragOverlay dropAnimation={null}>
+            {activeItem ? (
+              <div className="rotate-3 scale-105 pointer-events-none drop-shadow-2xl">
+                <KanbanCard item={activeItem} onDelete={() => {}} onEdit={() => {}} onAddMeeting={() => {}} onAddNote={() => {}} isDragging />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       </div>
 
       {/* Pipeline Modal */}

@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './lib/AuthContext';
 import { supabase } from './lib/supabase';
-import Login from './screens/Login';
-import SalesKanban from './screens/SalesKanban';
+import AuthCallback from './screens/AuthCallback';
+import CodeSnippets from './screens/CodeSnippets';
 import CreateProposal from './screens/CreateProposal';
-import MeetingNotes from './screens/MeetingNotes';
 import CustomerCredentials from './screens/CustomerCredentials';
 import FinanceDashboard from './screens/FinanceDashboard';
-import CodeSnippets from './screens/CodeSnippets';
-import AuthCallback from './screens/AuthCallback';
+import Login from './screens/Login';
+import MeetingNotes from './screens/MeetingNotes';
 import PublicBooking from './screens/PublicBooking';
+import SalesKanban from './screens/SalesKanban';
 
 enum Screen {
   KANBAN = 'KANBAN',
@@ -58,61 +58,80 @@ function Dashboard() {
   const NavItem = ({ screen, icon, label }: { screen: Screen; icon: string; label: string }) => (
     <button
       onClick={() => setCurrentScreen(screen)}
-      className={`group relative flex items-center justify-center size-12 rounded-xl transition-all duration-200 ${
+      className={`group relative flex items-center justify-center size-12 rounded-2xl transition-all duration-300 ${
         currentScreen === screen
-          ? 'bg-primary text-white shadow-lg shadow-primary/25'
-          : 'text-slate-400 hover:bg-white/10 hover:text-white'
+          ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110'
+          : 'text-slate-500 hover:bg-white/5 hover:text-white'
       }`}
       title={label}
     >
-      <span className="material-symbols-outlined text-[24px]">{icon}</span>
+      <span className="material-symbols-rounded text-[24px] font-light">{icon}</span>
+      {currentScreen === screen && (
+        <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full blur-[2px]" />
+      )}
     </button>
   );
 
   return (
-    <div className="flex h-screen w-screen bg-[#0d141c] text-white overflow-hidden">
+    <div className="flex h-screen w-screen bg-background-dark text-white overflow-hidden font-display relative">
+      {/* Decorative background elements */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+      
       {/* Main OS Dock / Navigation Rail */}
-      <nav className="w-20 flex flex-col items-center py-6 gap-6 border-r border-white/5 bg-[#101922] shrink-0 z-50">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4">
-          <span className="material-symbols-outlined text-white text-[24px]">grid_view</span>
+      <nav className="w-24 flex flex-col items-center py-8 gap-10 border-r border-glass-border bg-glass-bg backdrop-blur-3xl shrink-0 z-50 relative">
+        <div className="flex flex-col items-center gap-2">
+          <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-indigo-400 flex items-center justify-center shadow-xl shadow-primary/20 mb-1 group cursor-pointer hover:rotate-3 transition-transform">
+            <span className="material-symbols-rounded text-white text-[28px] font-bold">bolt</span>
+          </div>
+          <div className="w-8 h-1 bg-white/10 rounded-full" />
         </div>
 
-        <div className="flex flex-col gap-4 w-full px-4 items-center">
-          <NavItem screen={Screen.KANBAN} icon="view_kanban" label="Sales Process" />
+        <div className="flex flex-col gap-6 w-full px-4 items-center">
+          <NavItem screen={Screen.KANBAN} icon="dashboard" label="Sales Process" />
           <NavItem screen={Screen.PROPOSAL} icon="description" label="Proposals" />
-          <NavItem screen={Screen.NOTES} icon="calendar_month" label="Meetings & Notes" />
-          <NavItem screen={Screen.CREDENTIALS} icon="lock" label="Customer Credentials" />
-          <NavItem screen={Screen.FINANCE} icon="attach_money" label="Finance" />
-          <NavItem screen={Screen.SNIPPETS} icon="code" label="Code Snippets" />
-          <NavItem screen={Screen.CALENDAR} icon="event" label="Calendar & Bookings" />
+          <NavItem screen={Screen.NOTES} icon="edit_note" label="Meetings & Notes" />
+          <NavItem screen={Screen.CREDENTIALS} icon="key" label="Customer Credentials" />
+          <NavItem screen={Screen.FINANCE} icon="payments" label="Finance" />
+          <NavItem screen={Screen.SNIPPETS} icon="terminal" label="Code Snippets" />
+          <NavItem screen={Screen.CALENDAR} icon="calendar_today" label="Calendar & Bookings" />
         </div>
 
-        <div className="mt-auto flex flex-col gap-4 items-center">
+        <div className="mt-auto flex flex-col gap-6 items-center">
+          {/* User Avatar */}
+          <div className="group relative">
+            <div className="size-11 rounded-2xl border-2 border-primary/30 p-0.5 bg-background-dark overflow-hidden transition-all duration-300 hover:border-primary">
+              <div className="w-full h-full rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center overflow-hidden">
+                <span className="material-symbols-rounded text-slate-400 text-[24px]">person</span>
+              </div>
+            </div>
+            <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-3 py-1 bg-surface-dark border border-glass-border rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              Profil
+            </div>
+          </div>
+
           {/* Logout Button */}
           <button
             onClick={signOut}
-            className="size-10 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all flex items-center justify-center"
+            className="size-11 rounded-2xl text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 flex items-center justify-center group"
             title="Çıkış Yap"
           >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
+            <span className="material-symbols-rounded text-[24px] font-light group-hover:rotate-12">logout</span>
           </button>
-
-          {/* User Avatar */}
-          <div className="size-10 rounded-full bg-primary/20 overflow-hidden border border-primary/30 flex items-center justify-center">
-            <span className="material-symbols-outlined text-primary text-[20px]">person</span>
-          </div>
         </div>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex overflow-hidden bg-background-dark relative">
-        {currentScreen === Screen.KANBAN && <SalesKanban />}
-        {currentScreen === Screen.PROPOSAL && <CreateProposal />}
-        {currentScreen === Screen.NOTES && <MeetingNotes />}
-        {currentScreen === Screen.CREDENTIALS && <CustomerCredentials />}
-        {currentScreen === Screen.FINANCE && <FinanceDashboard />}
-        {currentScreen === Screen.SNIPPETS && <CodeSnippets />}
-        {currentScreen === Screen.CALENDAR && <CalendarBookings />}
+      <main className="flex-1 flex flex-col overflow-hidden bg-transparent relative z-10">
+        <div className="flex-1 overflow-hidden relative">
+          {currentScreen === Screen.KANBAN && <SalesKanban />}
+          {currentScreen === Screen.PROPOSAL && <CreateProposal />}
+          {currentScreen === Screen.NOTES && <MeetingNotes />}
+          {currentScreen === Screen.CREDENTIALS && <CustomerCredentials />}
+          {currentScreen === Screen.FINANCE && <FinanceDashboard />}
+          {currentScreen === Screen.SNIPPETS && <CodeSnippets />}
+          {currentScreen === Screen.CALENDAR && <CalendarBookings />}
+        </div>
       </main>
     </div>
   );

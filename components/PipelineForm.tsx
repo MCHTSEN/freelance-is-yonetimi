@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import type { PipelineInsert, Client } from '../lib/supabase'
+import { useEffect, useState } from 'react'
 import type { PipelineStage } from '../hooks/usePipeline'
 import { STAGE_CONFIG } from '../hooks/usePipeline'
+import type { Client, PipelineInsert } from '../lib/supabase'
 
 interface PipelineFormProps {
   clients: Client[]
@@ -103,19 +103,19 @@ export default function PipelineForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Müşteri Seçimi */}
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Müşteri</label>
+        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Müşteri</label>
         <div className="flex gap-2">
           <select
             value={formData.client_id}
             onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-            className="flex-1 px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary transition-colors"
+            className="flex-1 px-5 py-4 bg-surface-dark/50 border border-glass-border rounded-2xl text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
           >
-            <option value="">Müşteri seçin...</option>
+            <option value="" className="bg-slate-900">Müşteri seçin...</option>
             {clients.map(client => (
-              <option key={client.id} value={client.id}>
+              <option key={client.id} value={client.id} className="bg-slate-900">
                 {client.first_name} {client.last_name} {client.company && `(${client.company})`}
               </option>
             ))}
@@ -123,7 +123,7 @@ export default function PipelineForm({
           <button
             type="button"
             onClick={onAddClient}
-            className="px-4 py-3 bg-surface-dark border border-border-dark hover:border-primary text-white rounded-xl transition-colors"
+            className="size-[58px] bg-white/5 border border-glass-border hover:border-primary/50 text-slate-400 hover:text-primary rounded-2xl transition-all flex items-center justify-center"
             title="Yeni müşteri ekle"
           >
             <span className="material-symbols-rounded">person_add</span>
@@ -133,17 +133,17 @@ export default function PipelineForm({
 
       {/* Aşama - Chip Buttons */}
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Aşama</label>
+        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Aşama</label>
         <div className="flex flex-wrap gap-2">
           {STAGE_OPTIONS.map(option => (
             <button
               key={option.value}
               type="button"
               onClick={() => setFormData(prev => ({ ...prev, stage: option.value }))}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
                 formData.stage === option.value
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-dark text-text-secondary hover:bg-[#233648] hover:text-white border border-border-dark'
+                  ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-glass-border'
               }`}
             >
               {option.label}
@@ -152,57 +152,59 @@ export default function PipelineForm({
         </div>
       </div>
 
-      {/* Öncelik - Chip Buttons */}
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Öncelik</label>
-        <div className="flex gap-2">
-          {PRIORITY_OPTIONS.map(option => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => setFormData(prev => ({ ...prev, priority: option.value }))}
-              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all border ${
-                formData.priority === option.value
-                  ? option.color
-                  : 'bg-surface-dark text-text-secondary border-border-dark hover:bg-[#233648]'
-              }`}
-            >
-              {option.label}
-            </button>
-          ))}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Öncelik */}
+        <div>
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Öncelik</label>
+          <div className="flex gap-2">
+            {PRIORITY_OPTIONS.map(option => (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, priority: option.value }))}
+                className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all border ${
+                  formData.priority === option.value
+                    ? option.color + ' shadow-lg'
+                    : 'bg-white/5 text-slate-500 border-glass-border hover:bg-white/10'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Fiyat */}
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Fiyat (₺)</label>
-        <input
-          type="number"
-          value={formData.estimated_value}
-          onChange={(e) => setFormData(prev => ({ ...prev, estimated_value: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
-          placeholder="50000"
-          min="0"
-          step="100"
-        />
-        <p className="text-xs text-text-secondary mt-1">Kazanıldı aşamasına geçince finansal takibe otomatik eklenir</p>
+        {/* Fiyat */}
+        <div>
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tahmini Değer (₺)</label>
+          <input
+            type="number"
+            value={formData.estimated_value}
+            onChange={(e) => setFormData(prev => ({ ...prev, estimated_value: e.target.value }))}
+            className="w-full px-5 py-2.5 bg-surface-dark/50 border border-glass-border rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 font-mono text-sm"
+            placeholder="0.00"
+            min="0"
+          />
+        </div>
       </div>
 
       {/* Takip Tarihi */}
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Takip Tarihi</label>
+        <div className="flex justify-between items-center mb-2 px-1">
+          <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Takip Tarihi</label>
+          <span className="text-[10px] text-slate-600 font-medium">Opsiyonel</span>
+        </div>
 
-        {/* Hızlı Tarih Butonları */}
         <div className="flex flex-wrap gap-2 mb-3">
           {QUICK_DATES.map(({ label, days }) => (
             <button
               key={days}
               type="button"
               onClick={() => handleQuickDate(days)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+              className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all border ${
                 formData.follow_up_date === addDays(days)
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-dark text-text-secondary hover:bg-[#233648] hover:text-white border border-border-dark'
+                  ? 'bg-slate-200 text-slate-900 border-slate-200 shadow-lg shadow-white/5'
+                  : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-white border-glass-border'
               }`}
             >
               {label}
@@ -212,59 +214,58 @@ export default function PipelineForm({
             <button
               type="button"
               onClick={clearDate}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 transition-all"
+              className="px-3 py-2 rounded-xl text-[10px] font-bold uppercase bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition-all flex items-center justify-center"
             >
-              Temizle
+              <span className="material-symbols-rounded text-[14px]">close</span>
             </button>
           )}
         </div>
 
-        {/* Manuel Tarih Seçici */}
         <input
           type="date"
           value={formData.follow_up_date}
           onChange={(e) => setFormData(prev => ({ ...prev, follow_up_date: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary transition-colors"
+          className="w-full px-5 py-3 bg-surface-dark/50 border border-glass-border rounded-xl text-white focus:outline-none focus:border-primary/50 text-sm"
         />
       </div>
 
       {/* Notlar */}
       <div>
-        <label className="block text-sm text-text-secondary mb-2">Notlar</label>
+        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Notlar</label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors resize-none"
-          placeholder="Proje veya müşteri hakkında notlar..."
+          className="w-full px-5 py-4 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all resize-none text-sm font-light italic"
+          placeholder="İş birliği hakkında kısa notlar..."
           rows={3}
         />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl animate-pulse">
+          <p className="text-rose-400 text-xs font-bold text-center uppercase tracking-wider">{error}</p>
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
+          className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-glass-border"
         >
-          İptal
+          Geri Dön
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="flex-1 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
+          className="flex-[1.5] py-4 bg-white text-slate-900 hover:bg-slate-200 disabled:opacity-50 font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xl shadow-white/5 active:scale-[0.98]"
         >
           {loading ? (
             <span className="material-symbols-rounded animate-spin">progress_activity</span>
           ) : (
             <>
-              <span className="material-symbols-rounded">{editMode ? 'save' : 'add'}</span>
-              {editMode ? 'Güncelle' : 'Ekle'}
+              <span className="material-symbols-rounded font-black">{editMode ? 'sync' : 'stars'}</span>
+              <span className="uppercase tracking-widest">{editMode ? 'Güncelle' : 'Yolculuğu Başlat'}</span>
             </>
           )}
         </button>

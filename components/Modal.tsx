@@ -32,21 +32,25 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-surface-dark border border-border-dark rounded-2xl w-full max-w-lg mx-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      {/* Modal Container */}
+      <div className="relative bg-glass-bg backdrop-blur-3xl border border-glass-border rounded-3xl w-full max-w-lg mx-4 shadow-glass animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        <div className="absolute -top-12 -right-12 size-32 bg-primary/20 rounded-full blur-3xl" />
+        
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border-dark">
-          <h2 className="text-xl font-semibold text-white">{title}</h2>
+        <div className="flex items-center justify-between p-8 pb-4 relative z-10">
+          <h2 className="text-2xl font-black text-white tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="text-text-secondary hover:text-white transition-colors p-1"
+            className="size-10 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center border border-white/10"
           >
             <span className="material-symbols-rounded text-2xl">close</span>
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-8 pt-4 relative z-10">
           {children}
         </div>
       </div>

@@ -8,10 +8,10 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
     
     <!-- Material Symbols -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&family=Material+Symbols+Rounded:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries,typography"></script>
@@ -21,24 +21,48 @@
         theme: {
           extend: {
             colors: {
-              primary: "#137fec",
-              "background-light": "#f6f7f8",
-              "background-dark": "#101922",
-              "surface-dark": "#16212b",
-              "surface-lighter": "#233648",
-              "text-secondary": "#92adc9",
-              "border-dark": "#233648",
+              primary: {
+                DEFAULT: "#6366f1",
+                dark: "#4f46e5",
+                light: "#818cf8",
+              },
+              accent: "#f43f5e",
+              "background-light": "#f8fafc",
+              "background-dark": "#020617",
+              "surface-dark": "#0f172a",
+              "surface-lighter": "#1e293b",
+              "glass-bg": "rgba(15, 23, 42, 0.6)",
+              "glass-border": "rgba(255, 255, 255, 0.08)",
+              "text-secondary": "#94a3b8",
+              "border-dark": "rgba(255, 255, 255, 0.05)",
             },
             fontFamily: {
-              display: ["Inter", "sans-serif"],
+              display: ["Outfit", "Inter", "sans-serif"],
               mono: ["Fira Code", "monospace"],
             },
+            boxShadow: {
+              'premium': '0 0 50px -12px rgba(99, 102, 241, 0.15)',
+              'premium-hover': '0 0 60px -10px rgba(99, 102, 241, 0.25)',
+              'glass': 'inset 0 0 0 1px rgba(255, 255, 255, 0.05)',
+            },
             borderRadius: {
-              DEFAULT: "0.25rem",
-              lg: "0.5rem",
-              xl: "0.75rem",
+              DEFAULT: "0.5rem",
+              lg: "0.75rem",
+              xl: "1rem",
+              "2xl": "1.5rem",
+              "3xl": "2rem",
               full: "9999px",
             },
+            animation: {
+              'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
+            }
           },
         },
       };
