@@ -392,7 +392,7 @@ export default function FinanceDashboard() {
                   <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Total Receivable</p>
                   <p className="text-white text-4xl font-black tracking-tighter">₺{stats.totalReceivable.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-500 font-medium">{stats.pendingCount} active invoices</p>
+               <p className="text-[10px] text-slate-400 font-medium">{stats.pendingCount} active invoices</p>
             </div>
 
             {/* Overdue Widget */}
@@ -404,7 +404,7 @@ export default function FinanceDashboard() {
                   <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Overdue</p>
                   <p className="text-white text-3xl font-black tracking-tighter text-rose-400">₺{stats.totalOverdue.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-500 font-medium">Immediate attention needed</p>
+               <p className="text-[10px] text-slate-400 font-medium">Immediate attention needed</p>
             </div>
 
             {/* This Week Widget */}
@@ -416,11 +416,11 @@ export default function FinanceDashboard() {
                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Coming This Week</p>
                   <p className="text-white text-3xl font-black tracking-tighter">₺{stats.dueThisWeek.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-500 font-medium">Estimated cash flow</p>
+               <p className="text-[10px] text-slate-400 font-medium">Estimated cash flow</p>
             </div>
 
             {/* Timer Console Widget */}
-            <div className="size-full h-36 bg-[#111827] border border-primary/20 rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/50 transition-all shadow-premium overflow-hidden">
+            <div className="size-full h-36 bg-surface-lighter border border-primary/20 rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/50 transition-all shadow-premium overflow-hidden">
                <div className="absolute top-0 right-0 p-4 opacity-5">
                   <span className="material-symbols-rounded text-7xl text-primary animate-pulse">timer</span>
                </div>
@@ -432,34 +432,34 @@ export default function FinanceDashboard() {
                        <span className="size-2 rounded-full bg-green-500 animate-ping" />
                     </div>
                     <p className="text-white text-2xl font-black font-mono tracking-tight my-auto">{formatDurationDetailed(elapsedSeconds)}</p>
-                    <div className="flex items-center justify-between group/row mt-auto">
-                       <span className="text-[10px] text-slate-500 truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Project'}</span>
-                       <button onClick={stopTimer} className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">Stop</button>
-                    </div>
+                     <div className="flex items-center justify-between group/row mt-auto">
+                        <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Project'}</span>
+                        <button onClick={stopTimer} className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">Stop</button>
+                     </div>
                  </div>
                ) : (
-                 <div className="flex flex-col h-full">
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Time Tracking</p>
-                    <div className="mt-auto flex flex-col gap-2">
-                       <div className="flex gap-2">
-                          <select 
-                             value={timerClientId} 
-                             onChange={(e) => setTimerClientId(e.target.value)}
-                             className="flex-1 bg-white/5 border border-white/5 rounded-xl text-[10px] text-slate-300 px-2 py-1.5 focus:outline-none focus:border-primary/50 appearance-none"
-                          >
-                             <option value="">Client...</option>
-                             {clients.map(c => <option key={c.id} value={c.id}>{c.first_name}</option>)}
-                          </select>
-                          <button 
-                             onClick={() => timerClientId && startTimer(timerDescription, undefined, timerClientId)}
-                             className="size-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-                          >
-                             <span className="material-symbols-rounded font-black">play_arrow</span>
-                          </button>
-                       </div>
-                       <p className="text-[10px] text-slate-600 font-medium">Daily total: {timeStatsData.todayFormatted}</p>
-                    </div>
-                 </div>
+                  <div className="flex flex-col h-full">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Time Tracking</p>
+                     <div className="mt-auto flex flex-col gap-2">
+                        <div className="flex gap-2">
+                           <select 
+                              value={timerClientId} 
+                              onChange={(e) => setTimerClientId(e.target.value)}
+                              className="flex-1 bg-white/5 border border-white/5 rounded-xl text-[10px] text-slate-300 px-2 py-1.5 focus:outline-none focus:border-primary/50 appearance-none"
+                           >
+                              <option value="">Client...</option>
+                              {clients.map(c => <option key={c.id} value={c.id}>{c.first_name}</option>)}
+                           </select>
+                           <button 
+                              onClick={() => timerClientId && startTimer(timerDescription, undefined, timerClientId)}
+                              className="size-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all"
+                           >
+                              <span className="material-symbols-rounded font-black">play_arrow</span>
+                           </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium">Daily total: {timeStatsData.todayFormatted}</p>
+                     </div>
+                  </div>
                )}
             </div>
           </div>

@@ -142,7 +142,7 @@ export default function MeetingNotes() {
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
+              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -222,13 +222,13 @@ export default function MeetingNotes() {
                         {note.clients.first_name} {note.clients.last_name}
                       </p>
                     ) : (
-                      <p className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-1">General</p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 opacity-60">General</p>
                     )}
                   </div>
                   
                   {note.content && (
                     <div
-                      className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed"
+                      className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed"
                       dangerouslySetInnerHTML={{
                         __html: note.content.replace(/<[^>]*>/g, ' ').substring(0, 100)
                       }}
@@ -367,10 +367,10 @@ export default function MeetingNotes() {
           <div className="flex-1 flex flex-col items-center justify-center bg-background-dark/30">
             <div className="relative mb-8">
                <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
-               <span className="material-symbols-rounded text-slate-600 text-[120px] relative z-10">edit_note</span>
+               <span className="material-symbols-rounded text-slate-400 text-[120px] relative z-10 opacity-40">edit_note</span>
             </div>
             <h3 className="text-3xl font-black text-white mb-2 tracking-tight">Select an Asset</h3>
-            <p className="text-slate-500 mb-8 max-w-sm text-center font-medium">Capture ideas, meeting minutes, or technical documentation in your premium workspace.</p>
+            <p className="text-slate-400 mb-8 max-w-sm text-center font-medium opacity-80">Capture ideas, meeting minutes, or technical documentation in your premium workspace.</p>
             <button
               onClick={handleNewNote}
               className="px-10 py-4 bg-white text-slate-900 hover:bg-slate-100 font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-white/5 active:scale-95"

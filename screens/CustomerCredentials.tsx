@@ -61,7 +61,7 @@ function CredentialForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Client Connection</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Client Connection</label>
           <select
             value={formData.client_id}
             onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
@@ -77,7 +77,7 @@ function CredentialForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Protocol Type</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Protocol Type</label>
           <select
             value={formData.category || 'web'}
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -91,7 +91,7 @@ function CredentialForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Resource Title</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Resource Title</label>
         <input
           type="text"
           value={formData.service_name}
@@ -105,7 +105,7 @@ function CredentialForm({
       <div className="space-y-2">
         <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Endpoint URL / Host</label>
         <div className="relative">
-           <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">link</span>
+           <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">link</span>
            <input
             type="text"
             value={formData.url || ''}
@@ -118,7 +118,7 @@ function CredentialForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
             Identity / Username
           </label>
           <input
@@ -144,7 +144,7 @@ function CredentialForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Security Notes</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Security Notes</label>
         <textarea
           value={formData.notes || ''}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
@@ -361,19 +361,19 @@ export default function CustomerCredentials() {
       <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
         <div className="p-6 space-y-6">
           <div className="flex flex-col gap-1 mb-2">
-            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Security Center</span>
-            <h2 className="text-white text-2xl font-black tracking-tight">Identity Vault</h2>
+             <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-80 leading-none">Security Center</span>
+             <h2 className="text-white text-2xl font-black tracking-tight mt-1">Identity Vault</h2>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
-                placeholder="Search assets..."
-              />
+               <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
+                  placeholder="Search assets..."
+                />
             </div>
             <button
                onClick={() => setShowForm(true)}

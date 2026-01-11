@@ -61,7 +61,7 @@ function Dashboard() {
       className={`group relative flex items-center justify-center size-12 rounded-2xl transition-all duration-300 ${
         currentScreen === screen
           ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110'
-          : 'text-slate-500 hover:bg-white/5 hover:text-white'
+          : 'text-slate-400 hover:bg-white/5 hover:text-white'
       }`}
       title={label}
     >
@@ -88,13 +88,13 @@ function Dashboard() {
         </div>
 
         <div className="flex flex-col gap-6 w-full px-4 items-center">
-          <NavItem screen={Screen.KANBAN} icon="dashboard" label="Sales Process" />
-          <NavItem screen={Screen.PROPOSAL} icon="description" label="Proposals" />
-          <NavItem screen={Screen.NOTES} icon="edit_note" label="Meetings & Notes" />
-          <NavItem screen={Screen.CREDENTIALS} icon="key" label="Customer Credentials" />
-          <NavItem screen={Screen.FINANCE} icon="payments" label="Finance" />
-          <NavItem screen={Screen.SNIPPETS} icon="terminal" label="Code Snippets" />
-          <NavItem screen={Screen.CALENDAR} icon="calendar_today" label="Calendar & Bookings" />
+          <NavItem screen={Screen.KANBAN} icon="dashboard" label="Satış Süreci" />
+          <NavItem screen={Screen.PROPOSAL} icon="description" label="Teklifler" />
+          <NavItem screen={Screen.NOTES} icon="edit_note" label="Toplantı & Notlar" />
+          <NavItem screen={Screen.CREDENTIALS} icon="key" label="Müşteri Bilgileri" />
+          <NavItem screen={Screen.FINANCE} icon="payments" label="Finans" />
+          <NavItem screen={Screen.SNIPPETS} icon="terminal" label="Kod Snippetları" />
+          <NavItem screen={Screen.CALENDAR} icon="calendar_today" label="Takvim & Randevular" />
         </div>
 
         <div className="mt-auto flex flex-col gap-6 items-center">
@@ -113,7 +113,7 @@ function Dashboard() {
           {/* Logout Button */}
           <button
             onClick={signOut}
-            className="size-11 rounded-2xl text-slate-500 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 flex items-center justify-center group"
+            className="size-11 rounded-2xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 flex items-center justify-center group"
             title="Çıkış Yap"
           >
             <span className="material-symbols-rounded text-[24px] font-light group-hover:rotate-12">logout</span>

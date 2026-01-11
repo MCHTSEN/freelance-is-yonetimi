@@ -227,7 +227,7 @@ export default function CodeSnippets() {
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[20px]">search</span>
+               <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -247,7 +247,7 @@ export default function CodeSnippets() {
             <button
               onClick={() => setFilterLang(null)}
               className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
-                !filterLang ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
+                !filterLang ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
               }`}
             >
               All
@@ -257,7 +257,7 @@ export default function CodeSnippets() {
                 key={lang.value}
                 onClick={() => setFilterLang(filterLang === lang.value ? null : lang.value)}
                 className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${
-                  filterLang === lang.value ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
+                  filterLang === lang.value ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
                 }`}
               >
                 {lang.label}
@@ -286,7 +286,7 @@ export default function CodeSnippets() {
                 <div className={`size-10 rounded-xl flex items-center justify-center transition-all ${
                   activeSnippet?.id === snippet.id
                     ? 'bg-primary text-white'
-                    : 'bg-white/5 text-slate-500 group-hover:bg-white/10 group-hover:text-slate-300'
+                    : 'bg-white/10 text-slate-400 group-hover:bg-white/20 group-hover:text-slate-200'
                 }`}>
                    <span className="material-symbols-rounded text-[20px] font-light">code_blocks</span>
                 </div>

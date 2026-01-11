@@ -77,8 +77,8 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
   return (
     <div
       onClick={onEdit}
-      className={`group relative bg-[#111827] border border-white/10 p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
-        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-[#1f2937] hover:border-primary/50'
+      className={`group relative bg-surface-lighter border border-white/10 p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
+        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-surface-lighter/80 hover:border-primary/50'
       }`}
     >
       {/* High-end glass shadow effect on hover */}
@@ -124,7 +124,7 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
 
       {/* Status & Notes */}
       {item.notes && (
-        <p className="text-slate-500 text-sm mb-4 line-clamp-2 italic font-light relative z-10">
+        <p className="text-slate-400 text-sm mb-4 line-clamp-2 italic font-light relative z-10">
           "{item.notes}"
         </p>
       )}
@@ -139,7 +139,7 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-slate-500 text-xs">
+          <div className="flex items-center gap-2 text-slate-400 text-xs text-secondary">
             <span className="material-symbols-rounded text-[16px] font-light">calendar_today</span>
             <span>{item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'No follow-up'}</span>
           </div>
@@ -573,7 +573,7 @@ export default function SalesKanban() {
                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Active</p>
                 <p className="text-white text-3xl font-black">{items.length}</p>
              </div>
-             <p className="text-[10px] text-slate-500 font-medium mt-auto">Live Deals</p>
+             <p className="text-[10px] text-slate-400 font-medium mt-auto text-secondary">Live Deals</p>
           </div>
 
           <div className="flex flex-col gap-4">
