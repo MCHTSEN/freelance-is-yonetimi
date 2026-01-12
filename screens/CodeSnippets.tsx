@@ -221,8 +221,8 @@ export default function CodeSnippets() {
       <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
         <div className="p-6 space-y-4">
           <div className="flex flex-col gap-1 mb-4">
-            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Developer Vault</span>
-            <h2 className="text-white text-2xl font-black tracking-tight">Snippets</h2>
+            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Geliştirici Kasası</span>
+            <h2 className="text-white text-2xl font-black tracking-tight">Snippet'lar</h2>
           </div>
 
           <div className="flex items-center gap-2">
@@ -232,7 +232,7 @@ export default function CodeSnippets() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
-                placeholder="Search repository..."
+                placeholder="Kodlarda ara..."
               />
             </div>
             <button
@@ -250,7 +250,7 @@ export default function CodeSnippets() {
                 !filterLang ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/5 text-slate-400 hover:text-white'
               }`}
             >
-              All
+              Tümü
             </button>
             {LANGUAGE_OPTIONS.slice(0, 5).map(lang => (
               <button
@@ -270,7 +270,7 @@ export default function CodeSnippets() {
           {filteredSnippets.length === 0 ? (
             <div className="text-center py-12 px-4 opacity-30">
               <span className="material-symbols-rounded text-6xl mb-4">folder_off</span>
-              <p className="text-sm font-black uppercase tracking-widest">No matching assets</p>
+              <p className="text-sm font-black uppercase tracking-widest">Eşleşen öğe bulunamadı</p>
             </div>
           ) : (
             filteredSnippets.map(snippet => (
@@ -319,7 +319,7 @@ export default function CodeSnippets() {
                 </span>
               </div>
               <p className="text-slate-500 text-xs font-medium">
-                Updated on {activeSnippet.created_at ? new Date(activeSnippet.created_at).toLocaleDateString() : 'Unknown'}
+                Son güncelleme: {activeSnippet.created_at ? new Date(activeSnippet.created_at).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -349,7 +349,7 @@ export default function CodeSnippets() {
                 }`}
               >
                 <span className="material-symbols-rounded text-[20px] font-black">{isCopied ? 'done_all' : 'content_copy'}</span>
-                {isCopied ? 'Copied' : 'Copy'}
+                {isCopied ? 'Kopyalandı' : 'Kopyala'}
               </button>
             </div>
           </div>
@@ -384,7 +384,7 @@ export default function CodeSnippets() {
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
                 <span className="material-symbols-outlined text-[14px]">schedule</span>
-                {activeSnippet.created_at ? new Date(activeSnippet.created_at).toLocaleDateString('tr-TR') : 'Unknown'}
+                {activeSnippet.created_at ? new Date(activeSnippet.created_at).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
               </span>
             </div>
             <div className="flex items-center gap-4">

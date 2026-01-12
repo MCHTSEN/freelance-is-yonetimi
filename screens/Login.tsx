@@ -40,7 +40,7 @@ export default function Login() {
           </div>
           <div className="space-y-1">
              <h1 className="text-4xl font-black text-white tracking-tight leading-none">Freelance OS</h1>
-             <p className="text-slate-500 font-black uppercase text-[10px] tracking-[0.4em]">Integrated Work Management</p>
+             <p className="text-slate-500 font-black uppercase text-[10px] tracking-[0.4em]">Entegre İş Yönetimi</p>
           </div>
         </div>
 
@@ -48,16 +48,16 @@ export default function Login() {
         <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/5 rounded-[3rem] p-10 shadow-[0_30px_100px_rgba(0,0,0,0.5)]">
           <div className="mb-8 space-y-1">
              <h2 className="text-2xl font-black text-white tracking-tight">
-               {isSignUp ? 'Initialize Instance' : 'Authentication Required'}
+               {isSignUp ? 'Yeni Kayıt Oluştur' : 'Kimlik Doğrulama Gerekli'}
              </h2>
              <p className="text-slate-500 text-xs font-medium">
-               {isSignUp ? 'Create your master account' : 'Please verify your identity to proceed'}
+               {isSignUp ? 'Ana hesabınızı oluşturun' : 'Devam etmek için lütfen kimliğinizi doğrulayın'}
              </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Universal Identity</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Evrensel Kimlik</label>
               <div className="relative group">
                  <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[20px] group-focus-within:text-primary transition-colors">alternate_email</span>
                  <input
@@ -65,14 +65,14 @@ export default function Login() {
                    value={email}
                    onChange={(e) => setEmail(e.target.value)}
                    className="w-full pl-12 pr-6 py-4 bg-white/5 border border-white/5 rounded-2xl text-white placeholder-slate-700 focus:outline-none focus:border-primary/50 font-bold transition-all"
-                   placeholder="identity@freelance.os"
+                   placeholder="kimlik@freelance.os"
                    required
                  />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Access Protocol</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Erişim Protokolü</label>
               <div className="relative group">
                  <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 text-[20px] group-focus-within:text-primary transition-colors">lock</span>
                  <input
@@ -106,7 +106,7 @@ export default function Login() {
                   <span className="material-symbols-rounded text-[20px] font-black">
                     {isSignUp ? 'person_add' : 'verified_user'}
                   </span>
-                  {isSignUp ? 'Begin Initialization' : 'Authorize Access'}
+                  {isSignUp ? 'Kaydı Başlat' : 'Erişimi Yetkilendir'}
                 </>
               )}
             </button>
@@ -121,8 +121,8 @@ export default function Login() {
               className="group text-slate-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest"
             >
               {isSignUp
-                ? 'Back to Secure Login'
-                : 'Need New Instance? Register'}
+                ? 'Güvenli Girişe Dön'
+                : 'Hesabınız yok mu? Kayıt Ol'}
             </button>
           </div>
         </div>
@@ -131,7 +131,7 @@ export default function Login() {
         <div className="mt-10 flex flex-col items-center gap-4">
            <div className="flex items-center gap-3 text-slate-700">
              <div className="h-px w-8 bg-slate-800" />
-             <p className="text-[10px] font-black uppercase tracking-[0.5em]">Freelance OS Console v1.0</p>
+             <p className="text-[10px] font-black uppercase tracking-[0.5em]">Freelance OS Konsolu v1.0</p>
              <div className="h-px w-8 bg-slate-800" />
            </div>
            <div className="flex gap-4">

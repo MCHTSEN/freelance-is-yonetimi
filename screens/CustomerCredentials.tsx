@@ -4,10 +4,10 @@ import { useClients } from '../hooks/useClients'
 import { useCredentials, type CredentialType, type CredentialWithClient } from '../hooks/useCredentials'
 
 const CREDENTIAL_TYPES: { value: CredentialType; label: string; icon: string; color: string; bg: string }[] = [
-  { value: 'web', label: 'Web Entry', icon: 'language', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+  { value: 'web', label: 'Web Girişi', icon: 'language', color: 'text-blue-400', bg: 'bg-blue-500/10' },
   { value: 'ssh', label: 'Terminal / SSH', icon: 'terminal', color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  { value: 'db', label: 'Database', icon: 'database', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  { value: 'api', label: 'API / Service', icon: 'api', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { value: 'db', label: 'Veritabanı', icon: 'database', color: 'text-purple-400', bg: 'bg-purple-500/10' },
+  { value: 'api', label: 'API / Servis', icon: 'api', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
 ]
 
 function CredentialForm({
@@ -51,7 +51,7 @@ function CredentialForm({
         notes: formData.notes || null,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
+      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
       setLoading(false)
     }
@@ -61,13 +61,13 @@ function CredentialForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Client Connection</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Müşteri Bağlantısı</label>
           <select
             value={formData.client_id}
             onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
             className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
           >
-            <option value="" className="bg-slate-900">General / No Client</option>
+            <option value="" className="bg-slate-900">Genel / Müşterisiz</option>
             {clients.map(client => (
               <option key={client.id} value={client.id} className="bg-slate-900">
                 {client.first_name} {client.last_name}
@@ -77,7 +77,7 @@ function CredentialForm({
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Protocol Type</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Protokol Türü</label>
           <select
             value={formData.category || 'web'}
             onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
@@ -91,19 +91,19 @@ function CredentialForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Resource Title</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Kaynak Başlığı</label>
         <input
           type="text"
           value={formData.service_name}
           onChange={(e) => setFormData(prev => ({ ...prev, service_name: e.target.value }))}
           className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-bold"
-          placeholder="e.g. AWS Production Dashboard"
+          placeholder="örn. AWS Üretim Paneli"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Endpoint URL / Host</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Bağlantı URL'i / Host</label>
         <div className="relative">
            <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">link</span>
            <input
@@ -119,7 +119,7 @@ function CredentialForm({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-            Identity / Username
+            Kimlik / Kullanıcı Adı
           </label>
           <input
             type="text"
@@ -131,7 +131,7 @@ function CredentialForm({
         </div>
         <div className="space-y-2">
           <label className="text-[10px] font-black uppercase tracking-widest text-rose-500/80 ml-1">
-            Secret / Password
+            Sır / Şifre
           </label>
           <input
             type="password"
@@ -144,12 +144,12 @@ function CredentialForm({
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Security Notes</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Güvenlik Notları</label>
         <textarea
           value={formData.notes || ''}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
           className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-slate-300 text-sm focus:outline-none focus:border-primary/50 transition-all font-medium resize-none"
-          placeholder="Access restrictions, rotation policy, etc..."
+          placeholder="Erişim kısıtlamaları, yenileme politikası vb..."
           rows={3}
         />
       </div>
@@ -167,7 +167,7 @@ function CredentialForm({
           onClick={onCancel}
           className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-widest rounded-2xl transition-all"
         >
-          Cancel
+          İptal
         </button>
         <button
           type="submit"
@@ -179,7 +179,7 @@ function CredentialForm({
           ) : (
             <>
               <span className="material-symbols-rounded font-black">{initialData ? 'verified_user' : 'encrypted'}</span>
-              {initialData ? 'Update Vault' : 'Secure in Vault'}
+              {initialData ? 'Kasayı Güncelle' : 'Kasaya Güvenle Kaydet'}
             </>
           )}
         </button>
@@ -238,7 +238,7 @@ const CredentialCard = ({
         <div className="px-6 pb-6 pt-2 space-y-4">
           {cred.url && (
             <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Gateway Endpoint</label>
+              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Geçit Bağlantı Noktası</label>
               <a
                 href={cred.url}
                 target="_blank"
@@ -254,7 +254,7 @@ const CredentialCard = ({
           <div className="space-y-3 pt-2">
             {cred.username && (
               <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Identity / UID</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Kimlik / UID</label>
                 <div onClick={() => copyToClipboard(cred.username!, `${cred.id}-user`)} className="bg-white/[0.02] border border-white/5 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-between group/field">
                   <span className="text-white text-sm font-mono tracking-tight">{cred.username}</span>
                   <span className="material-symbols-rounded text-[14px] opacity-0 group-hover/field:opacity-100">{copiedId === `${cred.id}-user` ? 'done' : 'content_copy'}</span>
@@ -264,7 +264,7 @@ const CredentialCard = ({
 
             {cred.password_encrypted && (
               <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest text-rose-500/60">Secret / Token</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-rose-500/60">Sır / Token</label>
                 <div
                   className="relative h-11 bg-rose-500/5 border border-rose-500/10 rounded-xl overflow-hidden cursor-pointer group/pass"
                   onClick={() => !visibleSecrets[`${cred.id}-pass`] && toggleVisibility(`${cred.id}-pass`)}
@@ -284,7 +284,7 @@ const CredentialCard = ({
                   {!visibleSecrets[`${cred.id}-pass`] && (
                     <div className="absolute inset-0 flex items-center justify-center gap-2 text-rose-500/40 group-hover/pass:text-rose-400 transition-colors">
                        <span className="material-symbols-rounded text-[18px]">lock</span>
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Unlock Protocol</span>
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Kilit Çözme Protokolü</span>
                     </div>
                   )}
                 </div>
@@ -341,7 +341,7 @@ export default function CustomerCredentials() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('This action will permanently delete these credentials from the vault. Proceed?')) return
+    if (!confirm('Bu işlem bu bilgileri kasadan kalıcı olarak silecektir. Devam edilsin mi?')) return
     await deleteCredential(id)
   }
 
@@ -361,8 +361,8 @@ export default function CustomerCredentials() {
       <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
         <div className="p-6 space-y-6">
           <div className="flex flex-col gap-1 mb-2">
-             <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-80 leading-none">Security Center</span>
-             <h2 className="text-white text-2xl font-black tracking-tight mt-1">Identity Vault</h2>
+             <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-80 leading-none">Güvenlik Merkezi</span>
+             <h2 className="text-white text-2xl font-black tracking-tight mt-1">Kimlik Kasası</h2>
           </div>
 
           <div className="flex items-center gap-2">
@@ -372,7 +372,7 @@ export default function CustomerCredentials() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
-                  placeholder="Search assets..."
+                  placeholder="Varlıklarda ara..."
                 />
             </div>
             <button
@@ -395,8 +395,8 @@ export default function CustomerCredentials() {
               <span className="material-symbols-rounded text-xl font-black">vpn_lock</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-white text-xs font-black">Global Vault</span>
-              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{credentials.length} Records</span>
+              <span className="text-white text-xs font-black">Genel Kasa</span>
+              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{credentials.length} Kayıt</span>
             </div>
           </div>
 
@@ -417,7 +417,7 @@ export default function CustomerCredentials() {
               </div>
               <div className="flex flex-col overflow-hidden">
                 <span className="text-white text-xs font-bold truncate">{client.first_name} {client.last_name}</span>
-                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{getCredentialsByClient(client.id).length} Records</span>
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{getCredentialsByClient(client.id).length} Kayıt</span>
               </div>
             </div>
           ))}
@@ -430,14 +430,14 @@ export default function CustomerCredentials() {
            <div className="space-y-1">
               <div className="flex items-center gap-3">
                  <h1 className="text-4xl font-black text-white tracking-tight">
-                   {selectedClientId ? clients.find(c => c.id === selectedClientId)?.company || 'Secure Client Entity' : 'Master Infrastructure'}
+                   {selectedClientId ? clients.find(c => c.id === selectedClientId)?.company || 'Güvenli Müşteri Varlığı' : 'Ana Altyapı'}
                  </h1>
                  <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest animate-pulse">
-                    Live Encryption
+                    Canlı Şifreleme
                  </div>
               </div>
               <p className="text-slate-500 text-xs font-medium ml-1">
-                Encryption active • {filteredCredentials.length} protected resources
+                Şifreleme aktif • {filteredCredentials.length} korunan kaynak
               </p>
            </div>
            <button
@@ -445,7 +445,7 @@ export default function CustomerCredentials() {
              className="flex items-center gap-3 px-8 h-12 bg-primary hover:bg-primary-dark text-white rounded-[1rem] text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95"
            >
              <span className="material-symbols-rounded text-[20px] font-black">add_moderator</span>
-             New Protocol
+             Yeni Protokol
            </button>
         </header>
 
@@ -454,7 +454,7 @@ export default function CustomerCredentials() {
             {filteredCredentials.length === 0 ? (
                <div className="flex flex-col items-center justify-center py-24 opacity-30">
                   <span className="material-symbols-rounded text-8xl mb-6">lock_reset</span>
-                  <p className="text-xl font-black uppercase tracking-[0.3em]">No Secure Protocols Found</p>
+                  <p className="text-xl font-black uppercase tracking-[0.3em]">Güvenli Protokol Bulunamadı</p>
                </div>
             ) : (
                <div className="space-y-12">
@@ -467,7 +467,7 @@ export default function CustomerCredentials() {
                            <div className={`h-px flex-1 bg-gradient-to-r from-transparent to-white/5`} />
                            <h2 className={`text-[10px] font-black uppercase tracking-[0.4em] ${type.color} flex items-center gap-2`}>
                              <span className="material-symbols-rounded text-sm">{type.icon}</span>
-                             {type.label} Channels
+                             {type.label} Kanalları
                            </h2>
                            <div className={`h-px flex-1 bg-gradient-to-l from-transparent to-white/5`} />
                         </div>
@@ -494,7 +494,7 @@ export default function CustomerCredentials() {
         </div>
       </div>
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Initialize Secure Protocol">
+      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Güvenli Protokolü Başlat">
         <CredentialForm
           clients={clients}
           onSubmit={handleAdd}
@@ -503,7 +503,7 @@ export default function CustomerCredentials() {
         />
       </Modal>
 
-      <Modal isOpen={!!editingCredential} onClose={() => setEditingCredential(null)} title="Update Vault Structure">
+      <Modal isOpen={!!editingCredential} onClose={() => setEditingCredential(null)} title="Kasa Yapısını Güncelle">
         {editingCredential && (
           <CredentialForm
             clients={clients}

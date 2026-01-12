@@ -135,13 +135,13 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
           <div className="flex items-center gap-2 text-green-400 text-xs font-medium">
             <span className="material-symbols-rounded text-[16px]">schedule</span>
             <span className="animate-pulse">
-              Meeting at {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+              Toplantı: {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         ) : (
           <div className="flex items-center gap-2 text-slate-400 text-xs text-secondary">
             <span className="material-symbols-rounded text-[16px] font-light">calendar_today</span>
-            <span>{item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'No follow-up'}</span>
+            <span>{item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'Takip yok'}</span>
           </div>
         )}
         
@@ -270,7 +270,7 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAd
              <div className="size-16 rounded-3xl border-2 border-dashed border-slate-500 flex items-center justify-center mb-4 group-hover:border-primary transition-colors">
                 <span className="material-symbols-rounded text-3xl">add</span>
              </div>
-             <p className="text-xs font-medium uppercase tracking-widest text-center">Empty Stage</p>
+             <p className="text-xs font-medium uppercase tracking-widest text-center">Boş Aşama</p>
           </div>
         )}
       </div>
@@ -521,7 +521,7 @@ export default function SalesKanban() {
       <div className="flex-1 flex items-center justify-center bg-transparent">
         <div className="flex flex-col items-center gap-6">
           <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Initializing OS...</p>
+          <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Sistem Başlatılıyor...</p>
         </div>
       </div>
     )
@@ -534,11 +534,11 @@ export default function SalesKanban() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-1">
             <span className="material-symbols-rounded text-primary">analytics</span>
-            <span className="text-primary text-[10px] uppercase font-black tracking-[0.2em]">Management Console</span>
+            <span className="text-primary text-[10px] uppercase font-black tracking-[0.2em]">Yönetim Paneli</span>
           </div>
-          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Project Pipeline</h1>
+          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Satış Süreci</h1>
           <p className="text-slate-500 text-base font-light max-w-lg mt-2">
-            Track your journey from potential leads to successful collaborations.
+            Potansiyel fırsatlarınızdan başarılı iş birliklerine giden süreci takip edin.
           </p>
         </div>
 
@@ -550,7 +550,7 @@ export default function SalesKanban() {
                   <span className="material-symbols-rounded text-green-400">schedule</span>
                </div>
                <div className="relative z-10">
-                  <p className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">Next Up</p>
+                  <p className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">Sıradaki</p>
                   <p className="text-white text-sm font-bold truncate">{upcomingMeetings[0].client_name}</p>
                </div>
                <div className="relative z-10 mt-auto">
@@ -558,7 +558,7 @@ export default function SalesKanban() {
                     {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                   <p className="text-[10px] text-slate-500 font-medium">
-                    {new Date(upcomingMeetings[0].scheduled_at).toDateString() === new Date().toDateString() ? 'Today' : 'Upcoming'}
+                    {new Date(upcomingMeetings[0].scheduled_at).toDateString() === new Date().toDateString() ? 'Bugün' : 'Gelecek'}
                   </p>
                </div>
             </div>
@@ -570,10 +570,10 @@ export default function SalesKanban() {
                 <span className="material-symbols-rounded text-primary">rocket_launch</span>
              </div>
              <div>
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Active</p>
+                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Aktif</p>
                 <p className="text-white text-3xl font-black">{items.length}</p>
              </div>
-             <p className="text-[10px] text-slate-400 font-medium mt-auto text-secondary">Live Deals</p>
+             <p className="text-[10px] text-slate-400 font-medium mt-auto text-secondary">Canlı Fırsatlar</p>
           </div>
 
           <div className="flex flex-col gap-4">
@@ -585,7 +585,7 @@ export default function SalesKanban() {
               >
                 <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
                 <span className="material-symbols-rounded font-bold">add_circle</span>
-                <span>Create New Deal</span>
+                <span>Yeni Fırsat Oluştur</span>
               </button>
             </div>
             
@@ -594,7 +594,7 @@ export default function SalesKanban() {
                 <span className="material-symbols-rounded text-slate-500 group-focus-within:text-primary transition-colors">search</span>
                 <input
                   type="text"
-                  placeholder="Find anything..."
+                   placeholder="Ara..."
                   className="bg-transparent border-none focus:ring-0 text-sm text-white placeholder-slate-500 w-40 focus:w-60 transition-all duration-500"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}

@@ -91,9 +91,9 @@ function Dashboard() {
           <NavItem screen={Screen.KANBAN} icon="dashboard" label="Satış Süreci" />
           <NavItem screen={Screen.PROPOSAL} icon="description" label="Teklifler" />
           <NavItem screen={Screen.NOTES} icon="edit_note" label="Toplantı & Notlar" />
-          <NavItem screen={Screen.CREDENTIALS} icon="key" label="Müşteri Bilgileri" />
+          <NavItem screen={Screen.CREDENTIALS} icon="key" label="Müşteri Kasası" />
           <NavItem screen={Screen.FINANCE} icon="payments" label="Finans" />
-          <NavItem screen={Screen.SNIPPETS} icon="terminal" label="Kod Snippetları" />
+          <NavItem screen={Screen.SNIPPETS} icon="terminal" label="Kod Kasası" />
           <NavItem screen={Screen.CALENDAR} icon="calendar_today" label="Takvim & Randevular" />
         </div>
 

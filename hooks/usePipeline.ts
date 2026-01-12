@@ -35,12 +35,12 @@ export interface PipelineWithClient {
 }
 
 export const STAGE_CONFIG: Record<PipelineStage, { title: string; order: number }> = {
-  lead: { title: 'Lead', order: 1 },
+  lead: { title: 'Potansiyel', order: 1 },
   contacted: { title: 'Görüşüldü', order: 2 },
-  meeting: { title: 'Toplantı Yapılacak', order: 3 },
+  meeting: { title: 'Toplantı', order: 3 },
   proposal_sent: { title: 'Teklif Gönderildi', order: 4 },
   won: { title: 'Kazanıldı', order: 5 },
-  completed: { title: 'Bitti', order: 6 },
+  completed: { title: 'Tamamlandı', order: 6 },
 }
 
 export function usePipeline() {
@@ -113,15 +113,23 @@ export function usePipeline() {
     // Sadece "won" aşamasında ekleniyorsa finansal takibe ekle
     if (item.stage === 'won' && item.estimated_value && item.estimated_value > 0) {
       try {
-        await supabase.from('invoices').insert({
-          user_id: user.id,
-          client_id: item.client_id || null,
-          pipeline_id: data.id,
-          amount: item.estimated_value,
-          invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
-          notes: `Pipeline: ${data.id}`,
-          due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        })
+        // Önce bu pipeline için fatura var mı kontrol et
+        const { data: existingInvoices } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('pipeline_id', data.id)
+
+        if (!existingInvoices || existingInvoices.length === 0) {
+          await supabase.from('invoices').insert({
+            user_id: user.id,
+            client_id: item.client_id || null,
+            pipeline_id: data.id,
+            amount: item.estimated_value,
+            invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
+            notes: `Pipeline: ${data.id}`,
+            due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          })
+        }
       } catch (err) {
         console.error('Failed to create invoice:', err)
       }
@@ -151,26 +159,55 @@ export function usePipeline() {
     // Aşamayı güncelle
     const result = await updateItem(id, { stage: newStage })
 
-    // "won" aşamasına geçildiyse fatura oluştur (eğer zaten yoksa)
-    if (newStage === 'won' && item?.estimated_value && item.estimated_value > 0) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (user) {
-          // Since pipeline_id doesn't exist on invoices, we'll skip the check and just create it 
-          // or use the current logic but without the invalid column.
-          await supabase.from('invoices').insert({
-            user_id: user.id,
-            client_id: item.client_id || null,
-            amount: item.estimated_value,
-            invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
-            notes: `Pipeline: ${id}`,
-            due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          })
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        // "won" aşamasına geçildiyse fatura oluştur (eğer zaten yoksa)
+        if (newStage === 'won' && item?.estimated_value && item.estimated_value > 0) {
+          // Önce bu pipeline için fatura var mı kontrol et
+          const { data: existingInvoices } = await supabase
+            .from('invoices')
+            .select('id')
+            .eq('pipeline_id', id)
+
+          // Fatura yoksa oluştur
+          if (!existingInvoices || existingInvoices.length === 0) {
+            await supabase.from('invoices').insert({
+              user_id: user.id,
+              client_id: item.client_id || null,
+              pipeline_id: id,
+              amount: item.estimated_value,
+              invoice_number: `TKL-${Date.now().toString().slice(-6)}`,
+              notes: `Pipeline: ${id}`,
+              due_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            })
+          }
         }
-      } catch (err) {
-        console.error('Failed to create invoice on stage change:', err)
+
+        // "won" aşamasından ÇIKILIYORSA ve ödeme yapılmamışsa faturayı sil
+        if (previousStage === 'won' && newStage !== 'won') {
+          // Önce ödemesi olmayan faturaları kontrol et ve sil
+          const { data: invoiceData } = await supabase
+            .from('invoices')
+            .select(`id, invoice_payments (id)`)
+            .eq('pipeline_id', id)
+
+          if (invoiceData) {
+            for (const invoice of invoiceData) {
+              const payments = invoice.invoice_payments || []
+              if (payments.length === 0) {
+                await supabase.from('invoices').delete().eq('id', invoice.id)
+              }
+            }
+          }
+        }
       }
+    } catch (err) {
+      console.error('Invoice operation failed:', err)
     }
+
+    // Listeyi yenile (fatura değişikliklerini görmek için)
+    await fetchPipeline()
 
     return result
   }

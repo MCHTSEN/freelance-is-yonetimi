@@ -48,7 +48,7 @@ export default function PublicBooking() {
   })
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('tr-TR', {
       weekday: 'short',
       day: 'numeric',
       month: 'short'
@@ -80,7 +80,7 @@ export default function PublicBooking() {
       setSuccess(true)
       setStep('confirmation')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to schedule booking')
+      setError(err instanceof Error ? err.message : 'Randevu oluşturulamadı')
     } finally {
       setLoading(false)
     }
@@ -93,8 +93,8 @@ export default function PublicBooking() {
           <div className="size-20 bg-rose-500/10 rounded-[2rem] flex items-center justify-center mx-auto border border-rose-500/20">
              <span className="material-symbols-rounded text-rose-500 text-4xl">warning</span>
           </div>
-          <h1 className="text-2xl font-black text-white tracking-tight">Invalid Gateway</h1>
-          <p className="text-slate-500 font-medium">This booking link has expired or is invalid.</p>
+          <h1 className="text-2xl font-black text-white tracking-tight">Geçersiz Bağlantı</h1>
+          <p className="text-slate-500 font-medium">Bu randevu bağlantısı süresi dolmuş veya geçersiz.</p>
         </div>
       </div>
     )
@@ -115,8 +115,8 @@ export default function PublicBooking() {
               </div>
            </div>
            <div className="space-y-1">
-              <h1 className="text-3xl font-black tracking-tight text-white leading-none">Schedule Session</h1>
-              <p className="text-slate-500 font-medium uppercase text-[10px] tracking-[0.3em]">Discovery Meeting • 30 Minutes</p>
+              <h1 className="text-3xl font-black tracking-tight text-white leading-none">Oturum Planla</h1>
+              <p className="text-slate-500 font-medium uppercase text-[10px] tracking-[0.3em]">Tanışma Toplantısı • 30 Dakika</p>
            </div>
         </div>
 
@@ -143,8 +143,8 @@ export default function PublicBooking() {
            {step === 'date' && (
              <div className="p-10 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <div className="flex flex-col gap-1 items-center">
-                  <h2 className="text-xl font-black text-white tracking-tight">Select your availability</h2>
-                  <p className="text-slate-500 text-xs font-medium">Choose a convenient day for our session.</p>
+                  <h2 className="text-xl font-black text-white tracking-tight">Müsaitlik durumunuzu seçin</h2>
+                  <p className="text-slate-500 text-xs font-medium">Oturumumuz için uygun bir gün seçin.</p>
                </div>
                
                <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
@@ -172,7 +172,7 @@ export default function PublicBooking() {
                <div className="flex items-center justify-between">
                   <button onClick={() => setStep('date')} className="flex items-center gap-2 text-slate-500 hover:text-white transition-colors">
                      <span className="material-symbols-rounded text-[20px]">arrow_back</span>
-                     <span className="text-[10px] font-black uppercase tracking-widest mt-0.5">Change Date</span>
+                     <span className="text-[10px] font-black uppercase tracking-widest mt-0.5">Tarihi Değiştir</span>
                   </button>
                   <p className="text-[10px] font-black uppercase tracking-widest text-primary">{selectedDate && formatDate(selectedDate)}</p>
                </div>
@@ -203,7 +203,7 @@ export default function PublicBooking() {
              <div className="p-10 space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                <div className="flex items-center justify-between border-b border-white/5 pb-6">
                   <div className="space-y-1">
-                     <h2 className="text-xl font-black text-white tracking-tight">Finalizing session</h2>
+                     <h2 className="text-xl font-black text-white tracking-tight">Oturumu tamamlıyoruz</h2>
                      <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
                         <span className="material-symbols-rounded text-sm text-primary">event_available</span>
                         {selectedDate && formatDate(selectedDate)} @ {selectedTime}
@@ -217,17 +217,17 @@ export default function PublicBooking() {
                <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Identity</label>
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Kimlik</label>
                        <input
                         type="text" required
                         value={formData.clientName}
                         onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                         className="w-full bg-white/5 border border-white/5 rounded-2xl px-5 py-4 text-white placeholder-slate-700 focus:outline-none focus:border-primary/50 font-bold transition-all"
-                        placeholder="Your full name"
+                        placeholder="Tam adınız"
                       />
                     </div>
                     <div className="space-y-2">
-                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Communication</label>
+                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">İletişim</label>
                        <input
                          type="email" required
                          value={formData.clientEmail}
@@ -239,13 +239,13 @@ export default function PublicBooking() {
                  </div>
 
                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Strategic Session Notes</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Stratejik Oturum Notları</label>
                     <textarea
                       value={formData.notes}
                       onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                       rows={3}
                       className="w-full bg-white/5 border border-white/5 rounded-[1.5rem] px-5 py-4 text-white placeholder-slate-700 focus:outline-none focus:border-primary/50 font-medium transition-all resize-none shadow-inner"
-                      placeholder="Outline any key discussion points or project goals..."
+                      placeholder="Tartışılacak önemli noktaları veya proje hedeflerini belirtin..."
                     />
                  </div>
 
@@ -259,12 +259,12 @@ export default function PublicBooking() {
                    {loading ? (
                      <>
                        <span className="material-symbols-rounded animate-spin">progress_activity</span>
-                       Deploying Request...
+                       İstek Gönderiliyor...
                      </>
                    ) : (
                      <>
                        <span className="material-symbols-rounded font-black">verified</span>
-                       Confirm Reservation
+                       Rezervasyonu Onayla
                      </>
                    )}
                  </button>
@@ -280,8 +280,8 @@ export default function PublicBooking() {
                   <span className="material-symbols-rounded text-5xl text-white font-black">done_all</span>
                </div>
                <div className="space-y-3">
-                  <h2 className="text-3xl font-black text-white tracking-tight">Mission Secured!</h2>
-                  <p className="text-slate-500 font-medium max-w-xs mx-auto">Your session has been successfully logged. Expect a verification email shortly.</p>
+                  <h2 className="text-3xl font-black text-white tracking-tight">Görev Tamamlandı!</h2>
+                  <p className="text-slate-500 font-medium max-w-xs mx-auto">Oturumunuz başarıyla kaydedildi. Kısa süre içinde bir doğrulama e-postası bekleyin.</p>
                </div>
                
                <div className="bg-white/5 border border-white/5 rounded-[2rem] p-6 inline-block">
@@ -290,7 +290,7 @@ export default function PublicBooking() {
                       <span className="material-symbols-rounded">event</span>
                    </div>
                    <div className="text-left">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Scheduled Asset</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Planlanan Varlık</p>
                       <p className="text-white font-black tracking-tight">{selectedDate && formatDate(selectedDate)} • {selectedTime}</p>
                    </div>
                  </div>
@@ -302,7 +302,7 @@ export default function PublicBooking() {
         {/* Brand Signifier */}
         <div className="flex items-center justify-center gap-3 opacity-30 select-none">
            <div className="h-px w-8 bg-slate-500" />
-           <p className="text-[8px] font-black uppercase tracking-[0.5em] text-slate-500">Encrypted Infrastructure by Freelance OS</p>
+           <p className="text-[8px] font-black uppercase tracking-[0.5em] text-slate-500">Freelance OS Tarafından Şifrelenmiş Altyapı</p>
            <div className="h-px w-8 bg-slate-500" />
         </div>
       </div>

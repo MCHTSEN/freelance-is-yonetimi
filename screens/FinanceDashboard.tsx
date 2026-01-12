@@ -355,11 +355,11 @@ export default function FinanceDashboard() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-1">
             <span className="material-symbols-rounded text-primary">payments</span>
-            <span className="text-secondary text-[10px] uppercase font-black tracking-[0.2em] opacity-70">Financial Console</span>
+            <span className="text-secondary text-[10px] uppercase font-black tracking-[0.2em] opacity-70">Finansal Konsol</span>
           </div>
-          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Revenue Control</h1>
+          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Gelir Kontrolü</h1>
           <p className="text-slate-500 text-base font-light max-w-lg mt-2">
-            Automate your billing cycle and monitor your financial growth.
+            Fatura döngünüzü otomatikleştirin ve finansal büyümenizi izleyin.
           </p>
         </div>
 
@@ -372,7 +372,7 @@ export default function FinanceDashboard() {
             >
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
               <span className="material-symbols-rounded font-bold">add_notes</span>
-              <span>Create New Invoice</span>
+              <span>Yeni Fatura Oluştur</span>
             </button>
           </div>
         </div>
@@ -389,10 +389,10 @@ export default function FinanceDashboard() {
                   <span className="material-symbols-rounded text-7xl text-emerald-500">account_balance_wallet</span>
                </div>
                <div>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Total Receivable</p>
+                   <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Toplam Alacak</p>
                   <p className="text-white text-4xl font-black tracking-tighter">₺{stats.totalReceivable.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-400 font-medium">{stats.pendingCount} active invoices</p>
+               <p className="text-[10px] text-slate-400 font-medium">{stats.pendingCount} aktif fatura</p>
             </div>
 
             {/* Overdue Widget */}
@@ -401,10 +401,10 @@ export default function FinanceDashboard() {
                   <span className="material-symbols-rounded text-7xl text-rose-500">priority_high</span>
                </div>
                <div>
-                  <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Overdue</p>
+                   <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Vadesi Geçen</p>
                   <p className="text-white text-3xl font-black tracking-tighter text-rose-400">₺{stats.totalOverdue.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-400 font-medium">Immediate attention needed</p>
+               <p className="text-[10px] text-slate-400 font-medium">Acil dikkat gerekiyor</p>
             </div>
 
             {/* This Week Widget */}
@@ -413,10 +413,10 @@ export default function FinanceDashboard() {
                   <span className="material-symbols-rounded text-7xl text-primary">event_upcoming</span>
                </div>
                <div>
-                  <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Coming This Week</p>
+                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Bu Hafta Tahsilat</p>
                   <p className="text-white text-3xl font-black tracking-tighter">₺{stats.dueThisWeek.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-400 font-medium">Estimated cash flow</p>
+               <p className="text-[10px] text-slate-400 font-medium">Tahmini nakit akışı</p>
             </div>
 
             {/* Timer Console Widget */}
@@ -428,18 +428,18 @@ export default function FinanceDashboard() {
                {activeEntry ? (
                  <div className="flex flex-col h-full">
                     <div className="flex justify-between items-start mb-1">
-                       <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Active Session</p>
+                        <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Aktif Oturum</p>
                        <span className="size-2 rounded-full bg-green-500 animate-ping" />
                     </div>
                     <p className="text-white text-2xl font-black font-mono tracking-tight my-auto">{formatDurationDetailed(elapsedSeconds)}</p>
                      <div className="flex items-center justify-between group/row mt-auto">
-                        <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Project'}</span>
-                        <button onClick={stopTimer} className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">Stop</button>
+                        <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Proje'}</span>
+                        <button onClick={stopTimer} className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">Durdur</button>
                      </div>
                  </div>
                ) : (
                   <div className="flex flex-col h-full">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Time Tracking</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Zaman Takibi</p>
                      <div className="mt-auto flex flex-col gap-2">
                         <div className="flex gap-2">
                            <select 
@@ -447,7 +447,7 @@ export default function FinanceDashboard() {
                               onChange={(e) => setTimerClientId(e.target.value)}
                               className="flex-1 bg-white/5 border border-white/5 rounded-xl text-[10px] text-slate-300 px-2 py-1.5 focus:outline-none focus:border-primary/50 appearance-none"
                            >
-                              <option value="">Client...</option>
+                               <option value="">Müşteri...</option>
                               {clients.map(c => <option key={c.id} value={c.id}>{c.first_name}</option>)}
                            </select>
                            <button 
@@ -457,7 +457,7 @@ export default function FinanceDashboard() {
                               <span className="material-symbols-rounded font-black">play_arrow</span>
                            </button>
                         </div>
-                        <p className="text-[10px] text-slate-400 font-medium">Daily total: {timeStatsData.todayFormatted}</p>
+                         <p className="text-[10px] text-slate-400 font-medium">Günlük toplam: {timeStatsData.todayFormatted}</p>
                      </div>
                   </div>
                )}
@@ -526,7 +526,7 @@ export default function FinanceDashboard() {
                                 </div>
                                 <div className="flex flex-col">
                                    <span className="text-sm">{clientName}</span>
-                                   <span className="text-[10px] text-slate-500 font-medium">Standard Project</span>
+                                    <span className="text-[10px] text-slate-500 font-medium">Standart Proje</span>
                                 </div>
                              </div>
                           </td>
@@ -548,7 +548,7 @@ export default function FinanceDashboard() {
                                    />
                                 </div>
                                 <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none">
-                                   {progress.toFixed(0)}% Collected
+                                    %{progress.toFixed(0)} Tahsil Edildi
                                 </span>
                              </div>
                           </td>
@@ -564,8 +564,8 @@ export default function FinanceDashboard() {
                                       onClick={() => setPaymentInvoice(inv)}
                                       className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 rounded-xl hover:bg-emerald-500 hover:text-slate-900 border border-emerald-500/20 transition-all active:scale-95"
                                    >
-                                      Pay
-                                   </button>
+                                       Öde
+                                    </button>
                                 )}
                                 <button
                                    onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === inv.id ? null : inv.id) }}

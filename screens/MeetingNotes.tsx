@@ -136,8 +136,8 @@ export default function MeetingNotes() {
       <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
         <div className="p-6 space-y-6">
           <div className="flex flex-col gap-1 mb-2">
-            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Knowledge Base</span>
-            <h2 className="text-white text-2xl font-black tracking-tight">Meeting Notes</h2>
+            <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-70 leading-none">Bilgi Bankası</span>
+            <h2 className="text-white text-2xl font-black tracking-tight">Toplantı Notları</h2>
           </div>
 
           <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function MeetingNotes() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
-                placeholder="Search notes..."
+                placeholder="Notlarda ara..."
               />
             </div>
             <button
@@ -165,7 +165,7 @@ export default function MeetingNotes() {
                 typeFilter === 'all' ? 'bg-white text-slate-900 border-white' : 'bg-white/5 border-white/5 text-slate-500 hover:text-white'
               }`}
             >
-              All
+              Tümü
             </button>
             {NOTE_TYPES.map(type => (
               <button
@@ -186,7 +186,7 @@ export default function MeetingNotes() {
           {filteredNotes.length === 0 ? (
             <div className="text-center py-12 px-4 opacity-30">
               <span className="material-symbols-rounded text-6xl mb-4">description_off</span>
-              <p className="text-sm font-black uppercase tracking-widest">No assets found</p>
+              <p className="text-sm font-black uppercase tracking-widest">Not bulunamadı</p>
             </div>
           ) : (
             filteredNotes.map(note => {
@@ -215,14 +215,14 @@ export default function MeetingNotes() {
                     <h3 className={`text-sm font-bold truncate tracking-tight transition-colors ${
                       isSelected ? 'text-white' : 'text-slate-300 group-hover:text-white'
                     }`}>
-                      {note.title || 'Untitled Note'}
+                      {note.title || 'Başlıksız Not'}
                     </h3>
                     {note.clients ? (
                       <p className="text-[10px] text-primary font-black uppercase tracking-widest mt-1 opacity-80">
                         {note.clients.first_name} {note.clients.last_name}
                       </p>
                     ) : (
-                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 opacity-60">General</p>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-1 opacity-60">Genel</p>
                     )}
                   </div>
                   
@@ -254,7 +254,7 @@ export default function MeetingNotes() {
                   onChange={(e) => setNoteTitle(e.target.value)}
                   onBlur={handleUpdateNote}
                   className="w-full bg-transparent text-3xl font-black text-white tracking-tight border-none focus:outline-none focus:ring-0 placeholder-slate-700"
-                  placeholder="Note title..."
+                  placeholder="Not başlığı..."
                 />
               </div>
               <div className="flex items-center gap-4">
@@ -273,7 +273,7 @@ export default function MeetingNotes() {
                   className="flex items-center justify-center gap-3 px-8 h-12 bg-primary hover:bg-primary-dark text-white rounded-[1rem] text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95"
                 >
                   <span className="material-symbols-rounded text-[20px] font-black">save</span>
-                  Save Note
+                   Kaydet
                 </button>
               </div>
             </div>
@@ -314,7 +314,7 @@ export default function MeetingNotes() {
                           }}
                           className="bg-transparent text-xs font-bold text-slate-300 focus:outline-none appearance-none pr-4"
                         >
-                          <option value="" className="bg-slate-900">Select Client</option>
+                          <option value="" className="bg-slate-900">Müşteri Seçin</option>
                           {clients.map(client => (
                             <option key={client.id} value={client.id} className="bg-slate-900">
                               {client.first_name} {client.last_name}
@@ -344,7 +344,7 @@ export default function MeetingNotes() {
                   <RichTextEditor
                     content={noteContent}
                     onChange={(content) => setNoteContent(content)}
-                    placeholder="Start documenting your session..."
+                    placeholder="Not yazmaya başlayın..."
                   />
                 </div>
               </div>
@@ -354,12 +354,12 @@ export default function MeetingNotes() {
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">history</span>
-                  Last synced: {new Date().toLocaleTimeString()}
+                  Son senkronizasyon: {new Date().toLocaleTimeString()}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                <span>Sync Active</span>
+                <span>Senkronizasyon Aktif</span>
               </div>
             </div>
           </>
@@ -369,13 +369,13 @@ export default function MeetingNotes() {
                <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
                <span className="material-symbols-rounded text-slate-400 text-[120px] relative z-10 opacity-40">edit_note</span>
             </div>
-            <h3 className="text-3xl font-black text-white mb-2 tracking-tight">Select an Asset</h3>
-            <p className="text-slate-400 mb-8 max-w-sm text-center font-medium opacity-80">Capture ideas, meeting minutes, or technical documentation in your premium workspace.</p>
+            <h3 className="text-3xl font-black text-white mb-2 tracking-tight">Bir Not Seçin</h3>
+            <p className="text-slate-400 mb-8 max-w-sm text-center font-medium opacity-80">Fikirlerinizi, toplantı tutanaklarını veya teknik dokümanları premium çalışma alanınızda saklayın.</p>
             <button
               onClick={handleNewNote}
               className="px-10 py-4 bg-white text-slate-900 hover:bg-slate-100 font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-white/5 active:scale-95"
             >
-              Initialize New Note
+              Yeni Not Oluştur
             </button>
           </div>
         )}
@@ -385,22 +385,22 @@ export default function MeetingNotes() {
       <Modal
         isOpen={showNewNoteModal}
         onClose={() => setShowNewNoteModal(false)}
-        title="Initialize New Asset"
+        title="Yeni Varlık Başlat"
       >
         <div className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Asset Title</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Not Başlığı</label>
             <input
               type="text"
               value={noteTitle}
               onChange={(e) => setNoteTitle(e.target.value)}
               className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-bold"
-              placeholder="e.g. System Architecture Update"
+              placeholder="Örn: Sistem Mimarisi Güncellemesi"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Category</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Kategori</label>
             <div className="grid grid-cols-3 gap-3">
               {NOTE_TYPES.map(type => (
                 <button
@@ -422,13 +422,13 @@ export default function MeetingNotes() {
 
           <div className="grid grid-cols-2 gap-4">
              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Client Connection</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Müşteri Bağlantısı</label>
                 <select
                   value={selectedClientId}
                   onChange={(e) => setSelectedClientId(e.target.value)}
                   className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
                 >
-                  <option value="" className="bg-slate-900">None</option>
+                  <option value="" className="bg-slate-900">Yok</option>
                   {clients.map(client => (
                     <option key={client.id} value={client.id} className="bg-slate-900">
                       {client.first_name} {client.last_name}
@@ -438,7 +438,7 @@ export default function MeetingNotes() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Timestamp</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Zaman Damgası</label>
                 <input
                   type="date"
                   value={meetingDate}
@@ -454,7 +454,7 @@ export default function MeetingNotes() {
               onClick={() => setShowNewNoteModal(false)}
               className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-widest rounded-2xl transition-all"
             >
-              Discard
+               Vazgeç
             </button>
             <button
               type="button"
@@ -462,7 +462,7 @@ export default function MeetingNotes() {
               className="flex-1 py-4 bg-primary hover:bg-primary-dark text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2"
             >
               <span className="material-symbols-rounded font-black">add</span>
-              Initialize Note
+              Notu Oluştur
             </button>
           </div>
         </div>

@@ -12,11 +12,11 @@ interface LineItem {
 
 export default function CreateProposal() {
   const [items, setItems] = useState<LineItem[]>([
-    { id: 1, name: 'UI/UX Design', desc: 'High-fidelity prototype design on Figma', qty: 40, price: 65 },
-    { id: 2, name: 'Frontend Geliştirme', desc: 'Responsive coding with React & Tailwind', qty: 60, price: 70 },
+    { id: 1, name: 'UI/UX Tasarımı', desc: 'Figma üzerinde yüksek sadakatli prototip tasarımı', qty: 40, price: 65 },
+    { id: 2, name: 'Frontend Geliştirme', desc: 'React & Tailwind ile duyarlı kodlama', qty: 60, price: 70 },
   ]);
   const [taxRate, setTaxRate] = useState(0.20);
-  const [title, setTitle] = useState("E-Commerce Platform Redesign");
+  const [title, setTitle] = useState("E-Ticaret Platformu Yenileme");
   const [proposalNote, setProposalNote] = useState('');
 
   const total = items.reduce((acc, item) => acc + (item.qty * item.price), 0);
@@ -49,11 +49,11 @@ export default function CreateProposal() {
 
   const handleSave = () => {
     const btn = document.getElementById('save-btn');
-    if(btn) btn.innerText = 'Syncing...';
+    if(btn) btn.innerText = 'Eşitleniyor...';
     setTimeout(() => {
         if(btn) {
-            btn.innerText = 'Synced!';
-            setTimeout(() => btn.innerText = 'Save Draft', 2000);
+            btn.innerText = 'Eşitlendi!';
+            setTimeout(() => btn.innerText = 'Taslağı Kaydet', 2000);
         }
     }, 800);
   };
@@ -66,10 +66,10 @@ export default function CreateProposal() {
            <div className="space-y-2">
               <div className="flex items-center gap-2">
                  <div className="size-2 rounded-full bg-primary animate-pulse" />
-                 <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-80">Proposal Studio</span>
+                 <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-80">Teklif Stüdyosu</span>
               </div>
-              <h1 className="text-4xl font-black text-white tracking-tight leading-none">Drafting New Proposal</h1>
-              <p className="text-slate-500 text-sm font-medium">Create and customize a professional quote for your client.</p>
+              <h1 className="text-4xl font-black text-white tracking-tight leading-none">Yeni Teklif Hazırlanıyor</h1>
+              <p className="text-slate-500 text-sm font-medium">Müşteriniz için profesyonel bir teklif oluşturun ve özelleştirin.</p>
            </div>
            
            <div className="flex items-center gap-4">
@@ -79,11 +79,11 @@ export default function CreateProposal() {
                 className="h-12 px-8 flex items-center gap-3 rounded-2xl bg-white/5 border border-white/5 text-slate-400 hover:text-white hover:bg-white/10 transition-all font-black uppercase tracking-widest text-xs"
               >
                 <span className="material-symbols-rounded text-[20px]">save</span>
-                Save Draft
+                Taslağı Kaydet
               </button>
               <button className="h-12 px-8 flex items-center gap-3 rounded-2xl bg-primary text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:bg-primary-dark transition-all active:scale-95">
                 <span className="material-symbols-rounded text-[20px]">send</span>
-                Send to Client
+                Müşteriye Gönder
               </button>
            </div>
         </div>
@@ -91,15 +91,15 @@ export default function CreateProposal() {
         {/* Templates Grid */}
         <section className="space-y-6">
            <div className="flex items-center gap-4">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 whitespace-nowrap">Rapid Templates</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 whitespace-nowrap">Hızlı Şablonlar</h3>
               <div className="h-px w-full bg-white/5" />
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[
-                { icon: 'terminal', title: 'System Architecture', desc: 'Backend systems and cloud infra.', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-                { icon: 'palette', title: 'Brand Identity', desc: 'UI/UX and visual design language.', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-                { icon: 'rocket_launch', title: 'Full-Stack MVP', desc: 'Rapid development for startups.', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+                { icon: 'terminal', title: 'Sistem Mimarisi', desc: 'Backend sistemleri ve bulut altyapısı.', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+                { icon: 'palette', title: 'Marka Kimliği', desc: 'UI/UX ve görsel tasarım dili.', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+                { icon: 'rocket_launch', title: 'Full-Stack MVP', desc: 'Girişimler için hızlı geliştirme.', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
               ].map((t, i) => (
                 <button key={i} className={`group relative p-6 rounded-[2rem] bg-glass-bg border border-white/5 hover:border-primary/40 transition-all duration-500 text-left overflow-hidden shadow-xl`}>
                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-3xl rounded-full -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/20 transition-colors" />
@@ -119,16 +119,16 @@ export default function CreateProposal() {
            
            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
               <div className="lg:col-span-8 space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Proposal Subject</label>
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Teklif Konusu</label>
                  <input 
                     className="h-14 w-full rounded-2xl bg-white/5 border border-white/5 px-6 text-lg text-white font-black tracking-tight focus:border-primary/50 transition-all outline-none" 
-                    placeholder="Enter project name..." 
+                    placeholder="Proje adını girin..." 
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                  />
               </div>
               <div className="lg:col-span-4 space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Reference ID</label>
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Referans ID</label>
                  <div className="relative">
                     <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black opacity-50 text-sm">PR-</span>
                     <input className="h-14 w-full rounded-2xl bg-white/5 border border-white/5 pl-14 pr-6 text-sm font-black text-slate-300 focus:border-primary/50 transition-all outline-none" defaultValue="2024-V12" />
@@ -138,7 +138,7 @@ export default function CreateProposal() {
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Assign Client</label>
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Müşteri Ata</label>
                  <div className="relative group">
                     <select className="h-12 w-full appearance-none rounded-xl bg-white/5 border border-white/5 px-6 text-sm font-bold text-white focus:border-primary/50 transition-all outline-none cursor-pointer pr-10">
                        <option className="bg-slate-900">Acme Global Inc.</option>
@@ -149,11 +149,11 @@ export default function CreateProposal() {
                  </div>
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Proposal Date</label>
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Teklif Tarihi</label>
                  <input type="date" className="h-12 w-full rounded-xl bg-white/5 border border-white/5 px-4 text-sm font-bold text-white focus:border-primary/50 transition-all outline-none [color-scheme:dark]" defaultValue="2023-10-24" />
               </div>
               <div className="space-y-2">
-                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Validity Expires</label>
+                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Geçerlilik Süresi</label>
                  <input type="date" className="h-12 w-full rounded-xl bg-white/5 border border-white/5 px-4 text-sm font-bold text-white focus:border-primary/50 transition-all outline-none [color-scheme:dark]" defaultValue="2023-11-24" />
               </div>
            </div>
@@ -161,10 +161,10 @@ export default function CreateProposal() {
            {/* Line Items Table */}
            <div className="space-y-6 pt-4">
               <div className="flex items-center justify-between">
-                 <h3 className="text-xl font-black text-white tracking-tight">Financial Allocation</h3>
+                 <h3 className="text-xl font-black text-white tracking-tight">Finansal Tahsisat</h3>
                  <button onClick={handleAddItem} className="px-4 py-2 flex items-center gap-2 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all text-[10px] font-black uppercase tracking-widest">
                     <span className="material-symbols-rounded text-[18px]">add_task</span>
-                    Append Resource
+                    Kaynak Ekle
                  </button>
               </div>
 
@@ -172,10 +172,10 @@ export default function CreateProposal() {
                  <table className="w-full text-left">
                     <thead className="bg-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500">
                        <tr>
-                          <th className="px-8 py-5">Service / Milestone</th>
-                          <th className="px-4 py-5 text-center">Units</th>
-                          <th className="px-4 py-5 text-center">Unit Price</th>
-                          <th className="px-8 py-5 text-right">Allocation</th>
+                          <th className="px-8 py-5">Hizmet / Kilometre Taşı</th>
+                          <th className="px-4 py-5 text-center">Birim</th>
+                          <th className="px-4 py-5 text-center">Birim Fiyat</th>
+                          <th className="px-8 py-5 text-right">Tahsis</th>
                           <th className="px-4 py-5"></th>
                        </tr>
                     </thead>
@@ -186,13 +186,13 @@ export default function CreateProposal() {
                                 <input 
                                    className="w-full bg-transparent border-none p-0 text-white font-black tracking-tight placeholder:text-slate-700 focus:ring-0 text-base mb-1" 
                                    value={item.name} 
-                                   placeholder="Title..."
+                                   placeholder="Başlık..."
                                    onChange={(e) => handleUpdateItem(item.id, 'name', e.target.value)}
                                 />
                                 <input 
                                    className="w-full bg-transparent border-none p-0 text-xs text-slate-500 font-medium placeholder:text-slate-700 focus:ring-0" 
                                    value={item.desc}
-                                   placeholder="Strategic description..." 
+                                   placeholder="Stratejik açıklama..." 
                                    onChange={(e) => handleUpdateItem(item.id, 'desc', e.target.value)}
                                 />
                              </td>
@@ -205,7 +205,7 @@ export default function CreateProposal() {
                              </td>
                              <td className="px-4 py-6">
                                 <div className="relative w-32 mx-auto">
-                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs">$</span>
+                                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs">₺</span>
                                     <FormattedPriceInput 
                                        className="w-full rounded-xl bg-white/5 border border-white/5 pl-7 pr-3 py-2 text-right text-sm font-bold text-white focus:border-primary/30 transition-all outline-none" 
                                        value={item.price} 
@@ -214,7 +214,7 @@ export default function CreateProposal() {
                                 </div>
                              </td>
                              <td className="px-8 py-6 text-right">
-                                <span className="text-white font-black text-base">${(item.price * item.qty).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                                <span className="text-white font-black text-base">₺{(item.price * item.qty).toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
                              </td>
                              <td className="px-4 py-6 text-center">
                                 <button onClick={() => handleDeleteItem(item.id)} className="opacity-0 group-hover/row:opacity-100 text-slate-500 hover:text-rose-500 transition-all">
@@ -225,7 +225,7 @@ export default function CreateProposal() {
                        ))}
                        {items.length === 0 && (
                           <tr>
-                             <td colSpan={5} className="py-16 text-center text-slate-500 italic font-medium uppercase tracking-widest text-xs opacity-50">Empty Manifest • Add Resources to Populate</td>
+                             <td colSpan={5} className="py-16 text-center text-slate-500 italic font-medium uppercase tracking-widest text-xs opacity-50">Sıralanacak Kaynak Bulunmamaktadır</td>
                           </tr>
                        )}
                     </tbody>
@@ -236,12 +236,12 @@ export default function CreateProposal() {
               <div className="flex justify-end pt-4">
                  <div className="w-80 space-y-4 p-8 rounded-3xl bg-white/5 border border-white/5 shadow-inner">
                     <div className="flex justify-between items-center">
-                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Resource Base</span>
-                       <span className="text-slate-300 font-bold">${total.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                       <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kaynak Tabanı</span>
+                       <span className="text-slate-300 font-bold">₺{total.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
                     </div>
                     <div className="flex justify-between items-center">
                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tax Protocol</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Vergi Protokolü</span>
                           <select 
                              value={taxRate}
                              onChange={(e) => setTaxRate(parseFloat(e.target.value))}
@@ -252,12 +252,12 @@ export default function CreateProposal() {
                              <option value={0} className="bg-slate-900">%0</option>
                           </select>
                        </div>
-                       <span className="text-slate-300 font-bold">${vat.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                       <span className="text-slate-300 font-bold">₺{vat.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
                     </div>
                     <div className="h-px bg-white/5" />
                     <div className="flex justify-between items-center">
-                       <span className="text-xs font-black uppercase tracking-widest text-white">Project Total</span>
-                       <span className="text-2xl font-black text-primary drop-shadow-[0_0_10px_rgba(79,70,229,0.3)]">${grandTotal.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+                       <span className="text-xs font-black uppercase tracking-widest text-white">Proje Toplamı</span>
+                       <span className="text-2xl font-black text-primary drop-shadow-[0_0_10px_rgba(79,70,229,0.3)]">₺{grandTotal.toLocaleString('tr-TR', {minimumFractionDigits: 2})}</span>
                     </div>
                  </div>
               </div>
@@ -266,17 +266,17 @@ export default function CreateProposal() {
            {/* Strategic Context */}
            <div className="space-y-6 pt-10">
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                 <h3 className="text-xl font-black text-white tracking-tight">Semantic Project Overview</h3>
+                 <h3 className="text-xl font-black text-white tracking-tight">Semantik Proje Özeti</h3>
                  <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
-                    <button className="px-4 py-1.5 rounded-lg bg-primary text-white text-[10px] font-black uppercase tracking-widest transition-all">Editor</button>
-                    <button className="px-4 py-1.5 rounded-lg text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all">Preview</button>
+                    <button className="px-4 py-1.5 rounded-lg bg-primary text-white text-[10px] font-black uppercase tracking-widest transition-all">Editör</button>
+                    <button className="px-4 py-1.5 rounded-lg text-slate-500 text-[10px] font-black uppercase tracking-widest hover:text-white transition-all">Önizleme</button>
                  </div>
               </div>
               
               <div className="relative">
                  <RichTextEditor
-                   content={`<h3 style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 1rem;">Executive Summary</h3><p>Detailed breakdown of proposed deliverables and system architecture refinements requested by the stakeholder.</p>`}
-                   placeholder="Outline the project scope, technical requirements, and strategic vision..."
+                   content={`<h3 style="color: white; font-weight: 800; font-size: 1.5rem; margin-bottom: 1rem;">Yönetici Özeti</h3><p>Paydaş tarafından talep edilen önerilen teslimatlar ve sistem mimarisi iyileştirmelerinin ayrıntılı dökümü.</p>`}
+                   placeholder="Proje kapsamını, teknik gereksinimleri ve stratejik vizyonu özetleyin..."
                    onChange={() => {}}
                  />
               </div>
@@ -285,23 +285,23 @@ export default function CreateProposal() {
            {/* Personal Context */}
            <div className="space-y-3 pt-6">
               <label className="text-[10px] font-black uppercase tracking-widest text-amber-500/80 flex items-center gap-2 ml-1">
-                 <span className="material-symbols-rounded text-sm">lock_person</span> Private Archival Notes
+                 <span className="material-symbols-rounded text-sm">lock_person</span> Özel Arşiv Notları
               </label>
               <textarea 
                  value={proposalNote}
                  onChange={(e) => setProposalNote(e.target.value)}
                  className="w-full rounded-[1.5rem] bg-white/[0.03] border border-white/5 p-6 text-sm text-slate-300 font-medium placeholder:text-slate-700 focus:border-amber-500/30 transition-all h-32 outline-none resize-none" 
-                 placeholder="Internal context, risk assessments, or negotiation strategy..." 
+                 placeholder="İçsel bağlam, risk değerlendirmeleri veya müzakere stratejisi..." 
               />
            </div>
         </div>
 
         {/* Global Action Bar */}
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 px-8 py-4 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] scale-110 md:scale-100">
-           <button className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Discard</button>
+           <button className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white transition-all">Vazgeç</button>
            <div className="w-px h-6 bg-white/10" />
-           <button onClick={handleSave} className="px-8 py-2.5 rounded-xl bg-white/10 text-white text-xs font-black uppercase tracking-widest hover:bg-white/20 transition-all border border-white/5 shadow-xl">Save As Template</button>
-           <button className="px-10 py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all">Deploy Proposal</button>
+           <button onClick={handleSave} className="px-8 py-2.5 rounded-xl bg-white/10 text-white text-xs font-black uppercase tracking-widest hover:bg-white/20 transition-all border border-white/5 shadow-xl">Şablon Olarak Kaydet</button>
+           <button className="px-10 py-2.5 rounded-xl bg-primary text-white text-xs font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all">Teklifi Yayınla</button>
         </div>
       </div>
     </div>
