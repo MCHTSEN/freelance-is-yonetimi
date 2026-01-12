@@ -241,7 +241,7 @@ export default function PipelineForm({
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl animate-pulse">
+        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
           <p className="text-rose-400 text-xs font-bold text-center uppercase tracking-wider">{error}</p>
         </div>
       )}

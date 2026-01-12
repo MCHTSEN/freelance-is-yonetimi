@@ -422,7 +422,7 @@ export default function FinanceDashboard() {
             {/* Timer Console Widget */}
             <div className="size-full h-36 bg-surface-lighter border border-primary/20 rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/50 transition-all shadow-premium overflow-hidden">
                <div className="absolute top-0 right-0 p-4 opacity-5">
-                  <span className="material-symbols-rounded text-7xl text-primary animate-pulse">timer</span>
+                  <span className="material-symbols-rounded text-7xl text-primary">timer</span>
                </div>
                
                {activeEntry ? (
@@ -512,7 +512,7 @@ export default function FinanceDashboard() {
                         <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
                           <td className="py-6 px-8">
                              <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(inv.status)}`}>
-                                <span className={`size-1.5 rounded-full ${inv.status === 'overdue' ? 'bg-rose-500 animate-pulse' : 'bg-current'}`} />
+                                <span className={`size-1.5 rounded-full ${inv.status === 'overdue' ? 'bg-rose-500' : 'bg-current'}`} />
                                 {getStatusLabel(inv.status)}
                              </span>
                           </td>

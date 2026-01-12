@@ -3,8 +3,6 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 import { useAuth } from './lib/AuthContext';
 import { supabase } from './lib/supabase';
 import AuthCallback from './screens/AuthCallback';
-import CodeSnippets from './screens/CodeSnippets';
-import CreateProposal from './screens/CreateProposal';
 import CustomerCredentials from './screens/CustomerCredentials';
 import FinanceDashboard from './screens/FinanceDashboard';
 import Login from './screens/Login';
@@ -14,11 +12,9 @@ import SalesKanban from './screens/SalesKanban';
 
 enum Screen {
   KANBAN = 'KANBAN',
-  PROPOSAL = 'PROPOSAL',
   NOTES = 'NOTES',
   CREDENTIALS = 'CREDENTIALS',
   FINANCE = 'FINANCE',
-  SNIPPETS = 'SNIPPETS',
   CALENDAR = 'CALENDAR'
 }
 
@@ -58,16 +54,24 @@ function Dashboard() {
   const NavItem = ({ screen, icon, label }: { screen: Screen; icon: string; label: string }) => (
     <button
       onClick={() => setCurrentScreen(screen)}
-      className={`group relative flex items-center justify-center size-12 rounded-2xl transition-all duration-300 ${
+      className={`group relative flex items-center gap-4 w-full px-6 py-3 transition-all duration-300 ${
         currentScreen === screen
-          ? 'bg-primary text-white shadow-lg shadow-primary/40 scale-110'
+          ? 'bg-primary/20 text-primary'
           : 'text-slate-400 hover:bg-white/5 hover:text-white'
       }`}
-      title={label}
     >
-      <span className="material-symbols-rounded text-[24px] font-light">{icon}</span>
+      <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
+        currentScreen === screen ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white/5'
+      }`}>
+        <span className="material-symbols-rounded text-[22px] font-light">{icon}</span>
+      </div>
+      <span className={`text-[13px] font-bold tracking-tight transition-all duration-300 whitespace-nowrap ${
+        currentScreen === screen ? 'text-white' : 'text-slate-400 group-hover:text-white'
+      }`}>
+        {label}
+      </span>
       {currentScreen === screen && (
-        <span className="absolute -right-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full blur-[2px]" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-primary rounded-r-full shadow-[0_0_12px_rgba(59,130,246,0.5)]" />
       )}
     </button>
   );
@@ -79,44 +83,48 @@ function Dashboard() {
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
       
       {/* Main OS Dock / Navigation Rail */}
-      <nav className="w-24 flex flex-col items-center py-8 gap-10 border-r border-glass-border bg-glass-bg backdrop-blur-3xl shrink-0 z-50 relative">
-        <div className="flex flex-col items-center gap-2">
-          <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-indigo-400 flex items-center justify-center shadow-xl shadow-primary/20 mb-1 group cursor-pointer hover:rotate-3 transition-transform">
+      <nav className="w-64 flex flex-col py-8 border-r border-glass-border bg-glass-bg backdrop-blur-3xl shrink-0 z-50 relative">
+        <div className="flex items-center gap-3 px-6 mb-12">
+          <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-indigo-400 flex items-center justify-center shadow-xl shadow-primary/20 group cursor-pointer hover:rotate-3 transition-transform">
             <span className="material-symbols-rounded text-white text-[28px] font-bold">bolt</span>
           </div>
-          <div className="w-8 h-1 bg-white/10 rounded-full" />
+          <div className="flex flex-col">
+            <span className="text-white font-black tracking-tight text-lg">Freelance OS</span>
+            <span className="text-[10px] text-primary font-black uppercase tracking-widest leading-none opacity-70">Personal Suite</span>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-6 w-full px-4 items-center">
+        <div className="flex flex-col gap-1 w-full">
           <NavItem screen={Screen.KANBAN} icon="dashboard" label="Satış Süreci" />
-          <NavItem screen={Screen.PROPOSAL} icon="description" label="Teklifler" />
           <NavItem screen={Screen.NOTES} icon="edit_note" label="Toplantı & Notlar" />
           <NavItem screen={Screen.CREDENTIALS} icon="key" label="Müşteri Kasası" />
           <NavItem screen={Screen.FINANCE} icon="payments" label="Finans" />
-          <NavItem screen={Screen.SNIPPETS} icon="terminal" label="Kod Kasası" />
           <NavItem screen={Screen.CALENDAR} icon="calendar_today" label="Takvim & Randevular" />
         </div>
 
-        <div className="mt-auto flex flex-col gap-6 items-center">
-          {/* User Avatar */}
-          <div className="group relative">
-            <div className="size-11 rounded-2xl border-2 border-primary/30 p-0.5 bg-background-dark overflow-hidden transition-all duration-300 hover:border-primary">
-              <div className="w-full h-full rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center overflow-hidden">
-                <span className="material-symbols-rounded text-slate-400 text-[24px]">person</span>
+        <div className="mt-auto px-6 flex flex-col gap-4">
+          {/* User Profile Info */}
+          <div className="flex items-center gap-4 p-3 bg-white/5 border border-white/5 rounded-2xl">
+            <div className="size-10 rounded-xl border border-primary/30 p-0.5 bg-background-dark overflow-hidden shrink-0">
+              <div className="w-full h-full rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                <span className="material-symbols-rounded text-slate-400 text-[20px]">person</span>
               </div>
             </div>
-            <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 px-3 py-1 bg-surface-dark border border-glass-border rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-              Profil
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-white text-[13px] font-bold truncate">Mucahit Sen</span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Administrator</span>
             </div>
           </div>
 
           {/* Logout Button */}
           <button
             onClick={signOut}
-            className="size-11 rounded-2xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-300 flex items-center justify-center group"
-            title="Çıkış Yap"
+            className="flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-300 rounded-2xl group"
           >
-            <span className="material-symbols-rounded text-[24px] font-light group-hover:rotate-12">logout</span>
+            <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-rose-500/20 transition-all">
+              <span className="material-symbols-rounded text-[22px] font-light group-hover:rotate-12">logout</span>
+            </div>
+            <span className="text-[13px] font-bold tracking-tight">Çıkış Yap</span>
           </button>
         </div>
       </nav>
@@ -125,11 +133,9 @@ function Dashboard() {
       <main className="flex-1 flex flex-col overflow-hidden bg-transparent relative z-10">
         <div className="flex-1 overflow-hidden relative">
           {currentScreen === Screen.KANBAN && <SalesKanban />}
-          {currentScreen === Screen.PROPOSAL && <CreateProposal />}
           {currentScreen === Screen.NOTES && <MeetingNotes />}
           {currentScreen === Screen.CREDENTIALS && <CustomerCredentials />}
           {currentScreen === Screen.FINANCE && <FinanceDashboard />}
-          {currentScreen === Screen.SNIPPETS && <CodeSnippets />}
           {currentScreen === Screen.CALENDAR && <CalendarBookings />}
         </div>
       </main>

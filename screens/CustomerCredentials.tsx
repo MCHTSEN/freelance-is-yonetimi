@@ -432,7 +432,7 @@ export default function CustomerCredentials() {
                  <h1 className="text-4xl font-black text-white tracking-tight">
                    {selectedClientId ? clients.find(c => c.id === selectedClientId)?.company || 'Güvenli Müşteri Varlığı' : 'Ana Altyapı'}
                  </h1>
-                 <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest animate-pulse">
+                 <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest">
                     Canlı Şifreleme
                  </div>
               </div>

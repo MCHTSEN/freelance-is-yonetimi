@@ -87,7 +87,7 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
       {/* Header Info */}
       <div className="flex justify-between items-start mb-4 relative z-10">
         <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${priority.color}`}>
-          <span className={`size-1.5 rounded-full ${priority.dot} animate-pulse`} />
+          <span className={`size-1.5 rounded-full ${priority.dot}`} />
           {priority.label}
         </div>
         
@@ -134,8 +134,8 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
         {upcomingMeeting ? (
           <div className="flex items-center gap-2 text-green-400 text-xs font-medium">
             <span className="material-symbols-rounded text-[16px]">schedule</span>
-            <span className="animate-pulse">
-              Toplantı: {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+            <span>
+              {new Date(upcomingMeeting.scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} • {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         ) : (
@@ -555,10 +555,10 @@ export default function SalesKanban() {
                </div>
                <div className="relative z-10 mt-auto">
                   <p className="text-slate-300 text-base font-black">
-                    {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                     {new Date(upcomingMeetings[0].scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} • {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                   <p className="text-[10px] text-slate-500 font-medium">
-                    {new Date(upcomingMeetings[0].scheduled_at).toDateString() === new Date().toDateString() ? 'Bugün' : 'Gelecek'}
+                    {new Date(upcomingMeetings[0].scheduled_at).toDateString() === new Date().toDateString() ? 'Bugün' : 'Gelecek Randevu'}
                   </p>
                </div>
             </div>
