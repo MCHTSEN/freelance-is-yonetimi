@@ -409,6 +409,38 @@ export type Database = {
           },
         ]
       }
+      job_comments: {
+        Row: {
+          id: string
+          pipeline_id: string
+          user_id: string | null
+          content: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          pipeline_id: string
+          user_id?: string | null
+          content: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          pipeline_id?: string
+          user_id?: string | null
+          content?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_comments_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline: {
         Row: {
           client_id: string | null
@@ -416,6 +448,9 @@ export type Database = {
           estimated_value: number | null
           follow_up_date: string | null
           id: string
+          job_progress: number
+          job_status: string
+          last_status_note: string | null
           notes: string | null
           priority: string | null
           stage: string
@@ -428,6 +463,9 @@ export type Database = {
           estimated_value?: number | null
           follow_up_date?: string | null
           id?: string
+          job_progress?: number
+          job_status?: string
+          last_status_note?: string | null
           notes?: string | null
           priority?: string | null
           stage?: string
@@ -440,6 +478,9 @@ export type Database = {
           estimated_value?: number | null
           follow_up_date?: string | null
           id?: string
+          job_progress?: number
+          job_status?: string
+          last_status_note?: string | null
           notes?: string | null
           priority?: string | null
           stage?: string

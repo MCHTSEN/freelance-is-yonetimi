@@ -91,21 +91,23 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
           {priority.label}
         </div>
         
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-          <button
-            onClick={(e) => { e.stopPropagation(); onAddMeeting(); }}
-            className="size-8 rounded-lg bg-white/5 hover:bg-green-500/20 text-slate-400 hover:text-green-400 flex items-center justify-center transition-colors"
-            title="Toplantı"
-          >
-            <span className="material-symbols-rounded text-[18px]">videocam</span>
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); onAddNote(); }}
-            className="size-8 rounded-lg bg-white/5 hover:bg-primary/20 text-slate-400 hover:text-primary flex items-center justify-center transition-colors"
-            title="Not"
-          >
-            <span className="material-symbols-rounded text-[18px]">edit_note</span>
-          </button>
+        <div className="flex gap-2">
+          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddMeeting(); }}
+              className="size-8 rounded-lg bg-white/5 hover:bg-green-500/20 text-slate-400 hover:text-green-400 flex items-center justify-center transition-colors border border-white/5"
+              title="Toplantı"
+            >
+              <span className="material-symbols-rounded text-[18px]">videocam</span>
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddNote(); }}
+              className="size-8 rounded-lg bg-white/5 hover:bg-primary/20 text-slate-400 hover:text-primary flex items-center justify-center transition-colors border border-white/5"
+              title="Not"
+            >
+              <span className="material-symbols-rounded text-[18px]">edit_note</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -545,35 +547,35 @@ export default function SalesKanban() {
         <div className="flex flex-wrap items-center gap-6">
           {/* Next Meeting Square Widget */}
           {upcomingMeetings.length > 0 && (
-            <div className="size-32 bg-glass-bg border border-glass-border rounded-3xl p-4 flex flex-col justify-between relative group hover:border-green-500/30 transition-all shadow-glass overflow-hidden">
-               <div className="absolute top-0 right-0 p-2 opacity-20">
-                  <span className="material-symbols-rounded text-green-400">schedule</span>
+            <div className="h-32 w-48 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-green-500/30 transition-all duration-500 shadow-2xl overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="material-symbols-rounded text-5xl text-green-400">event_available</span>
                </div>
                <div className="relative z-10">
-                  <p className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-1">Sıradaki</p>
-                  <p className="text-white text-sm font-bold truncate">{upcomingMeetings[0].client_name}</p>
+                  <span className="text-[10px] font-black text-green-400 uppercase tracking-widest px-2 py-0.5 bg-green-400/10 rounded-full border border-green-400/20">Sıradaki</span>
+                  <p className="text-white text-sm font-bold mt-2 truncate">{upcomingMeetings[0].client_name}</p>
                </div>
                <div className="relative z-10 mt-auto">
-                  <p className="text-slate-300 text-base font-black">
-                     {new Date(upcomingMeetings[0].scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} • {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                  <p className="text-white text-lg font-black leading-none mb-1">
+                     {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                   </p>
-                  <p className="text-[10px] text-slate-500 font-medium">
-                    {new Date(upcomingMeetings[0].scheduled_at).toDateString() === new Date().toDateString() ? 'Bugün' : 'Gelecek Randevu'}
+                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
+                    {new Date(upcomingMeetings[0].scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
                   </p>
                </div>
             </div>
           )}
 
           {/* Active Deals / Stats Square Widget */}
-          <div className="size-32 bg-glass-bg border border-glass-border rounded-3xl p-4 flex flex-col justify-between relative group hover:border-primary/30 transition-all shadow-glass">
-             <div className="absolute top-0 right-0 p-2 opacity-20">
-                <span className="material-symbols-rounded text-primary">rocket_launch</span>
+          <div className="h-32 w-48 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-primary/30 transition-all duration-500 shadow-2xl overflow-hidden">
+             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <span className="material-symbols-rounded text-5xl text-primary">rocket_launch</span>
              </div>
              <div>
-                 <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Aktif</p>
-                <p className="text-white text-3xl font-black">{items.length}</p>
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">Aktif</span>
+                <p className="text-white text-3xl font-black mt-2 leading-none">{items.length}</p>
              </div>
-             <p className="text-[10px] text-slate-400 font-medium mt-auto text-secondary">Canlı Fırsatlar</p>
+             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">Canlı Fırsatlar</p>
           </div>
 
           <div className="flex flex-col gap-4">

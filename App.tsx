@@ -9,12 +9,16 @@ import Login from './screens/Login';
 import MeetingNotes from './screens/MeetingNotes';
 import PublicBooking from './screens/PublicBooking';
 import SalesKanban from './screens/SalesKanban';
+import TimerPage from './screens/TimerPage';
+import WonJobs from './screens/WonJobs';
 
 enum Screen {
   KANBAN = 'KANBAN',
+  WON_JOBS = 'WON_JOBS',
   NOTES = 'NOTES',
   CREDENTIALS = 'CREDENTIALS',
   FINANCE = 'FINANCE',
+  TIMER = 'TIMER',
   CALENDAR = 'CALENDAR'
 }
 
@@ -25,7 +29,7 @@ function LoadingSpinner() {
       <div className="flex flex-col items-center gap-4">
         <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
         <p className="text-text-secondary">Yükleniyor...</p>
-      </div>
+      </div>ai
     </div>
   );
 }
@@ -54,24 +58,29 @@ function Dashboard() {
   const NavItem = ({ screen, icon, label }: { screen: Screen; icon: string; label: string }) => (
     <button
       onClick={() => setCurrentScreen(screen)}
-      className={`group relative flex items-center gap-4 w-full px-6 py-3 transition-all duration-300 ${
+      className={`group relative flex items-center gap-4 w-full px-6 py-3.5 transition-all duration-500 rounded-2xl ${
         currentScreen === screen
-          ? 'bg-primary/20 text-primary'
-          : 'text-slate-400 hover:bg-white/5 hover:text-white'
+          ? 'text-primary'
+          : 'text-slate-400 hover:text-white'
       }`}
     >
-      <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ${
-        currentScreen === screen ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-white/5'
+      <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 ${
+        currentScreen === screen 
+          ? 'bg-primary text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-110' 
+          : 'bg-white/5 border border-white/5 group-hover:bg-white/10 group-hover:scale-105'
       }`}>
-        <span className="material-symbols-rounded text-[22px] font-light">{icon}</span>
+        <span className="material-symbols-rounded text-[22px] font-light leading-none">{icon}</span>
       </div>
-      <span className={`text-[13px] font-bold tracking-tight transition-all duration-300 whitespace-nowrap ${
-        currentScreen === screen ? 'text-white' : 'text-slate-400 group-hover:text-white'
+      <span className={`text-[13px] font-bold tracking-tight transition-all duration-500 whitespace-nowrap ${
+        currentScreen === screen ? 'text-white' : 'text-slate-400 group-hover:text-white group-hover:translate-x-1'
       }`}>
         {label}
       </span>
       {currentScreen === screen && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-8 bg-primary rounded-r-full shadow-[0_0_12px_rgba(59,130,246,0.5)]" />
+        <>
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-primary rounded-r-full shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
+          <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-sm -z-10 animate-pulse-slow" />
+        </>
       )}
     </button>
   );
@@ -83,23 +92,26 @@ function Dashboard() {
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
       
       {/* Main OS Dock / Navigation Rail */}
-      <nav className="w-64 flex flex-col py-8 border-r border-glass-border bg-glass-bg backdrop-blur-3xl shrink-0 z-50 relative">
-        <div className="flex items-center gap-3 px-6 mb-12">
-          <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-indigo-400 flex items-center justify-center shadow-xl shadow-primary/20 group cursor-pointer hover:rotate-3 transition-transform">
-            <span className="material-symbols-rounded text-white text-[28px] font-bold">bolt</span>
+      <nav className="w-72 flex flex-col py-10 border-r border-white/5 bg-background-dark/40 backdrop-blur-2xl shrink-0 z-50 relative">
+        <div className="flex items-center gap-4 px-8 mb-16">
+          <div className="size-14 rounded-[20px] bg-gradient-to-tr from-primary via-blue-500 to-indigo-400 flex items-center justify-center shadow-2xl shadow-primary/30 group cursor-pointer hover:rotate-6 transition-all duration-500 relative">
+            <div className="absolute inset-0 bg-white/20 rounded-[20px] blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="material-symbols-rounded text-white text-[32px] font-bold relative z-10">bolt</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-white font-black tracking-tight text-lg">Freelance OS</span>
-            <span className="text-[10px] text-primary font-black uppercase tracking-widest leading-none opacity-70">Personal Suite</span>
+            <span className="text-white font-black tracking-tight text-xl leading-none">Freelance OS</span>
+            <span className="text-[11px] text-primary font-black uppercase tracking-[0.2em] mt-1.5 opacity-80">Design Collective</span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 w-full">
-          <NavItem screen={Screen.KANBAN} icon="dashboard" label="Satış Süreci" />
-          <NavItem screen={Screen.NOTES} icon="edit_note" label="Toplantı & Notlar" />
-          <NavItem screen={Screen.CREDENTIALS} icon="key" label="Müşteri Kasası" />
-          <NavItem screen={Screen.FINANCE} icon="payments" label="Finans" />
-          <NavItem screen={Screen.CALENDAR} icon="calendar_today" label="Takvim & Randevular" />
+        <div className="flex flex-col gap-2 w-full px-2">
+          <NavItem screen={Screen.KANBAN} icon="grid_view" label="Satış Süreci" />
+          <NavItem screen={Screen.WON_JOBS} icon="task_alt" label="Kazanılan İşler" />
+          <NavItem screen={Screen.NOTES} icon="description" label="Toplantı & Notlar" />
+          <NavItem screen={Screen.CREDENTIALS} icon="enhanced_encryption" label="Müşteri Kasası" />
+          <NavItem screen={Screen.FINANCE} icon="account_balance_wallet" label="Finans" />
+          <NavItem screen={Screen.TIMER} icon="timer" label="Zaman Takibi" />
+          <NavItem screen={Screen.CALENDAR} icon="event_repeat" label="Takvim & Randevular" />
         </div>
 
         <div className="mt-auto px-6 flex flex-col gap-4">
@@ -133,9 +145,11 @@ function Dashboard() {
       <main className="flex-1 flex flex-col overflow-hidden bg-transparent relative z-10">
         <div className="flex-1 overflow-hidden relative">
           {currentScreen === Screen.KANBAN && <SalesKanban />}
+          {currentScreen === Screen.WON_JOBS && <WonJobs />}
           {currentScreen === Screen.NOTES && <MeetingNotes />}
           {currentScreen === Screen.CREDENTIALS && <CustomerCredentials />}
           {currentScreen === Screen.FINANCE && <FinanceDashboard />}
+          {currentScreen === Screen.TIMER && <TimerPage />}
           {currentScreen === Screen.CALENDAR && <CalendarBookings />}
         </div>
       </main>

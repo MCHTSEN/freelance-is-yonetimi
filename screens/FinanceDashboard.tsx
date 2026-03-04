@@ -382,72 +382,75 @@ export default function FinanceDashboard() {
         <div className="max-w-7xl mx-auto flex flex-col gap-8">
           {/* Stats */}
           {/* Visual Stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Main Receivable Widget */}
-            <div className="col-span-1 lg:col-span-1 h-36 bg-glass-bg border border-glass-border rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-emerald-500/30 transition-all shadow-glass overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-rounded text-7xl text-emerald-500">account_balance_wallet</span>
+            <div className="h-32 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-emerald-500/30 transition-all duration-500 shadow-2xl overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="material-symbols-rounded text-5xl text-emerald-500">account_balance_wallet</span>
                </div>
                <div>
-                   <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Toplam Alacak</p>
-                  <p className="text-white text-4xl font-black tracking-tighter">₺{stats.totalReceivable.toLocaleString()}</p>
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">Toplam Alacak</span>
+                  <p className="text-white text-3xl font-black mt-2 leading-none tracking-tight">₺{stats.totalReceivable.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-400 font-medium">{stats.pendingCount} aktif fatura</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">{stats.pendingCount} Aktif Fatura</p>
             </div>
 
             {/* Overdue Widget */}
-            <div className="size-full h-36 bg-glass-bg border border-glass-border rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-rose-500/30 transition-all shadow-glass overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-rounded text-7xl text-rose-500">priority_high</span>
+            <div className="h-32 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-rose-500/30 transition-all duration-500 shadow-2xl overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="material-symbols-rounded text-5xl text-rose-500">priority_high</span>
                </div>
                <div>
-                   <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Vadesi Geçen</p>
-                  <p className="text-white text-3xl font-black tracking-tighter text-rose-400">₺{stats.totalOverdue.toLocaleString()}</p>
+                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20">Vadesi Geçen</span>
+                  <p className="text-rose-400 text-3xl font-black mt-2 leading-none tracking-tight">₺{stats.totalOverdue.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-400 font-medium">Acil dikkat gerekiyor</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">Acil Kayıtlar</p>
             </div>
 
             {/* This Week Widget */}
-            <div className="size-full h-36 bg-glass-bg border border-glass-border rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/30 transition-all shadow-glass overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <span className="material-symbols-rounded text-7xl text-primary">event_upcoming</span>
+            <div className="h-32 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-primary/30 transition-all duration-500 shadow-2xl overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="material-symbols-rounded text-5xl text-primary">event_upcoming</span>
                </div>
                <div>
-                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Bu Hafta Tahsilat</p>
-                  <p className="text-white text-3xl font-black tracking-tighter">₺{stats.dueThisWeek.toLocaleString()}</p>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">Bu Hafta</span>
+                  <p className="text-white text-3xl font-black mt-2 leading-none tracking-tight">₺{stats.dueThisWeek.toLocaleString()}</p>
                </div>
-               <p className="text-[10px] text-slate-400 font-medium">Tahmini nakit akışı</p>
+               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">Tahmini Giriş</p>
             </div>
 
             {/* Timer Console Widget */}
-            <div className="size-full h-36 bg-surface-lighter border border-primary/20 rounded-[2rem] p-6 flex flex-col justify-between relative group hover:border-primary/50 transition-all shadow-premium overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-5">
-                  <span className="material-symbols-rounded text-7xl text-primary">timer</span>
+            <div className="h-32 bg-primary/5 border border-primary/20 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-primary/50 transition-all duration-500 shadow-2xl overflow-hidden">
+               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className="material-symbols-rounded text-5xl text-primary">timer</span>
                </div>
                
                {activeEntry ? (
-                 <div className="flex flex-col h-full">
-                    <div className="flex justify-between items-start mb-1">
-                        <p className="text-[10px] font-black text-green-400 uppercase tracking-widest">Aktif Oturum</p>
-                       <span className="size-2 rounded-full bg-green-500 animate-ping" />
+                 <div className="flex flex-col h-full relative z-10">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <p className="text-[10px] font-black text-green-400 uppercase tracking-widest leading-none">Canlı Oturum</p>
                     </div>
-                    <p className="text-white text-2xl font-black font-mono tracking-tight my-auto">{formatDurationDetailed(elapsedSeconds)}</p>
-                     <div className="flex items-center justify-between group/row mt-auto">
-                        <span className="text-[10px] text-slate-400 truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Proje'}</span>
-                        <button onClick={stopTimer} className="px-3 py-1 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-lg transition-all">Durdur</button>
+                    <p className="text-white text-2xl font-black font-mono tracking-tight my-1">{formatDurationDetailed(elapsedSeconds)}</p>
+                     <div className="flex items-center justify-between mt-auto">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Aktif'}</span>
+                        <button onClick={stopTimer} className="px-4 py-1.5 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-xl transition-all border border-rose-500/20 shadow-lg shadow-rose-500/10">BİTİR</button>
                      </div>
                  </div>
                ) : (
-                  <div className="flex flex-col h-full">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Zaman Takibi</p>
+                  <div className="flex flex-col h-full relative z-10">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-full border border-white/10 w-fit">Zaman Takibi</span>
                      <div className="mt-auto flex flex-col gap-2">
                         <div className="flex gap-2">
                            <select 
                               value={timerClientId} 
                               onChange={(e) => setTimerClientId(e.target.value)}
-                              className="flex-1 bg-white/5 border border-white/5 rounded-xl text-[10px] text-slate-300 px-2 py-1.5 focus:outline-none focus:border-primary/50 appearance-none"
+                              className="flex-1 bg-white/5 border border-white/10 rounded-xl text-[10px] text-slate-300 px-3 py-2 focus:outline-none focus:border-primary/50 appearance-none font-bold uppercase tracking-wider"
                            >
-                               <option value="">Müşteri...</option>
+                               <option value="">İstemci Seç...</option>
                               {clients.map(c => <option key={c.id} value={c.id}>{c.first_name}</option>)}
                            </select>
                            <button 
