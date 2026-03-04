@@ -1,8 +1,33 @@
+import {
+  Calendar,
+  CheckSquare,
+  ChevronRight,
+  FileText,
+  LayoutGrid,
+  Loader2,
+  LogOut,
+  Menu,
+  Moon,
+  ShieldCheck,
+  Sun,
+  Timer,
+  User,
+  Wallet,
+  Zap
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Button } from './components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./components/ui/tooltip";
 import { useAuth } from './lib/AuthContext';
-import { supabase } from './lib/supabase';
+import { cn } from './lib/utils';
 import AuthCallback from './screens/AuthCallback';
+import CalendarBookings from './screens/CalendarBookings';
 import CustomerCredentials from './screens/CustomerCredentials';
 import FinanceDashboard from './screens/FinanceDashboard';
 import Login from './screens/Login';
@@ -25,11 +50,11 @@ enum Screen {
 // Loading spinner component
 function LoadingSpinner() {
   return (
-    <div className="flex h-screen w-screen bg-background-dark items-center justify-center">
+    <div className="flex h-screen w-screen bg-background items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
-        <p className="text-text-secondary">Yükleniyor...</p>
-      </div>ai
+        <Loader2 className="size-8 text-primary animate-spin" />
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground animate-pulse">Sistem Yükleniyor</p>
+      </div>
     </div>
   );
 }
@@ -39,111 +64,173 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   return <>{children}</>;
 }
 
 // Main Dashboard (protected)
 function Dashboard() {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.KANBAN);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'dark';
+  });
 
-  const NavItem = ({ screen, icon, label }: { screen: Screen; icon: string; label: string }) => (
-    <button
-      onClick={() => setCurrentScreen(screen)}
-      className={`group relative flex items-center gap-4 w-full px-6 py-3.5 transition-all duration-500 rounded-2xl ${
-        currentScreen === screen
-          ? 'text-primary'
-          : 'text-slate-400 hover:text-white'
-      }`}
-    >
-      <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-500 ${
-        currentScreen === screen 
-          ? 'bg-primary text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] scale-110' 
-          : 'bg-white/5 border border-white/5 group-hover:bg-white/10 group-hover:scale-105'
-      }`}>
-        <span className="material-symbols-rounded text-[22px] font-light leading-none">{icon}</span>
-      </div>
-      <span className={`text-[13px] font-bold tracking-tight transition-all duration-500 whitespace-nowrap ${
-        currentScreen === screen ? 'text-white' : 'text-slate-400 group-hover:text-white group-hover:translate-x-1'
-      }`}>
-        {label}
-      </span>
-      {currentScreen === screen && (
-        <>
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-primary rounded-r-full shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
-          <div className="absolute inset-0 bg-primary/5 rounded-2xl blur-sm -z-10 animate-pulse-slow" />
-        </>
-      )}
-    </button>
+  useEffect(() => {
+    const root = window.document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
+
+  const NavItem = ({ screen, icon: Icon, label }: { screen: Screen; icon: any; label: string }) => (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={() => setCurrentScreen(screen)}
+            className={cn(
+              "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-300 group relative",
+              currentScreen === screen
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "text-muted-foreground hover:bg-card hover:text-foreground hover:shadow-sm"
+            )}
+          >
+            <Icon className={cn("size-4.5 shrink-0 transition-transform group-hover:scale-110", currentScreen === screen ? "text-primary-foreground" : "text-muted-foreground")} />
+            {!isSidebarCollapsed && <span className="text-xs font-semibold tracking-tight">{label}</span>}
+            
+            {currentScreen === screen && !isSidebarCollapsed && (
+              <div className="ml-auto flex items-center gap-1">
+                 <div className="size-1 rounded-full bg-primary-foreground/40" />
+                 <ChevronRight className="size-3 text-primary-foreground/60" />
+              </div>
+            )}
+            
+            {currentScreen === screen && isSidebarCollapsed && (
+              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
+            )}
+          </button>
+        </TooltipTrigger>
+        {isSidebarCollapsed && (
+          <TooltipContent side="right" className="font-bold text-xs">
+            {label}
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   );
 
   return (
-    <div className="flex h-screen w-screen bg-background-dark text-white overflow-hidden font-display relative">
-      {/* Decorative background elements */}
-      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-      
-      {/* Main OS Dock / Navigation Rail */}
-      <nav className="w-72 flex flex-col py-10 border-r border-white/5 bg-background-dark/40 backdrop-blur-2xl shrink-0 z-50 relative">
-        <div className="flex items-center gap-4 px-8 mb-16">
-          <div className="size-14 rounded-[20px] bg-gradient-to-tr from-primary via-blue-500 to-indigo-400 flex items-center justify-center shadow-2xl shadow-primary/30 group cursor-pointer hover:rotate-6 transition-all duration-500 relative">
-            <div className="absolute inset-0 bg-white/20 rounded-[20px] blur-sm opacity-0 group-hover:opacity-100 transition-opacity" />
-            <span className="material-symbols-rounded text-white text-[32px] font-bold relative z-10">bolt</span>
+    <div className="flex h-screen w-screen bg-background text-foreground overflow-hidden font-display antialiased">
+      {/* Premium Minimalist Sidebar */}
+      <nav className={cn(
+        "flex flex-col bg-card/80 backdrop-blur-xl border-r border-border/20 transition-all duration-500 ease-in-out z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]",
+        isSidebarCollapsed ? "w-20 p-3" : "w-72 p-6"
+      )}>
+        {/* Brand */}
+        <div className={cn("flex items-center gap-3 mb-10 transition-all duration-300", isSidebarCollapsed ? "justify-center" : "px-2")}>
+          <div className="size-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+            <Zap className="size-5 text-primary-foreground fill-primary-foreground opacity-90" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-white font-black tracking-tight text-xl leading-none">Freelance OS</span>
-            <span className="text-[11px] text-primary font-black uppercase tracking-[0.2em] mt-1.5 opacity-80">Design Collective</span>
-          </div>
+          {!isSidebarCollapsed && (
+            <div className="flex flex-col">
+              <span className="font-black tracking-tighter text-2xl leading-none">FREE.OS</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-0.5">Freelancer Workspace</span>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col gap-2 w-full px-2">
-          <NavItem screen={Screen.KANBAN} icon="grid_view" label="Satış Süreci" />
-          <NavItem screen={Screen.WON_JOBS} icon="task_alt" label="Kazanılan İşler" />
-          <NavItem screen={Screen.NOTES} icon="description" label="Toplantı & Notlar" />
-          <NavItem screen={Screen.CREDENTIALS} icon="enhanced_encryption" label="Müşteri Kasası" />
-          <NavItem screen={Screen.FINANCE} icon="account_balance_wallet" label="Finans" />
-          <NavItem screen={Screen.TIMER} icon="timer" label="Zaman Takibi" />
-          <NavItem screen={Screen.CALENDAR} icon="event_repeat" label="Takvim & Randevular" />
+        {/* Menu Toggle */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          className="absolute -right-3 top-10 size-6 bg-card border rounded-full shadow-sm z-50 hover:bg-accent"
+        >
+          <Menu className="size-3 text-muted-foreground" />
+        </Button>
+
+        {/* Navigation */}
+        <div className="flex flex-col gap-1.5 w-full flex-1">
+          {!isSidebarCollapsed && <p className="text-xs font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-2 px-2">Ana Menü</p>}
+          <NavItem screen={Screen.KANBAN} icon={LayoutGrid} label="Satış Süreci" />
+          <NavItem screen={Screen.WON_JOBS} icon={CheckSquare} label="Kazanılan İşler" />
+          <NavItem screen={Screen.TIMER} icon={Timer} label="Zaman Takibi" />
+          
+          <div className="my-4 h-px bg-border/40 w-full" />
+          
+          {!isSidebarCollapsed && <p className="text-xs font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-2 px-2">Operasyon</p>}
+          <NavItem screen={Screen.CALENDAR} icon={Calendar} label="Takvim & Randevu" />
+          <NavItem screen={Screen.NOTES} icon={FileText} label="Meeting Notes" />
+          <NavItem screen={Screen.CREDENTIALS} icon={ShieldCheck} label="Client Vault" />
+          <NavItem screen={Screen.FINANCE} icon={Wallet} label="Finans" />
         </div>
 
-        <div className="mt-auto px-6 flex flex-col gap-4">
-          {/* User Profile Info */}
-          <div className="flex items-center gap-4 p-3 bg-white/5 border border-white/5 rounded-2xl">
-            <div className="size-10 rounded-xl border border-primary/30 p-0.5 bg-background-dark overflow-hidden shrink-0">
-              <div className="w-full h-full rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
-                <span className="material-symbols-rounded text-slate-400 text-[20px]">person</span>
+        {/* Footer */}
+        <div className="mt-auto flex flex-col gap-4">
+          {/* Theme Toggle */}
+          <div className={cn(
+            "flex items-center gap-2 p-1.5 rounded-2xl bg-secondary/30",
+            isSidebarCollapsed ? "flex-col" : "flex-row"
+          )}>
+            <Button
+              variant={theme === 'light' ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setTheme('light')}
+              className={cn("h-8 flex-1 rounded-xl transition-all", theme === 'light' && "bg-background shadow-sm text-primary")}
+            >
+              <Sun className="size-4" />
+            </Button>
+            <Button
+              variant={theme === 'dark' ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setTheme('dark')}
+              className={cn("h-8 flex-1 rounded-xl transition-all", theme === 'dark' && "bg-background shadow-sm text-primary")}
+            >
+              <Moon className="size-4" />
+            </Button>
+          </div>
+
+          <div className={cn("flex items-center gap-3 p-2 rounded-2xl bg-secondary/30", isSidebarCollapsed ? "justify-center" : "")}>
+            <div className="size-9 rounded-xl bg-white border flex items-center justify-center shrink-0">
+              <User className="size-4 text-muted-foreground" />
+            </div>
+            {!isSidebarCollapsed && (
+              <div className="flex flex-col overflow-hidden">
+                <span className="text-xs font-bold truncate leading-none mb-0.5">{user?.email?.split('@')[0]}</span>
+                <span className="text-xs text-muted-foreground font-bold uppercase tracking-widest">Administrator</span>
               </div>
-            </div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-white text-[13px] font-bold truncate">Mucahit Sen</span>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Administrator</span>
-            </div>
+            )}
           </div>
 
-          {/* Logout Button */}
-          <button
+          <Button
+            variant="ghost"
             onClick={signOut}
-            className="flex items-center gap-4 px-4 py-3 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-300 rounded-2xl group"
+            className={cn(
+              "justify-start gap-3 h-11 text-muted-foreground hover:text-destructive hover:bg-destructive/5 rounded-xl transition-all",
+              isSidebarCollapsed ? "px-0 justify-center" : ""
+            )}
           >
-            <div className="size-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-rose-500/20 transition-all">
-              <span className="material-symbols-rounded text-[22px] font-light group-hover:rotate-12">logout</span>
-            </div>
-            <span className="text-[13px] font-bold tracking-tight">Çıkış Yap</span>
-          </button>
+            <LogOut className="size-4 text-muted-foreground/60 transition-colors group-hover:text-destructive" />
+            {!isSidebarCollapsed && <span className="text-xs font-bold">Oturumu Kapat</span>}
+          </Button>
         </div>
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden bg-transparent relative z-10">
+      <main className="flex-1 flex flex-col overflow-hidden bg-background/80 backdrop-blur-3xl relative">
         <div className="flex-1 overflow-hidden relative">
+          {/* Subtle page transitions would go here */}
           {currentScreen === Screen.KANBAN && <SalesKanban />}
           {currentScreen === Screen.WON_JOBS && <WonJobs />}
           {currentScreen === Screen.NOTES && <MeetingNotes />}
@@ -157,433 +244,11 @@ function Dashboard() {
   );
 }
 
-// Calendar & Bookings screen - Simple meeting scheduler
-function CalendarBookings() {
-  const { user } = useAuth();
-  const [showModal, setShowModal] = useState(false);
-  const [meetings, setMeetings] = useState<{
-    id: string;
-    client_id: string | null;
-    client_name: string;
-    scheduled_at: string;
-    duration_minutes: number;
-    notes: string;
-    status: string;
-  }[]>([]);
-  const [clients, setClients] = useState<{ id: string; first_name: string; last_name: string; company?: string | null; email?: string | null }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    client_id: '',
-    scheduled_at: '',
-    duration_minutes: 30,
-    notes: ''
-  });
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  // Fetch meetings and clients
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch meetings
-        const { data: bookingsData } = await supabase
-          .from('bookings')
-          .select('*')
-          .order('scheduled_at', { ascending: true });
-
-        // Fetch clients
-        const { data: clientsData } = await supabase
-          .from('clients')
-          .select('id, first_name, last_name, company, email')
-          .order('first_name');
-
-        setMeetings(bookingsData || []);
-        setClients(clientsData || []);
-      } catch (err) {
-        console.error('Fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const selectedClient = clients.find(c => c.id === formData.client_id);
-      const clientName = selectedClient
-        ? `${selectedClient.first_name} ${selectedClient.last_name}`
-        : 'Bilinmeyen Müşteri';
-      const clientEmail = selectedClient?.email || `${formData.client_id}@client.local`;
-
-      if (editingId) {
-        // Update existing meeting
-        const { data, error } = await supabase
-          .from('bookings')
-          .update({
-            client_id: formData.client_id || null,
-            client_name: clientName,
-            client_email: clientEmail,
-            scheduled_at: formData.scheduled_at,
-            duration_minutes: formData.duration_minutes,
-            notes: formData.notes,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', editingId)
-          .select()
-          .single();
-
-        if (error) throw error;
-        setMeetings(prev => prev.map(m => m.id === editingId ? data : m));
-      } else {
-        // Create new meeting
-        const { data, error } = await supabase
-          .from('bookings')
-          .insert({
-            user_id: user?.id || '',
-            client_id: formData.client_id || null,
-            client_name: clientName,
-            client_email: clientEmail,
-            scheduled_at: formData.scheduled_at,
-            duration_minutes: formData.duration_minutes,
-            notes: formData.notes,
-            status: 'confirmed'
-          })
-          .select()
-          .single();
-
-        if (error) throw error;
-        setMeetings(prev => [...prev, data].sort((a, b) =>
-          new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
-        ));
-      }
-
-      setShowModal(false);
-      setFormData({ client_id: '', scheduled_at: '', duration_minutes: 30, notes: '' });
-      setEditingId(null);
-    } catch (err) {
-      console.error('Save error:', err);
-      alert('Kaydetme hatası!');
-    }
-  };
-
-  const handleEdit = (meeting: typeof meetings[0]) => {
-    setFormData({
-      client_id: meeting.client_id || '',
-      scheduled_at: meeting.scheduled_at.slice(0, 16), // Format for datetime-local
-      duration_minutes: meeting.duration_minutes || 30,
-      notes: meeting.notes || ''
-    });
-    setEditingId(meeting.id);
-    setShowModal(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Bu toplantıyı silmek istediğinize emin misiniz?')) return;
-    try {
-      await supabase.from('bookings').delete().eq('id', id);
-      setMeetings(prev => prev.filter(m => m.id !== id));
-    } catch (err) {
-      console.error('Delete error:', err);
-    }
-  };
-
-  const formatDateTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('tr-TR', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const upcomingMeetings = meetings.filter(m =>
-    new Date(m.scheduled_at) >= new Date() && m.status !== 'cancelled'
-  );
-  const pastMeetings = meetings.filter(m =>
-    new Date(m.scheduled_at) < new Date() || m.status === 'cancelled'
-  );
-
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-background-dark">
-        <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 overflow-auto p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-white mb-2">Toplantılar</h1>
-            <p className="text-text-secondary">Müşteri toplantılarınızı yönetin</p>
-          </div>
-          <button
-            onClick={() => {
-              setFormData({ client_id: '', scheduled_at: '', duration_minutes: 30, notes: '' });
-              setEditingId(null);
-              setShowModal(true);
-            }}
-            className="px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-white font-medium transition-colors flex items-center gap-2"
-          >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            Yeni Toplantı
-          </button>
-        </div>
-
-        {/* Upcoming Meetings */}
-        <div className="bg-surface-dark rounded-xl border border-border-dark p-6 mb-6">
-          <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">event</span>
-            Yaklaşan Toplantılar ({upcomingMeetings.length})
-          </h2>
-          {upcomingMeetings.length === 0 ? (
-            <div className="text-center py-8 text-text-secondary">
-              <span className="material-symbols-outlined text-4xl mb-3 block">event_busy</span>
-              <p>Yaklaşan toplantı yok</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {upcomingMeetings.map(meeting => (
-                <div
-                  key={meeting.id}
-                  className="bg-background-dark rounded-lg p-4 border border-border-dark hover:border-primary/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="size-10 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm font-bold">
-                          {meeting.client_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                        </div>
-                        <div>
-                          <h3 className="text-white font-medium">{meeting.client_name}</h3>
-                          <p className="text-text-secondary text-sm">{formatDateTime(meeting.scheduled_at)}</p>
-                        </div>
-                      </div>
-                      {meeting.notes && (
-                        <p className="text-text-secondary text-sm mt-2 ml-13">{meeting.notes}</p>
-                      )}
-                      <div className="flex items-center gap-2 mt-2 ml-13">
-                        <span className="text-xs bg-primary/20 text-primary px-2 py-1 rounded">
-                          {meeting.duration_minutes} dakika
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(meeting)}
-                        className="p-2 text-text-secondary hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(meeting.id)}
-                        className="p-2 text-text-secondary hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Past Meetings */}
-        {pastMeetings.length > 0 && (
-          <div className="bg-surface-dark rounded-xl border border-border-dark p-6">
-            <h2 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-text-secondary">history</span>
-              Geçmiş Toplantılar ({pastMeetings.length})
-            </h2>
-            <div className="space-y-3">
-              {pastMeetings.slice(0, 5).map(meeting => (
-                <div
-                  key={meeting.id}
-                  className="bg-background-dark/50 rounded-lg p-4 border border-border-dark opacity-60"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-white/10 flex items-center justify-center text-text-secondary text-xs font-bold">
-                      {meeting.client_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                    </div>
-                    <div>
-                      <h3 className="text-white font-medium text-sm">{meeting.client_name}</h3>
-                      <p className="text-text-secondary text-xs">{formatDateTime(meeting.scheduled_at)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-surface-dark rounded-xl border border-border-dark p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-            <h2 className="text-xl font-semibold text-white mb-6">
-              {editingId ? 'Toplantıyı Düzenle' : 'Yeni Toplantı'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Müşteri</label>
-                <select
-                  value={formData.client_id}
-                  onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-                  className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
-                  required
-                >
-                  <option value="">Müşteri seçin...</option>
-                  {clients.map(client => (
-                    <option key={client.id} value={client.id}>
-                      {client.first_name} {client.last_name} {client.company ? `(${client.company})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Tarih</label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {[
-                    { label: 'Bugün', date: new Date() },
-                    { label: 'Yarın', date: new Date(Date.now() + 86400000) },
-                    { label: '2 Gün Sonra', date: new Date(Date.now() + 2 * 86400000) },
-                    { label: 'Bu Hafta Sonu', date: (() => { const d = new Date(); d.setDate(d.getDate() + (6 - d.getDay())); return d; })() },
-                  ].map(({ label, date }) => {
-                    const dateStr = date.toISOString().split('T')[0];
-                    const isSelected = formData.scheduled_at.startsWith(dateStr);
-                    return (
-                      <button
-                        key={label}
-                        type="button"
-                        onClick={() => {
-                          const currentTime = formData.scheduled_at.split('T')[1] || '10:00';
-                          setFormData(prev => ({ ...prev, scheduled_at: `${dateStr}T${currentTime}` }));
-                        }}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                          isSelected
-                            ? 'bg-primary text-white'
-                            : 'bg-white/10 text-text-secondary hover:bg-white/20 hover:text-white'
-                        }`}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <input
-                  type="date"
-                  value={formData.scheduled_at.split('T')[0] || ''}
-                  onChange={(e) => {
-                    const currentTime = formData.scheduled_at.split('T')[1] || '10:00';
-                    setFormData(prev => ({ ...prev, scheduled_at: `${e.target.value}T${currentTime}` }));
-                  }}
-                  className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Saat</label>
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  {['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'].map(time => {
-                    const isSelected = formData.scheduled_at.includes(`T${time}`);
-                    return (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => {
-                          const currentDate = formData.scheduled_at.split('T')[0] || new Date().toISOString().split('T')[0];
-                          setFormData(prev => ({ ...prev, scheduled_at: `${currentDate}T${time}` }));
-                        }}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                          isSelected
-                            ? 'bg-primary text-white'
-                            : 'bg-white/10 text-text-secondary hover:bg-white/20 hover:text-white'
-                        }`}
-                      >
-                        {time}
-                      </button>
-                    );
-                  })}
-                </div>
-                <input
-                  type="time"
-                  value={formData.scheduled_at.split('T')[1] || ''}
-                  onChange={(e) => {
-                    const currentDate = formData.scheduled_at.split('T')[0] || new Date().toISOString().split('T')[0];
-                    setFormData(prev => ({ ...prev, scheduled_at: `${currentDate}T${e.target.value}` }));
-                  }}
-                  className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Süre (dakika)</label>
-                <select
-                  value={formData.duration_minutes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration_minutes: Number(e.target.value) }))}
-                  className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary"
-                >
-                  <option value={15}>15 dakika</option>
-                  <option value={30}>30 dakika</option>
-                  <option value={45}>45 dakika</option>
-                  <option value={60}>1 saat</option>
-                  <option value={90}>1.5 saat</option>
-                  <option value={120}>2 saat</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Notlar (opsiyonel)</label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-3 text-white focus:outline-none focus:border-primary resize-none"
-                  rows={3}
-                  placeholder="Toplantı konusu, gündem vb."
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-lg text-white font-medium transition-colors"
-                >
-                  İptal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-3 bg-primary hover:bg-primary/90 rounded-lg text-white font-medium transition-colors"
-                >
-                  {editingId ? 'Güncelle' : 'Kaydet'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Login page wrapper (redirects if already logged in)
 function LoginPage() {
   const { user, loading } = useAuth();
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
-
+  if (loading) return <LoadingSpinner />;
+  if (user) return <Navigate to="/" replace />;
   return <Login />;
 }
 
@@ -592,20 +257,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/booking/:userId" element={<PublicBooking />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-
-        {/* Protected Routes */}
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       </Routes>
     </BrowserRouter>
   );

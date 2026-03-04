@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Input } from './ui/input'
 
 interface FormattedPriceInputProps {
   value: string | number
@@ -73,7 +74,7 @@ export default function FormattedPriceInput({
   }
 
   return (
-    <input
+    <Input
       id={id}
       type="text"
       inputMode="decimal"

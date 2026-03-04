@@ -1,5 +1,9 @@
+import { Loader2, UserPlus } from 'lucide-react'
 import { useState } from 'react'
 import type { ClientInsert } from '../lib/supabase'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
 
 interface ClientFormProps {
   onSubmit: (client: Omit<ClientInsert, 'user_id'>) => Promise<void>
@@ -37,102 +41,101 @@ export default function ClientForm({ onSubmit, onCancel, initialData }: ClientFo
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Ad *</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="first_name">Ad *</Label>
+          <Input
+            id="first_name"
             type="text"
             value={formData.first_name}
             onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
-            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
             placeholder="John"
             required
           />
         </div>
-        <div>
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Soyad</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="last_name">Soyad</Label>
+          <Input
+            id="last_name"
             type="text"
             value={formData.last_name}
             onChange={(e) => setFormData(prev => ({ ...prev, last_name: e.target.value }))}
-            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
             placeholder="Doe"
           />
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Şirket Ünvanı</label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="company">Şirket Ünvanı</Label>
+        <Input
+          id="company"
           type="text"
           value={formData.company}
           onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
-          className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-medium"
           placeholder="Lumina Creative Studio"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">E-posta</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="email">E-posta</Label>
+          <Input
+            id="email"
             type="email"
             value={formData.email}
             onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all"
             placeholder="hello@example.com"
           />
         </div>
-        <div>
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Telefon</label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefon</Label>
+          <Input
+            id="phone"
             type="tel"
             value={formData.phone}
             onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-            className="w-full px-5 py-3.5 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all"
             placeholder="+90 5..."
           />
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Müşteri Notları</label>
+      <div className="space-y-2">
+        <Label htmlFor="notes">Müşteri Notları</Label>
         <textarea
+          id="notes"
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-5 py-4 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all resize-none text-sm italic"
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           placeholder="Müşteri ve beklentileri hakkında detaylar..."
-          rows={3}
         />
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
-          <p className="text-rose-400 text-xs font-bold text-center uppercase tracking-widest">{error}</p>
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-destructive text-xs font-medium text-center">{error}</p>
         </div>
       )}
 
       <div className="flex gap-4 pt-4">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={onCancel}
-          className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-glass-border"
+          className="flex-1"
         >
           İptal
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={loading}
-          className="flex-[1.5] py-4 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
+          className="flex-[1.5]"
         >
           {loading ? (
-            <span className="material-symbols-rounded animate-spin">progress_activity</span>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <>
-              <span className="material-symbols-rounded font-black">person_add</span>
-              <span className="uppercase tracking-widest">Müşteriyi Kaydet</span>
-            </>
+            <UserPlus className="mr-2 h-4 w-4" />
           )}
-        </button>
+          Müşteriyi Kaydet
+        </Button>
       </div>
     </form>
   )

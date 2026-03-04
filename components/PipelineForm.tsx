@@ -1,8 +1,25 @@
+import {
+    Loader2,
+    RefreshCcw,
+    Star,
+    UserPlus,
+    X
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { PipelineStage } from '../hooks/usePipeline'
 import { STAGE_CONFIG } from '../hooks/usePipeline'
 import type { Client, PipelineInsert } from '../lib/supabase'
 import FormattedPriceInput from './FormattedPriceInput'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Label } from './ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from './ui/select'
 
 interface PipelineFormProps {
   clients: Client[]
@@ -21,9 +38,9 @@ interface PipelineFormProps {
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Düşük', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
-  { value: 'medium', label: 'Orta', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30' },
-  { value: 'high', label: 'Yüksek', color: 'bg-red-500/20 text-red-300 border-red-500/30' },
+  { value: 'low', label: 'Düşük', variant: 'secondary' as const },
+  { value: 'medium', label: 'Orta', variant: 'default' as const },
+  { value: 'high', label: 'Yüksek', variant: 'destructive' as const },
 ]
 
 const STAGE_OPTIONS = Object.entries(STAGE_CONFIG).map(([key, config]) => ({
@@ -106,168 +123,166 @@ export default function PipelineForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Müşteri Seçimi */}
-      <div>
-        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Müşteri</label>
+      <div className="space-y-2">
+        <Label>Müşteri</Label>
         <div className="flex gap-2">
-          <select
+          <Select
             value={formData.client_id}
-            onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-            className="flex-1 px-5 py-4 bg-surface-dark/50 border border-glass-border rounded-2xl text-white focus:outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
+            onValueChange={(value) => setFormData(prev => ({ ...prev, client_id: value }))}
           >
-            <option value="" className="bg-slate-900">Müşteri seçin...</option>
-            {clients.map(client => (
-              <option key={client.id} value={client.id} className="bg-slate-900">
-                {client.first_name} {client.last_name} {client.company && `(${client.company})`}
-              </option>
-            ))}
-          </select>
-          <button
+            <SelectTrigger className="flex-1">
+              <SelectValue placeholder="Müşteri seçin..." />
+            </SelectTrigger>
+            <SelectContent>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.first_name} {client.last_name} {client.company && `(${client.company})`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={onAddClient}
-            className="size-[58px] bg-white/5 border border-glass-border hover:border-primary/50 text-slate-400 hover:text-primary rounded-2xl transition-all flex items-center justify-center"
+            className="h-10 w-10 shrink-0"
             title="Yeni müşteri ekle"
           >
-            <span className="material-symbols-rounded">person_add</span>
-          </button>
+            <UserPlus className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Aşama - Chip Buttons */}
-      <div>
-        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Aşama</label>
+      {/* Aşama */}
+      <div className="space-y-2">
+        <Label>Aşama</Label>
         <div className="flex flex-wrap gap-2">
           {STAGE_OPTIONS.map(option => (
-            <button
+            <Button
               key={option.value}
               type="button"
+              variant={formData.stage === option.value ? "default" : "outline"}
+              size="sm"
               onClick={() => setFormData(prev => ({ ...prev, stage: option.value }))}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
-                formData.stage === option.value
-                  ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                  : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-glass-border'
-              }`}
+              className="text-xs font-semibold"
             >
               {option.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
         {/* Öncelik */}
-        <div>
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Öncelik</label>
+        <div className="space-y-2">
+          <Label>Öncelik</Label>
           <div className="flex gap-2">
             {PRIORITY_OPTIONS.map(option => (
-              <button
+              <Button
                 key={option.value}
                 type="button"
+                variant={formData.priority === option.value ? option.variant : "outline"}
+                size="sm"
                 onClick={() => setFormData(prev => ({ ...prev, priority: option.value }))}
-                className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all border ${
-                  formData.priority === option.value
-                    ? option.color + ' shadow-lg'
-                    : 'bg-white/5 text-slate-500 border-glass-border hover:bg-white/10'
-                }`}
+                className="flex-1 text-[10px] uppercase font-bold tracking-wider"
               >
                 {option.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         {/* Fiyat */}
-        <div>
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Tahmini Değer (₺)</label>
+        <div className="space-y-2">
+          <Label>Tahmini Değer (₺)</Label>
           <FormattedPriceInput
             value={formData.estimated_value}
             onChange={(val) => setFormData(prev => ({ ...prev, estimated_value: val }))}
-            className="w-full px-5 py-2.5 bg-surface-dark/50 border border-glass-border rounded-xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 font-mono text-sm"
             placeholder="0"
           />
         </div>
       </div>
 
       {/* Takip Tarihi */}
-      <div>
-        <div className="flex justify-between items-center mb-2 px-1">
-          <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Takip Tarihi</label>
-          <span className="text-[10px] text-slate-600 font-medium">Opsiyonel</span>
+      <div className="space-y-2">
+        <div className="flex justify-between items-center">
+          <Label>Takip Tarihi</Label>
+          <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Opsiyonel</span>
         </div>
 
         <div className="flex flex-wrap gap-2 mb-3">
           {QUICK_DATES.map(({ label, days }) => (
-            <button
+            <Button
               key={days}
               type="button"
+              variant={formData.follow_up_date === addDays(days) ? "secondary" : "outline"}
+              size="sm"
               onClick={() => handleQuickDate(days)}
-              className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase transition-all border ${
-                formData.follow_up_date === addDays(days)
-                  ? 'bg-slate-200 text-slate-900 border-slate-200 shadow-lg shadow-white/5'
-                  : 'bg-white/5 text-slate-500 hover:bg-white/10 hover:text-white border-glass-border'
-              }`}
+              className="h-8 text-[10px] font-bold uppercase"
             >
               {label}
-            </button>
+            </Button>
           ))}
           {formData.follow_up_date && (
-            <button
+            <Button
               type="button"
+              variant="destructive"
+              size="icon"
               onClick={clearDate}
-              className="px-3 py-2 rounded-xl text-[10px] font-bold uppercase bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition-all flex items-center justify-center"
+              className="h-8 w-8"
             >
-              <span className="material-symbols-rounded text-[14px]">close</span>
-            </button>
+              <X className="h-3 w-3" />
+            </Button>
           )}
         </div>
 
-        <input
+        <Input
           type="date"
           value={formData.follow_up_date}
           onChange={(e) => setFormData(prev => ({ ...prev, follow_up_date: e.target.value }))}
-          className="w-full px-5 py-3 bg-surface-dark/50 border border-glass-border rounded-xl text-white focus:outline-none focus:border-primary/50 text-sm"
+          className="text-sm"
         />
       </div>
 
       {/* Notlar */}
-      <div>
-        <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2 px-1">Notlar</label>
+      <div className="space-y-2">
+        <Label>Notlar</Label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-5 py-4 bg-surface-dark/50 border border-glass-border rounded-2xl text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all resize-none text-sm font-light italic"
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 italic"
           placeholder="İş birliği hakkında kısa notlar..."
-          rows={3}
         />
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl">
-          <p className="text-rose-400 text-xs font-bold text-center uppercase tracking-wider">{error}</p>
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-destructive text-xs font-medium text-center">{error}</p>
         </div>
       )}
 
       <div className="flex gap-4 pt-4">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={onCancel}
-          className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-slate-300 font-bold rounded-2xl transition-all border border-glass-border"
+          className="flex-1"
         >
           Geri Dön
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
           disabled={loading}
-          className="flex-[1.5] py-4 bg-white text-slate-900 hover:bg-slate-200 disabled:opacity-50 font-black rounded-2xl transition-all flex items-center justify-center gap-2 shadow-xl shadow-white/5 active:scale-[0.98]"
+          className="flex-[1.5]"
         >
           {loading ? (
-            <span className="material-symbols-rounded animate-spin">progress_activity</span>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <>
-              <span className="material-symbols-rounded font-black">{editMode ? 'sync' : 'stars'}</span>
-              <span className="uppercase tracking-widest">{editMode ? 'Güncelle' : 'Yolculuğu Başlat'}</span>
-            </>
+            editMode ? <RefreshCcw className="mr-2 h-4 w-4" /> : <Star className="mr-2 h-4 w-4" />
           )}
-        </button>
+          {editMode ? 'Güncelle' : 'Yolculuğu Başlat'}
+        </Button>
       </div>
     </form>
   )

@@ -1,26 +1,41 @@
 import {
-  closestCorners,
-  DndContext,
-  DragEndEvent,
-  DragOverEvent,
-  DragOverlay,
-  DragStartEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useDroppable,
-  useSensor,
-  useSensors,
+    closestCorners,
+    DndContext,
+    DragEndEvent,
+    DragOverEvent,
+    DragOverlay,
+    DragStartEvent,
+    KeyboardSensor,
+    PointerSensor,
+    useDroppable,
+    useSensor,
+    useSensors,
 } from '@dnd-kit/core'
 import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import {
+    CheckCircle2,
+    Clock,
+    Loader2,
+    MessageSquare,
+    Plus,
+    Search,
+    Trophy
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import Modal from '../components/Modal'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader } from '../components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
 import { supabase } from '../lib/supabase'
+import { cn } from '../lib/utils'
 
 type JobStatus = 'planlama' | 'yapiliyor' | 'bitti'
 
@@ -47,13 +62,11 @@ interface WonJob {
   } | null
 }
 
-const STATUS_CONFIG: Record<JobStatus, { label: string; icon: string; color: string; dot: string }> = {
-  planlama: { label: 'Planlama', icon: 'draft', color: 'text-amber-400', dot: 'bg-amber-500' },
-  yapiliyor: { label: 'Yapılıyor', icon: 'pending', color: 'text-blue-400', dot: 'bg-blue-500' },
-  bitti: { label: 'Bitti', icon: 'check_circle', color: 'text-emerald-400', dot: 'bg-emerald-500' },
+const STATUS_CONFIG: Record<JobStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" | null | undefined }> = {
+  planlama: { label: 'Planlama', variant: 'secondary' },
+  yapiliyor: { label: 'Yapılıyor', variant: 'default' },
+  bitti: { label: 'Bitti', variant: 'outline' },
 }
-
-const PRIORITY_ORDER: Record<string, number> = { high: 0, medium: 1, low: 2 }
 
 const getClientName = (job: WonJob) => {
   if (!job.clients) return 'İsimsiz'
@@ -69,118 +82,107 @@ const getInitials = (job: WonJob) => {
     : `${job.clients.first_name[0]}${job.clients.last_name?.[0] || ''}`.toUpperCase()
 }
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-
 // ── Kanban Card ──
 function JobCard({ job, onClick, isDragging }: { job: WonJob; onClick: () => void; isDragging?: boolean }) {
-  const priorityConfig: Record<string, { color: string; label: string; dot: string }> = {
-    high: { color: 'bg-rose-500/10 text-rose-400 border-rose-500/20', label: 'Yüksek', dot: 'bg-rose-500' },
-    medium: { color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: 'Orta', dot: 'bg-amber-500' },
-    low: { color: 'bg-slate-500/10 text-slate-400 border-slate-500/20', label: 'Düşük', dot: 'bg-slate-400' },
+  const priorityConfig = {
+    high: { variant: 'destructive' as const, label: 'Kritik' },
+    medium: { variant: 'default' as const, label: 'Normal' },
+    low: { variant: 'secondary' as const, label: 'Düşük' },
   }
-  const priority = priorityConfig[job.priority || 'medium'] || priorityConfig.medium
+  const priority = priorityConfig[job.priority as keyof typeof priorityConfig] || priorityConfig.medium
 
   return (
-    <div
+    <Card
       onClick={onClick}
-      className={`group relative bg-surface-lighter border border-white/10 p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
-        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-surface-lighter/80 hover:border-primary/50'
-      }`}
+      className={cn(
+        "group relative transition-all duration-300 cursor-pointer overflow-hidden border-border/80 bg-card/60 backdrop-blur-md shadow-sm",
+        isDragging ? "opacity-40 scale-95" : "hover:border-primary/50 hover:shadow-2xl hover:bg-card/90"
+      )}
     >
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-      {/* Priority */}
-      <div className="mb-3 relative z-10">
-        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${priority.color}`}>
-          <span className={`size-1.5 rounded-full ${priority.dot}`} />
-          {priority.label}
-        </div>
-      </div>
-
-      {/* Client */}
-      <div className="flex items-center gap-3 mb-3 relative z-10">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-inner text-sm">
-          {getInitials(job)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-white font-semibold text-[15px] truncate tracking-tight">{getClientName(job)}</h4>
-        </div>
-      </div>
-
-      {/* Son Durum */}
-      {job.last_status_note && (
-        <p className="text-slate-400 text-sm mb-3 line-clamp-2 italic font-light relative z-10">
-          "{job.last_status_note}"
-        </p>
-      )}
-
-      {/* Progress bar for yapiliyor */}
-      {job.job_status === 'yapiliyor' && (
-        <div className="flex items-center gap-2 border-t border-glass-border pt-3 relative z-10">
-          <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${job.job_progress}%` }} />
+      <CardHeader className="p-5 pb-2">
+        <div className="flex justify-between items-start">
+          <Badge variant={priority.variant} className="text-xs font-black px-2 py-0.5 tracking-tighter uppercase">
+            {priority.label}
+          </Badge>
+          <div className="text-xs text-muted-foreground font-bold flex items-center gap-1.5 opacity-80">
+             <Clock className="size-3.5" />
+             <span>{job.created_at ? new Date(job.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '---'}</span>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono">%{job.job_progress}</span>
         </div>
-      )}
-    </div>
+      </CardHeader>
+
+      <CardContent className="p-5 pt-0 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-sm font-black ring-1 ring-primary/20 shadow-inner">
+            {getInitials(job)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-bold truncate tracking-tight text-foreground">{getClientName(job)}</h4>
+            <div className="flex items-center gap-2 mt-2">
+               <div className="flex-1 h-1.5 bg-muted/50 rounded-full overflow-hidden ring-1 ring-border/20">
+                 <div className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]" style={{ width: `${job.job_progress}%` }} />
+               </div>
+               <span className="text-sm text-primary font-black">{job.job_progress}%</span>
+            </div>
+          </div>
+        </div>
+
+        {job.last_status_note && (
+           <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10 transition-colors group-hover:bg-primary/10">
+              <MessageSquare className="size-3.5 mt-0.5 text-primary shrink-0 opacity-70" />
+              <p className="text-[12px] text-foreground/90 line-clamp-2 italic leading-relaxed font-medium">
+                {job.last_status_note}
+              </p>
+           </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 
-// ── Sortable Card Wrapper ──
 function SortableJobCard({ job, onClick }: { job: WonJob; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: job.id })
-  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 100 : 1 }
-
+  const style = { transform: CSS.Translate.toString(transform), transition }
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <JobCard job={job} onClick={onClick} isDragging={isDragging} />
     </div>
   )
 }
 
-// ── Droppable Column ──
-function JobColumn({
-  status,
-  jobs,
-  onCardClick,
-  isOver,
-}: {
-  status: JobStatus
-  jobs: WonJob[]
-  onCardClick: (job: WonJob) => void
-  isOver: boolean
-}) {
-  const config = STATUS_CONFIG[status]
+// ── Column ──
+function Column({ status, jobs, onJobClick, isOver }: { status: JobStatus; jobs: WonJob[]; onJobClick: (j: WonJob) => void; isOver?: boolean }) {
   const { setNodeRef } = useDroppable({ id: status })
+  const config = STATUS_CONFIG[status]
 
   return (
-    <div className="flex flex-col w-[340px] shrink-0 h-full">
-      <div className="flex items-center gap-3 mb-6 px-1">
-        <div className={`size-2 rounded-full ${config.dot} shadow-[0_0_8px_rgba(99,102,241,0.6)]`} />
-        <h3 className="font-bold text-sm text-slate-300 uppercase tracking-[0.1em]">{config.label}</h3>
-        <span className="text-[10px] text-slate-500 font-mono bg-white/5 px-2 py-0.5 rounded-full">{jobs.length}</span>
+    <div className="flex flex-col w-[320px] shrink-0 h-full">
+      <div className="flex items-center justify-between mb-6 px-2">
+        <div className="flex items-center gap-3">
+           <div className={cn("size-2.5 rounded-full ring-4 ring-background shadow-sm", status === 'planlama' ? "bg-amber-500" : status === 'yapiliyor' ? "bg-blue-500" : "bg-emerald-500")} />
+           <h3 className="font-black text-xs uppercase tracking-[0.15em] text-foreground/80">{config.label}</h3>
+           <Badge variant="secondary" className="h-5 min-w-[22px] justify-center px-1 text-xs font-black bg-muted/80">
+             {jobs.length}
+           </Badge>
+        </div>
       </div>
 
       <div
         ref={setNodeRef}
-        className={`flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar rounded-3xl p-3 transition-all duration-300 border-2 border-transparent ${
-          isOver ? 'bg-primary/5 border-primary/20 scale-[0.99] border-dashed shadow-inner' : 'bg-transparent'
-        }`}
+        className={cn(
+          "flex-1 flex flex-col gap-3 p-2 rounded-lg transition-colors duration-200 overflow-y-auto no-scrollbar",
+          isOver ? "bg-accent/50 ring-1 ring-primary/20" : "bg-transparent"
+        )}
       >
-        <SortableContext items={jobs.map(j => j.id)} strategy={verticalListSortingStrategy}>
-          {jobs.map(job => (
-            <SortableJobCard key={job.id} job={job} onClick={() => onCardClick(job)} />
+        <SortableContext items={jobs.map((j) => j.id)} strategy={verticalListSortingStrategy}>
+          {jobs.map((job) => (
+            <SortableJobCard key={job.id} job={job} onClick={() => onJobClick(job)} />
           ))}
         </SortableContext>
-
+        
         {jobs.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center p-10 opacity-20">
-            <div className="size-16 rounded-3xl border-2 border-dashed border-slate-500 flex items-center justify-center mb-4">
-              <span className="material-symbols-rounded text-3xl">{config.icon}</span>
-            </div>
-            <p className="text-xs font-medium uppercase tracking-widest text-center">Boş</p>
+          <div className="flex-1 border-2 border-dashed border-muted rounded-lg flex flex-col items-center justify-center p-6 opacity-30">
+            <p className="text-xs font-bold uppercase tracking-widest text-center">Aşama Boş</p>
           </div>
         )}
       </div>
@@ -194,200 +196,153 @@ export default function WonJobs() {
   const [loading, setLoading] = useState(true)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  // Detail modal state
+  // Modals
   const [selectedJob, setSelectedJob] = useState<WonJob | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
   const [comments, setComments] = useState<JobComment[]>([])
   const [newComment, setNewComment] = useState('')
-  const [editingNote, setEditingNote] = useState(false)
-  const [noteValue, setNoteValue] = useState('')
-  const [progressValue, setProgressValue] = useState(0)
-  const [editingProgress, setEditingProgress] = useState(false)
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
+  useEffect(() => {
+    fetchJobs()
+  }, [])
 
   const fetchJobs = async () => {
+    setLoading(true)
     const { data, error } = await supabase
       .from('pipeline')
-      .select('id, client_id, stage, priority, notes, job_status, job_progress, last_status_note, created_at, clients(first_name, last_name, company)')
-      .in('stage', ['won', 'completed'])
+      .select('*, clients(first_name, last_name, company)')
+      .eq('stage', 'won')
       .order('created_at', { ascending: false })
 
-    if (!error && data) {
-      setJobs(data as unknown as WonJob[])
-    }
+    if (!error && data) setJobs(data as WonJob[])
     setLoading(false)
   }
 
-  useEffect(() => { fetchJobs() }, [])
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
 
-  // Sort jobs by priority within each column
-  const getJobsByStatus = (status: JobStatus) =>
-    jobs
-      .filter(j => (j.job_status || 'planlama') === status)
-      .sort((a, b) => (PRIORITY_ORDER[a.priority || 'medium'] ?? 1) - (PRIORITY_ORDER[b.priority || 'medium'] ?? 1))
-
-  const activeItem = useMemo(() => jobs.find(j => j.id === activeId), [activeId, jobs])
-
-  // ── Drag handlers ──
   const handleDragStart = (e: DragStartEvent) => setActiveId(e.active.id as string)
 
-  const handleDragOver = (e: DragOverEvent) => {
-    const { over } = e
-    if (!over) { setOverId(null); return }
-    const statuses = Object.keys(STATUS_CONFIG) as JobStatus[]
-    if (statuses.includes(over.id as JobStatus)) {
-      setOverId(over.id as string)
-    } else {
-      const overJob = jobs.find(j => j.id === over.id)
-      if (overJob) setOverId(overJob.job_status || 'planlama')
-    }
-  }
+  const handleDragOver = (e: DragOverEvent) => setOverId(e.over ? (e.over.id as string) : null)
 
   const handleDragEnd = async (e: DragEndEvent) => {
-    const { active, over } = e
     setActiveId(null)
     setOverId(null)
+    const { active, over } = e
     if (!over) return
 
-    const draggedJob = jobs.find(j => j.id === active.id)
-    if (!draggedJob) return
+    const job = jobs.find((j) => j.id === active.id)
+    if (!job) return
 
-    let targetStatus: JobStatus | null = null
-    const statuses = Object.keys(STATUS_CONFIG) as JobStatus[]
-
-    if (statuses.includes(over.id as JobStatus)) {
-      targetStatus = over.id as JobStatus
-    } else {
-      const overJob = jobs.find(j => j.id === over.id)
-      if (overJob) targetStatus = (overJob.job_status || 'planlama') as JobStatus
-    }
-
-    if (targetStatus && (draggedJob.job_status || 'planlama') !== targetStatus) {
-      const progress = targetStatus === 'bitti' ? 100 : targetStatus === 'planlama' ? 0 : draggedJob.job_progress
-      await supabase.from('pipeline').update({ job_status: targetStatus, job_progress: progress }).eq('id', draggedJob.id)
-      setJobs(prev => prev.map(j => j.id === draggedJob.id ? { ...j, job_status: targetStatus!, job_progress: progress } : j))
+    const newStatus = over.id as JobStatus
+    if (job.job_status !== newStatus) {
+      const { error } = await supabase.from('pipeline').update({ job_status: newStatus }).eq('id', job.id)
+      if (!error) {
+        setJobs(jobs.map((j) => (j.id === job.id ? { ...j, job_status: newStatus } : j)))
+      }
     }
   }
 
-  // ── Detail modal actions ──
-  const openDetail = async (job: WonJob) => {
+  const handleJobClick = async (job: WonJob) => {
     setSelectedJob(job)
-    setNoteValue(job.last_status_note || '')
-    setProgressValue(job.job_progress)
-    setEditingNote(false)
-    setEditingProgress(false)
-    setNewComment('')
-
-    const { data } = await supabase
-      .from('job_comments')
-      .select('id, content, created_at')
-      .eq('pipeline_id', job.id)
-      .order('created_at', { ascending: false })
-
-    setComments(data || [])
+    setShowDetailModal(true)
+    fetchComments(job.id)
   }
 
-  const closeDetail = () => {
-    setSelectedJob(null)
-    setComments([])
-    setEditingNote(false)
-    setEditingProgress(false)
+  const fetchComments = async (jobId: string) => {
+    const { data } = await supabase.from('job_comments').select('*').eq('pipeline_id', jobId).order('created_at', { ascending: false })
+    if (data) setComments(data)
   }
 
-  const addComment = async () => {
-    if (!newComment.trim() || !selectedJob) return
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
+  const addComment = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedJob || !newComment.trim()) return
     const { data, error } = await supabase
       .from('job_comments')
-      .insert({ pipeline_id: selectedJob.id, user_id: user.id, content: newComment.trim() })
-      .select('id, content, created_at')
+      .insert({ pipeline_id: selectedJob.id, content: newComment })
+      .select()
       .single()
 
     if (!error && data) {
-      setComments(prev => [data, ...prev])
+      setComments([data, ...comments])
       setNewComment('')
+      // Update last status note for UI immediate feedback
+      setJobs(jobs.map(j => j.id === selectedJob.id ? { ...j, last_status_note: newComment } : j))
+      // Also update in DB
+      await supabase.from('pipeline').update({ last_status_note: newComment }).eq('id', selectedJob.id)
     }
   }
 
-  const deleteComment = async (commentId: string) => {
-    await supabase.from('job_comments').delete().eq('id', commentId)
-    setComments(prev => prev.filter(c => c.id !== commentId))
+  const updateProgress = async (val: number) => {
+    if (!selectedJob) return
+    const { error } = await supabase.from('pipeline').update({ job_progress: val }).eq('id', selectedJob.id)
+    if (!error) {
+      setJobs(jobs.map(j => j.id === selectedJob.id ? { ...j, job_progress: val } : j))
+      setSelectedJob({ ...selectedJob, job_progress: val })
+    }
   }
 
-  const saveLastNote = async () => {
-    if (!selectedJob) return
-    await supabase.from('pipeline').update({ last_status_note: noteValue }).eq('id', selectedJob.id)
-    setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, last_status_note: noteValue } : j))
-    setSelectedJob(prev => prev ? { ...prev, last_status_note: noteValue } : null)
-    setEditingNote(false)
-  }
+  const filteredJobs = useMemo(() => {
+    const q = searchQuery.toLowerCase()
+    return jobs.filter(j => 
+       getClientName(j).toLowerCase().includes(q) || 
+       j.notes?.toLowerCase().includes(q)
+    )
+  }, [jobs, searchQuery])
 
-  const saveProgress = async () => {
-    if (!selectedJob) return
-    await supabase.from('pipeline').update({ job_progress: progressValue }).eq('id', selectedJob.id)
-    setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, job_progress: progressValue } : j))
-    setSelectedJob(prev => prev ? { ...prev, job_progress: progressValue } : null)
-    setEditingProgress(false)
-  }
-
-  const changeStatusInModal = async (status: JobStatus) => {
-    if (!selectedJob) return
-    const progress = status === 'bitti' ? 100 : status === 'planlama' ? 0 : selectedJob.job_progress
-    await supabase.from('pipeline').update({ job_status: status, job_progress: progress }).eq('id', selectedJob.id)
-    setJobs(prev => prev.map(j => j.id === selectedJob.id ? { ...j, job_status: status, job_progress: progress } : j))
-    setSelectedJob(prev => prev ? { ...prev, job_status: status, job_progress: progress } : null)
-    setProgressValue(progress)
-  }
+  const activeJob = activeId ? jobs.find((j) => j.id === activeId) : null
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-transparent">
-        <div className="flex flex-col items-center gap-6">
-          <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Yükleniyor...</p>
-        </div>
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-transparent overflow-hidden px-8 py-6">
+    <div className="flex flex-col w-full h-full overflow-hidden px-6 py-6 space-y-8">
       {/* Header */}
-      <header className="flex items-center justify-between mb-12 shrink-0">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="material-symbols-rounded text-primary">task_alt</span>
-            <span className="text-primary text-[10px] uppercase font-black tracking-[0.2em]">Proje Takibi</span>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 shrink-0">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-primary font-black tracking-[0.2em] shadow-sm">
+            <Trophy className="size-5" />
+            <span className="text-xs uppercase">Aktif Projeler</span>
           </div>
-          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Kazanılan İşler</h1>
-          <p className="text-slate-500 text-base font-light max-w-lg mt-2">
-            Kazanılan projelerin durumunu takip edin ve yönetin.
-          </p>
+          <h1 className="text-4xl font-black tracking-tight">Başarılarım</h1>
+          <p className="text-muted-foreground text-base max-w-lg leading-relaxed">Kazandığınız işlerin ilerleyişini yönetin.</p>
         </div>
 
-        <div className="flex items-center gap-6">
-          {/* Stats */}
-          {(Object.keys(STATUS_CONFIG) as JobStatus[]).map(s => {
-            const count = getJobsByStatus(s).length
-            const cfg = STATUS_CONFIG[s]
-            return (
-              <div key={s} className="h-24 w-32 bg-white/5 border border-white/10 rounded-[1.5rem] p-4 flex flex-col justify-between relative group hover:border-white/20 transition-all shadow-xl overflow-hidden">
-                <span className={`text-[10px] font-black uppercase tracking-widest ${cfg.color}`}>{cfg.label}</span>
-                <p className="text-white text-2xl font-black leading-none">{count}</p>
-              </div>
-            )
-          })}
+        <div className="flex items-center gap-4">
+           {/* Summary Stats */}
+           <div className="flex gap-3">
+              <Card className="p-3 w-32 border-border/40 bg-card/50">
+                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Tamamlanan</p>
+                 <div className="flex items-center gap-2 mt-1">
+                    <CheckCircle2 className="size-4 text-emerald-500" />
+                    <span className="text-xl font-bold">{jobs.filter(j => j.job_status === 'bitti').length}</span>
+                 </div>
+              </Card>
+           </div>
+           
+           <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Proje ara..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-40 md:w-60 h-10"
+              />
+           </div>
         </div>
       </header>
 
-      {/* Kanban Board */}
-      <div className="flex-1 overflow-x-auto pb-8 custom-scrollbar">
+      {/* Board */}
+      <div className="flex-1 overflow-x-auto pb-6 custom-scrollbar">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -395,22 +350,22 @@ export default function WonJobs() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-8 min-w-full h-full pb-4">
-            {(Object.keys(STATUS_CONFIG) as JobStatus[]).map(status => (
-              <JobColumn
+          <div className="flex gap-6 min-w-full h-full">
+            {(['planlama', 'yapiliyor', 'bitti'] as JobStatus[]).map((status) => (
+              <Column
                 key={status}
                 status={status}
-                jobs={getJobsByStatus(status)}
-                onCardClick={openDetail}
+                jobs={filteredJobs.filter((j) => j.job_status === status)}
+                onJobClick={handleJobClick}
                 isOver={overId === status}
               />
             ))}
           </div>
 
           <DragOverlay dropAnimation={null}>
-            {activeItem ? (
-              <div className="rotate-3 scale-105 pointer-events-none drop-shadow-2xl">
-                <JobCard job={activeItem} onClick={() => {}} isDragging />
+            {activeJob ? (
+              <div className="rotate-3 scale-105 pointer-events-none opacity-90 drop-shadow-xl">
+                <JobCard job={activeJob} onClick={() => {}} isDragging />
               </div>
             ) : null}
           </DragOverlay>
@@ -418,142 +373,79 @@ export default function WonJobs() {
       </div>
 
       {/* Detail Modal */}
-      <Modal
-        isOpen={!!selectedJob}
-        onClose={closeDetail}
-        title={selectedJob ? getClientName(selectedJob) : ''}
-      >
-        {selectedJob && (
-          <div className="space-y-5">
-            {/* Status selector */}
-            <div>
-              <span className="text-xs text-text-secondary block mb-2">Durum</span>
-              <div className="flex gap-2">
-                {(Object.keys(STATUS_CONFIG) as JobStatus[]).map(s => {
-                  const cfg = STATUS_CONFIG[s]
-                  const active = selectedJob.job_status === s
-                  return (
-                    <button
-                      key={s}
-                      onClick={() => changeStatusInModal(s)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
-                        active
-                          ? `${cfg.color} bg-white/10 border-white/20`
-                          : 'text-slate-500 border-white/5 hover:border-white/15 hover:text-slate-300'
-                      }`}
-                    >
-                      <span className={`size-2 rounded-full ${cfg.dot}`} />
-                      {cfg.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Progress (only for yapiliyor) */}
-            {selectedJob.job_status === 'yapiliyor' && (
-              <div>
-                <span className="text-xs text-text-secondary block mb-2">İlerleme</span>
-                {editingProgress ? (
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min={0} max={100} step={5}
-                      value={progressValue}
-                      onChange={e => setProgressValue(Number(e.target.value))}
-                      className="flex-1 accent-blue-500"
-                    />
-                    <span className="text-sm text-white font-mono w-10">%{progressValue}</span>
-                    <button onClick={saveProgress} className="px-3 py-1.5 bg-primary/20 text-primary rounded-lg text-xs font-medium hover:bg-primary/30">Kaydet</button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setEditingProgress(true); setProgressValue(selectedJob.job_progress) }}>
-                    <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                      <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${selectedJob.job_progress}%` }} />
-                    </div>
-                    <span className="text-sm text-blue-400 font-mono">%{selectedJob.job_progress}</span>
-                    <span className="material-symbols-rounded text-slate-500 text-sm">edit</span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Son Durum */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-text-secondary">Son Durum</span>
-                {!editingNote && (
-                  <button onClick={() => { setEditingNote(true); setNoteValue(selectedJob.last_status_note || '') }} className="text-slate-500 hover:text-white transition-colors">
-                    <span className="material-symbols-rounded text-sm">edit</span>
-                  </button>
-                )}
-              </div>
-              {editingNote ? (
+      <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
+        <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-0">
+             <div className="flex items-center gap-3 mb-2">
+                <Badge variant={selectedJob?.priority === 'high' ? 'destructive' : 'default'}>
+                   {selectedJob?.priority === 'high' ? 'Kritik' : 'Normal'}
+                </Badge>
+                <div className="size-1.5 rounded-full bg-border" />
+                <span className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Proje Detayları</span>
+             </div>
+             <DialogTitle className="text-2xl">{selectedJob ? getClientName(selectedJob) : ''}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto p-6 space-y-8">
+             {/* Progress Controls */}
+             <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                   <Label className="text-sm">İlerleme Durumu</Label>
+                   <span className="text-2xl font-black text-primary">{selectedJob?.job_progress}%</span>
+                </div>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={noteValue}
-                    onChange={e => setNoteValue(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && saveLastNote()}
-                    placeholder="Son durum notu..."
-                    className="flex-1 bg-background-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary"
-                    autoFocus
-                  />
-                  <button onClick={saveLastNote} className="px-3 py-2 bg-primary/20 text-primary rounded-xl text-xs font-medium hover:bg-primary/30">Kaydet</button>
-                  <button onClick={() => setEditingNote(false)} className="px-3 py-2 text-slate-500 rounded-xl text-xs hover:text-white">İptal</button>
-                </div>
-              ) : (
-                <p className="text-sm text-white/70 bg-background-dark/50 rounded-xl px-4 py-3 border border-white/5">
-                  {selectedJob.last_status_note || <span className="text-slate-600 italic">Henüz not eklenmedi</span>}
-                </p>
-              )}
-            </div>
-
-            {/* Comments */}
-            <div>
-              <span className="text-xs text-text-secondary block mb-2">
-                Yorumlar {comments.length > 0 && `(${comments.length})`}
-              </span>
-
-              <div className="flex gap-2 mb-3">
-                <input
-                  type="text"
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && addComment()}
-                  placeholder="Yorum ekle..."
-                  className="flex-1 bg-background-dark border border-border-dark rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-primary"
-                />
-                <button
-                  onClick={addComment}
-                  className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-400 hover:text-white hover:bg-white/10 transition-colors font-medium"
-                >
-                  Gönder
-                </button>
-              </div>
-
-              {comments.length > 0 && (
-                <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
-                  {comments.map(c => (
-                    <div key={c.id} className="flex items-start gap-2 group">
-                      <div className="flex-1 bg-background-dark/50 rounded-xl px-4 py-2.5 border border-white/5">
-                        <p className="text-sm text-white/80">{c.content}</p>
-                        <span className="text-[10px] text-slate-600 mt-1 block">{formatDate(c.created_at)}</span>
-                      </div>
-                      <button
-                        onClick={() => deleteComment(c.id)}
-                        className="p-1.5 text-slate-700 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mt-1"
+                   {[0, 25, 50, 75, 100].map((v) => (
+                      <Button
+                        key={v}
+                        variant={selectedJob?.job_progress === v ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => updateProgress(v)}
+                        className="flex-1 h-10 text-xs font-bold uppercase"
                       >
-                        <span className="material-symbols-rounded text-sm">close</span>
-                      </button>
-                    </div>
-                  ))}
+                         {v}%
+                      </Button>
+                   ))}
                 </div>
-              )}
-            </div>
+             </div>
+
+             {/* Comments / Status Updates */}
+             <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                   <MessageSquare className="size-4 text-primary" />
+                   <h4 className="font-bold text-sm uppercase tracking-wider">Durum Notları</h4>
+                </div>
+                
+                <form onSubmit={addComment} className="flex gap-2">
+                   <Input
+                      placeholder="Güncelleme notu ekleyin..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="flex-1"
+                   />
+                   <Button type="submit" size="icon">
+                      <Plus className="size-4" />
+                   </Button>
+                </form>
+
+                <div className="space-y-3">
+                   {comments.map((c) => (
+                      <div key={c.id} className="p-3 bg-muted/40 rounded-xl border border-border/40 relative group">
+                         <p className="text-sm leading-relaxed">{c.content}</p>
+                         <div className="flex items-center justify-between mt-2">
+                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">
+                               {new Date(c.created_at).toLocaleString('tr-TR')}
+                            </span>
+                         </div>
+                      </div>
+                   ))}
+                   {comments.length === 0 && (
+                      <div className="text-center py-6 opacity-30 italic text-sm">Henüz not eklenmemiş.</div>
+                   )}
+                </div>
+             </div>
           </div>
-        )}
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

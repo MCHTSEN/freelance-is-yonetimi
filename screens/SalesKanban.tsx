@@ -18,14 +18,39 @@ import {
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import {
+    Calendar as CalendarIcon,
+    CheckCircle2,
+    Clock,
+    FileEdit,
+    Loader2,
+    Plus,
+    Rocket,
+    Search,
+    TrendingUp,
+    Video
+} from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import ClientForm from '../components/ClientForm'
-import Modal from '../components/Modal'
 import PipelineForm from '../components/PipelineForm'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardHeader } from '../components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../components/ui/select'
 import { useClients } from '../hooks/useClients'
 import { PipelineStage, PipelineWithClient, STAGE_CONFIG, usePipeline } from '../hooks/usePipeline'
 import type { Client } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
+import { cn } from '../lib/utils'
 
 // Type for upcoming meeting display
 interface UpcomingMeeting {
@@ -62,9 +87,9 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
     : '??'
 
   const priorityConfig = {
-    high: { color: 'bg-rose-500/10 text-rose-400 border-rose-500/20', label: 'Yüksek', dot: 'bg-rose-500' },
-    medium: { color: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: 'Orta', dot: 'bg-amber-500' },
-    low: { color: 'bg-slate-500/10 text-slate-400 border-slate-500/20', label: 'Düşük', dot: 'bg-slate-400' },
+    high: { variant: 'destructive' as const, label: 'Yüksek' },
+    medium: { variant: 'default' as const, label: 'Orta' },
+    low: { variant: 'secondary' as const, label: 'Düşük' },
   }
 
   const priority = priorityConfig[item.priority as keyof typeof priorityConfig] || priorityConfig.medium
@@ -75,142 +100,107 @@ function KanbanCard({ item, onDelete, onEdit, onAddMeeting, onAddNote, isDraggin
   }
 
   return (
-    <div
+    <Card
       onClick={onEdit}
-      className={`group relative bg-surface-lighter border border-white/10 p-5 rounded-2xl shadow-premium transition-all duration-300 cursor-pointer ${
-        isDragging ? 'opacity-40 scale-95' : 'hover:scale-[1.02] hover:bg-surface-lighter/80 hover:border-primary/50'
-      }`}
-    >
-      {/* High-end glass shadow effect on hover */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-      {/* Header Info */}
-      <div className="flex justify-between items-start mb-4 relative z-10">
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${priority.color}`}>
-          <span className={`size-1.5 rounded-full ${priority.dot}`} />
-          {priority.label}
-        </div>
-        
-        <div className="flex gap-2">
-          <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddMeeting(); }}
-              className="size-8 rounded-lg bg-white/5 hover:bg-green-500/20 text-slate-400 hover:text-green-400 flex items-center justify-center transition-colors border border-white/5"
-              title="Toplantı"
-            >
-              <span className="material-symbols-rounded text-[18px]">videocam</span>
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onAddNote(); }}
-              className="size-8 rounded-lg bg-white/5 hover:bg-primary/20 text-slate-400 hover:text-primary flex items-center justify-center transition-colors border border-white/5"
-              title="Not"
-            >
-              <span className="material-symbols-rounded text-[18px]">edit_note</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Client Identity */}
-      <div className="flex items-center gap-3 mb-4 relative z-10">
-        <div className="size-10 rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 flex items-center justify-center text-primary font-bold shadow-inner">
-          {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-white font-semibold text-base truncate tracking-tight">{clientName}</h4>
-          {item.estimated_value && (
-            <p className="text-slate-400 text-sm font-medium">{formatCurrency(item.estimated_value)}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Status & Notes */}
-      {item.notes && (
-        <p className="text-slate-400 text-sm mb-4 line-clamp-2 italic font-light relative z-10">
-          "{item.notes}"
-        </p>
+      className={cn(
+        "group relative transition-all duration-300 cursor-pointer overflow-hidden border-border/80 bg-card/60 backdrop-blur-md",
+        isDragging ? "opacity-40 scale-95" : "hover:border-primary/50 hover:shadow-2xl hover:bg-card/90"
       )}
+    >
+      <CardHeader className="p-5 pb-2">
+        <div className="flex justify-between items-start">
+          <Badge variant={priority.variant} className="text-xs font-bold px-2 py-0.5">
+            {priority.label}
+          </Badge>
+          
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 rounded-lg"
+              onClick={(e) => { e.stopPropagation(); onAddMeeting(); }}
+            >
+              <Video className="h-4 w-4 text-primary" />
+            </Button>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="h-8 w-8 rounded-lg"
+              onClick={(e) => { e.stopPropagation(); onAddNote(); }}
+            >
+              <FileEdit className="h-4 w-4 text-primary" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
 
-      {/* Progress or Meeting Info */}
-      <div className="flex items-center justify-between border-t border-glass-border pt-4 relative z-10">
-        {upcomingMeeting ? (
-          <div className="flex items-center gap-2 text-green-400 text-xs font-medium">
-            <span className="material-symbols-rounded text-[16px]">schedule</span>
-            <span>
-              {new Date(upcomingMeeting.scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} • {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-            </span>
+      <CardContent className="p-5 pt-0 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-sm font-black ring-1 ring-primary/20">
+            {initials}
           </div>
-        ) : (
-          <div className="flex items-center gap-2 text-slate-400 text-xs text-secondary">
-            <span className="material-symbols-rounded text-[16px] font-light">calendar_today</span>
-            <span>{item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'Takip yok'}</span>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-bold truncate tracking-tight">{clientName}</h4>
+            {item.estimated_value && (
+              <p className="text-xs text-primary font-bold mt-0.5">{formatCurrency(item.estimated_value)}</p>
+            )}
           </div>
-        )}
+        </div>
         
-        {item.total_paid && item.total_paid > 0 ? (
-          <div className="flex items-center gap-1">
-            <div className="w-12 h-1 bg-white/10 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-green-500 rounded-full" 
-                style={{ width: `${Math.min((item.total_paid / (item.estimated_value || 1)) * 100, 100)}%` }} 
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="size-2 rounded-full bg-slate-700" />
+        {item.notes && (
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed opacity-90 border-l-2 border-primary/20 pl-2">
+            {item.notes}
+          </p>
         )}
-      </div>
-    </div>
+
+        <div className="flex items-center justify-between pt-3 border-t border-border/60">
+          {upcomingMeeting ? (
+            <div className="flex items-center gap-1.5 text-primary text-xs font-bold">
+              <Clock className="h-3.5 w-3.5" />
+              <span>
+                {new Date(upcomingMeeting.scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} • {new Date(upcomingMeeting.scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs font-medium">
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>{item.follow_up_date ? new Date(item.follow_up_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : 'Takip yok'}</span>
+            </div>
+          )}
+          
+          <div className="flex items-center gap-1">
+             <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+             <span className="text-xs font-black uppercase text-primary/60 tracking-tighter">{item.id.slice(-4)}</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
-// Sortable Card Wrapper
-function SortableCard({
-  item,
-  onDelete,
-  onEdit,
-  onAddMeeting,
-  onAddNote,
-  upcomingMeeting
-}: {
-  item: PipelineWithClient
-  onDelete: () => void
-  onEdit: () => void
-  onAddMeeting: () => void
-  onAddNote: () => void
-  upcomingMeeting?: UpcomingMeeting | null
-}) {
+function SortableCard(props: KanbanCardProps) {
   const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.id })
+      attributes,
+      listeners,
+      setNodeRef,
+      transform,
+      transition,
+      isDragging,
+  } = useSortable({ id: props.item.id })
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 100 : 1,
+      transform: CSS.Translate.toString(transform),
+      transition,
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <KanbanCard
-        item={item}
-        onDelete={onDelete}
-        onEdit={onEdit}
-        onAddMeeting={onAddMeeting}
-        onAddNote={onAddNote}
-        isDragging={isDragging}
-        upcomingMeeting={upcomingMeeting}
-      />
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <KanbanCard {...props} isDragging={isDragging} />
     </div>
   )
 }
 
-// Droppable Column Component
+// Column Component
 interface ColumnProps {
   stage: PipelineStage
   title: string
@@ -220,7 +210,7 @@ interface ColumnProps {
   onEditCard: (item: PipelineWithClient) => void
   onAddMeeting: (item: PipelineWithClient) => void
   onAddNote: (item: PipelineWithClient) => void
-  isOver: boolean
+  isOver?: boolean
   clientMeetings: Map<string, UpcomingMeeting>
 }
 
@@ -230,28 +220,31 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAd
   })
 
   return (
-    <div className="flex flex-col w-[340px] shrink-0 h-full">
-      <div className="flex items-center justify-between mb-6 px-1">
+    <div className="flex flex-col w-[300px] shrink-0 h-full">
+      <div className="flex items-center justify-between mb-6 px-3">
         <div className="flex items-center gap-3">
-          <div className="size-2 rounded-full bg-primary shadow-[0_0_8px_rgba(99,102,241,0.6)]" />
-          <h3 className="font-bold text-sm text-slate-300 uppercase tracking-[0.1em]">{title}</h3>
-          <span className="text-[10px] text-slate-500 font-mono bg-white/5 px-2 py-0.5 rounded-full">
-            {items.length}
-          </span>
+           <div className={cn("size-2.5 rounded-full ring-4 ring-background shadow-sm", stage === 'lead' ? "bg-amber-500" : stage === 'proposal' ? "bg-blue-500" : "bg-emerald-500")} />
+           <h3 className="font-black text-xs uppercase tracking-[0.15em] text-foreground/80">{title}</h3>
+           <Badge variant="secondary" className="h-5 min-w-[22px] justify-center px-1 text-xs font-black bg-muted/80">
+             {items.length}
+           </Badge>
         </div>
-        <button
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-8 w-8 rounded-lg shadow-sm border-border/40 hover:bg-primary/10 hover:text-primary transition-all"
           onClick={onAddCard}
-          className="size-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all flex items-center justify-center border border-white/5"
         >
-          <span className="material-symbols-rounded text-[20px]">add</span>
-        </button>
+          <Plus className="h-4 w-4" />
+        </Button>
       </div>
 
       <div
         ref={setNodeRef}
-        className={`flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar rounded-3xl p-3 transition-all duration-300 border-2 border-transparent ${
-          isOver ? 'bg-primary/5 border-primary/20 scale-[0.99] border-dashed shadow-inner' : 'bg-transparent'
-        }`}
+        className={cn(
+          "flex-1 flex flex-col gap-3 p-2 rounded-lg transition-colors duration-200 overflow-y-auto no-scrollbar",
+          isOver ? "bg-accent/50 ring-1 ring-primary/20" : "bg-transparent"
+        )}
       >
         <SortableContext items={items.map(i => i.id)} strategy={verticalListSortingStrategy}>
           {items.map((item) => (
@@ -268,11 +261,8 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAd
         </SortableContext>
         
         {items.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center p-10 opacity-20 group">
-             <div className="size-16 rounded-3xl border-2 border-dashed border-slate-500 flex items-center justify-center mb-4 group-hover:border-primary transition-colors">
-                <span className="material-symbols-rounded text-3xl">add</span>
-             </div>
-             <p className="text-xs font-medium uppercase tracking-widest text-center">Boş Aşama</p>
+          <div className="flex-1 border-2 border-dashed border-muted rounded-lg flex flex-col items-center justify-center p-6 opacity-30">
+            <p className="text-xs font-bold uppercase tracking-widest text-center">Aşama Boş</p>
           </div>
         )}
       </div>
@@ -280,91 +270,97 @@ function Column({ stage, title, items, onAddCard, onDeleteCard, onEditCard, onAd
   )
 }
 
-// Main Component
 export default function SalesKanban() {
-  const [searchQuery, setSearchQuery] = useState('')
+  const { items, loading, updateItem, moveItem, deleteItem, addItem } = usePipeline()
+  const { clients, loading: clientsLoading, addClient } = useClients()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Modals state
   const [showPipelineModal, setShowPipelineModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const [showClientModal, setShowClientModal] = useState(false)
   const [selectedStage, setSelectedStage] = useState<PipelineStage>('lead')
-  const [preselectedClient, setPreselectedClient] = useState<Client | null>(null)
-  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeeting[]>([])
-
-  // Edit modal state
   const [editingItem, setEditingItem] = useState<PipelineWithClient | null>(null)
-  const [showEditModal, setShowEditModal] = useState(false)
+  const [preselectedClient, setPreselectedClient] = useState<Client | null>(null)
 
-  // Quick meeting modal state
-  const [meetingItem, setMeetingItem] = useState<PipelineWithClient | null>(null)
+  // Quick Meeting Modal state
   const [showMeetingModal, setShowMeetingModal] = useState(false)
-  const [meetingFormData, setMeetingFormData] = useState({ scheduled_at: '', duration_minutes: 30, notes: '' })
+  const [meetingItem, setMeetingItem] = useState<PipelineWithClient | null>(null)
+  const [meetingFormData, setMeetingFormData] = useState({
+    scheduled_at: '',
+    duration_minutes: 30,
+    notes: ''
+  })
 
-  // Quick note modal state
-  const [noteItem, setNoteItem] = useState<PipelineWithClient | null>(null)
+  // Quick Note Modal state
   const [showNoteModal, setShowNoteModal] = useState(false)
+  const [noteItem, setNoteItem] = useState<PipelineWithClient | null>(null)
   const [noteContent, setNoteContent] = useState('')
 
-  const { items, loading, updateStage, deleteItem, addItem, updateItem, getItemsByStage } = usePipeline()
-  const { clients, addClient, refetch: refetchClients } = useClients()
+  // Meetings cache for badges/info
+  const [clientMeetings, setClientMeetings] = useState<Map<string, UpcomingMeeting>>(new Map())
+  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeeting[]>([])
 
-  // Fetch upcoming meetings
   useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const now = new Date().toISOString()
-        const { data, error } = await supabase
-          .from('bookings')
-          .select('id, client_id, client_name, scheduled_at, duration_minutes, notes')
-          .gte('scheduled_at', now)
-          .neq('status', 'cancelled')
-          .order('scheduled_at', { ascending: true })
-          .limit(10)
-
-        if (!error && data) {
-          setUpcomingMeetings(data)
-        }
-      } catch (err) {
-        console.error('Failed to fetch meetings:', err)
-      }
-    }
-
-    fetchMeetings()
-    const interval = setInterval(fetchMeetings, 60000)
-    return () => clearInterval(interval)
+    fetchUpcomingMeetings()
   }, [])
 
-  // Create a map of client_id to their next meeting
-  const clientMeetings = useMemo(() => {
-    const map = new Map<string, UpcomingMeeting>()
-    for (const meeting of upcomingMeetings) {
-      if (meeting.client_id && !map.has(meeting.client_id)) {
-        map.set(meeting.client_id, meeting)
-      }
+  const fetchUpcomingMeetings = async () => {
+    const now = new Date().toISOString()
+    const { data } = await supabase
+      .from('meetings')
+      .select('*, clients(first_name, last_name)')
+      .gte('scheduled_at', now)
+      .eq('status', 'scheduled')
+      .order('scheduled_at', { ascending: true })
+
+    if (data) {
+      const meetingsMap = new Map()
+      const list: UpcomingMeeting[] = []
+      data.forEach(m => {
+        const meeting = {
+          id: m.id,
+          client_id: m.client_id,
+          client_name: m.clients ? `${m.clients.first_name} ${m.clients.last_name}` : 'Bilinmeyen',
+          scheduled_at: m.scheduled_at,
+          duration_minutes: m.duration_minutes,
+          notes: m.notes
+        }
+        if (m.client_id && !meetingsMap.has(m.client_id)) {
+          meetingsMap.set(m.client_id, meeting)
+        }
+        list.push(meeting)
+      })
+      setClientMeetings(meetingsMap)
+      setUpcomingMeetings(list)
     }
-    return map
-  }, [upcomingMeetings])
+  }
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
   )
 
-  const activeItem = useMemo(
-    () => items.find((item) => item.id === activeId),
-    [activeId, items]
-  )
+  const getItemsByStage = (stage: PipelineStage) => {
+    return items.filter((item) => item.stage === stage)
+  }
 
   const filteredItems = useMemo(() => {
     if (!searchQuery) return items
-    const lowerQ = searchQuery.toLowerCase()
+    const query = searchQuery.toLowerCase()
     return items.filter(item => {
-      const clientName = item.clients
-        ? `${item.clients.first_name} ${item.clients.last_name}`.toLowerCase()
+      const clientName = item.clients 
+        ? `${item.clients.first_name} ${item.clients.last_name} ${item.clients.company || ''}`.toLowerCase()
         : ''
-      const company = item.clients?.company?.toLowerCase() || ''
-      const notes = item.notes?.toLowerCase() || ''
-      return clientName.includes(lowerQ) || company.includes(lowerQ) || notes.includes(lowerQ)
+      return clientName.includes(query) || item.notes?.toLowerCase().includes(query)
     })
   }, [items, searchQuery])
 
@@ -374,19 +370,7 @@ export default function SalesKanban() {
 
   const handleDragOver = (event: DragOverEvent) => {
     const { over } = event
-    if (over) {
-      const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
-      if (stages.includes(over.id as PipelineStage)) {
-        setOverId(over.id as string)
-      } else {
-        const overItem = items.find(i => i.id === over.id)
-        if (overItem) {
-          setOverId(overItem.stage)
-        }
-      }
-    } else {
-      setOverId(null)
-    }
+    setOverId(over ? (over.id as string) : null)
   }
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -396,108 +380,76 @@ export default function SalesKanban() {
 
     if (!over) return
 
-    const activeItem = items.find(i => i.id === active.id)
+    const activeItem = items.find((item) => item.id === active.id)
     if (!activeItem) return
 
-    let targetStage: PipelineStage | null = null
-    const stages = Object.keys(STAGE_CONFIG) as PipelineStage[]
-
-    if (stages.includes(over.id as PipelineStage)) {
-      targetStage = over.id as PipelineStage
-    } else {
-      const overItem = items.find(i => i.id === over.id)
-      if (overItem) {
-        targetStage = overItem.stage as PipelineStage
-      }
-    }
-
-    if (targetStage && activeItem.stage !== targetStage) {
-      try {
-        await updateStage(activeItem.id, targetStage)
-      } catch (error) {
-        console.error('Failed to update stage:', error)
-      }
+    const newStage = over.id as PipelineStage
+    
+    // Only update if stage changed
+    if (activeItem.stage !== newStage) {
+        await moveItem(active.id as string, newStage)
     }
   }
 
   const handleAddPipeline = (stage: PipelineStage) => {
     setSelectedStage(stage)
-    setPreselectedClient(null)
     setShowPipelineModal(true)
   }
 
-  const handlePipelineSubmit = async (data: Parameters<typeof addItem>[0]) => {
+  const handlePipelineSubmit = async (data: any) => {
     await addItem(data)
     setShowPipelineModal(false)
+    setPreselectedClient(null)
   }
 
-  const handleClientSubmit = async (data: Parameters<typeof addClient>[0]) => {
+  const handleClientSubmit = async (data: any) => {
     const newClient = await addClient(data)
-    await refetchClients()
-    setShowClientModal(false)
-
-    setPreselectedClient(newClient)
-    setShowPipelineModal(true)
+    if (newClient) {
+      setPreselectedClient(newClient)
+      setShowClientModal(false)
+      setShowPipelineModal(true)
+    }
   }
 
-  const handleOpenClientModal = () => {
+  const handleOpenClientModal = (e: React.MouseEvent) => {
+    e.preventDefault()
     setShowPipelineModal(false)
     setShowClientModal(true)
   }
 
-  // Edit card handler
   const handleEditCard = (item: PipelineWithClient) => {
     setEditingItem(item)
     setShowEditModal(true)
   }
 
-  // Quick meeting handler
   const handleAddMeeting = (item: PipelineWithClient) => {
     setMeetingItem(item)
-    setMeetingFormData({ scheduled_at: '', duration_minutes: 30, notes: '' })
+    setMeetingFormData({
+      scheduled_at: new Date().toISOString().split('T')[0] + 'T10:00',
+      duration_minutes: 30,
+      notes: ''
+    })
     setShowMeetingModal(true)
   }
 
   const handleMeetingSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!meetingItem || !meetingFormData.scheduled_at) return
+    if (!meetingItem?.client_id) return
 
-    try {
-      const clientName = meetingItem.clients
-        ? `${meetingItem.clients.first_name} ${meetingItem.clients.last_name}`
-        : 'Bilinmeyen Müşteri'
-      const clientEmail = meetingItem.clients?.email || `${meetingItem.client_id}@client.local`
+    const { error } = await supabase.from('meetings').insert({
+      client_id: meetingItem.client_id,
+      scheduled_at: meetingFormData.scheduled_at,
+      duration_minutes: meetingFormData.duration_minutes,
+      notes: `Pipeline'dan oluşturuldu. ${meetingItem.notes || ''}`,
+      status: 'scheduled'
+    })
 
-      await supabase.from('bookings').insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id || '',
-        client_id: meetingItem.client_id || null,
-        client_name: clientName,
-        client_email: clientEmail,
-        scheduled_at: meetingFormData.scheduled_at,
-        duration_minutes: meetingFormData.duration_minutes,
-        notes: meetingFormData.notes,
-        status: 'confirmed'
-      })
-
-      const now = new Date().toISOString()
-      const { data } = await supabase
-        .from('bookings')
-        .select('id, client_id, client_name, scheduled_at, duration_minutes, notes')
-        .gte('scheduled_at', now)
-        .neq('status', 'cancelled')
-        .order('scheduled_at', { ascending: true })
-        .limit(10)
-
-      if (data) setUpcomingMeetings(data)
+    if (!error) {
       setShowMeetingModal(false)
-      setMeetingItem(null)
-    } catch (err) {
-      console.error('Meeting creation failed:', err)
-      alert('Toplantı oluşturulamadı!')
+      fetchUpcomingMeetings()
     }
   }
 
-  // Quick note handler
   const handleAddNote = (item: PipelineWithClient) => {
     setNoteItem(item)
     setNoteContent(item.notes || '')
@@ -508,107 +460,79 @@ export default function SalesKanban() {
     e.preventDefault()
     if (!noteItem) return
 
-    try {
-      await updateItem(noteItem.id, { notes: noteContent })
-      setShowNoteModal(false)
-      setNoteItem(null)
-    } catch (err) {
-      console.error('Note update failed:', err)
-      alert('Not kaydedilemedi!')
-    }
+    await updateItem(noteItem.id, { notes: noteContent })
+    setShowNoteModal(false)
   }
+
+  const activeItem = useMemo(() => 
+    activeId ? items.find(i => i.id === activeId) : null
+  , [activeId, items])
 
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-transparent">
-        <div className="flex flex-col items-center gap-6">
-          <div className="size-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-slate-400 font-medium tracking-widest uppercase text-xs">Sistem Başlatılıyor...</p>
-        </div>
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col w-full h-full bg-transparent overflow-hidden px-8 py-6">
-      {/* Dynamic Header */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-10 mb-12 shrink-0">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="material-symbols-rounded text-primary">analytics</span>
-            <span className="text-primary text-[10px] uppercase font-black tracking-[0.2em]">Yönetim Paneli</span>
+    <div className="flex flex-col w-full h-full overflow-hidden px-6 py-6 space-y-8">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 shrink-0">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-primary font-bold tracking-tight">
+            <TrendingUp className="h-5 w-5" />
+            <span className="text-xs uppercase tracking-[0.2em]">Pipeline</span>
           </div>
-          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Satış Süreci</h1>
-          <p className="text-slate-500 text-base font-light max-w-lg mt-2">
-            Potansiyel fırsatlarınızdan başarılı iş birliklerine giden süreci takip edin.
+          <h1 className="text-3xl font-bold tracking-tight">Satış Süreci</h1>
+          <p className="text-muted-foreground text-sm">
+            Potansiyel fırsatlarınızı yönetin ve takip edin.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6">
-          {/* Next Meeting Square Widget */}
-          {upcomingMeetings.length > 0 && (
-            <div className="h-32 w-48 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-green-500/30 transition-all duration-500 shadow-2xl overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="material-symbols-rounded text-5xl text-green-400">event_available</span>
-               </div>
-               <div className="relative z-10">
-                  <span className="text-[10px] font-black text-green-400 uppercase tracking-widest px-2 py-0.5 bg-green-400/10 rounded-full border border-green-400/20">Sıradaki</span>
-                  <p className="text-white text-sm font-bold mt-2 truncate">{upcomingMeetings[0].client_name}</p>
-               </div>
-               <div className="relative z-10 mt-auto">
-                  <p className="text-white text-lg font-black leading-none mb-1">
-                     {new Date(upcomingMeetings[0].scheduled_at).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-                    {new Date(upcomingMeetings[0].scheduled_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
-                  </p>
-               </div>
-            </div>
-          )}
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Stats Summary */}
+          <div className="flex gap-3">
+            <Card className="p-3 w-32 border-border/40 bg-card/50">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Aktif</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Rocket className="h-4 w-4 text-primary" />
+                <span className="text-xl font-bold">{items.length}</span>
+              </div>
+            </Card>
 
-          {/* Active Deals / Stats Square Widget */}
-          <div className="h-32 w-48 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-primary/30 transition-all duration-500 shadow-2xl overflow-hidden">
-             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                <span className="material-symbols-rounded text-5xl text-primary">rocket_launch</span>
-             </div>
-             <div>
-                <span className="text-[10px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">Aktif</span>
-                <p className="text-white text-3xl font-black mt-2 leading-none">{items.length}</p>
-             </div>
-             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">Canlı Fırsatlar</p>
+            {upcomingMeetings.length > 0 && (
+              <Card className="p-3 w-40 border-border/40 bg-card/50">
+                <p className="text-xs font-bold text-primary uppercase tracking-widest">Sıradaki</p>
+                <div className="flex items-center gap-2 mt-1 min-w-0">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold truncate">{upcomingMeetings[0].client_name}</span>
+                </div>
+              </Card>
+            )}
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              <button
-                onClick={() => handleAddPipeline('lead')}
-                className="relative flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 group overflow-hidden"
-              >
-                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                <span className="material-symbols-rounded font-bold">add_circle</span>
-                <span>Yeni Fırsat Oluştur</span>
-              </button>
+          <div className="flex gap-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Ara..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 w-40 md:w-60 h-10"
+              />
             </div>
-            
-            <div className="flex bg-surface-dark/40 backdrop-blur-md rounded-2xl border border-glass-border p-1">
-              <label className="flex items-center px-4 py-2 gap-2 cursor-text group">
-                <span className="material-symbols-rounded text-slate-500 group-focus-within:text-primary transition-colors">search</span>
-                <input
-                  type="text"
-                   placeholder="Ara..."
-                  className="bg-transparent border-none focus:ring-0 text-sm text-white placeholder-slate-500 w-40 focus:w-60 transition-all duration-500"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </label>
-            </div>
+            <Button onClick={() => handleAddPipeline('lead')} className="h-10">
+              <Plus className="mr-2 h-4 w-4" />
+              Yeni Fırsat
+            </Button>
           </div>
         </div>
       </header>
 
       {/* Main Board Container */}
-      <div className="flex-1 overflow-x-auto pb-8 custom-scrollbar">
+      <div className="flex-1 overflow-x-auto pb-6 custom-scrollbar">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -616,7 +540,7 @@ export default function SalesKanban() {
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
         >
-          <div className="flex gap-8 min-w-full h-full pb-4">
+          <div className="flex gap-6 min-w-full h-full">
             {(Object.entries(STAGE_CONFIG) as [PipelineStage, typeof STAGE_CONFIG[PipelineStage]][]).map(([stage, config]) => {
               const stageItems = searchQuery
                 ? filteredItems.filter(i => i.stage === stage)
@@ -642,7 +566,7 @@ export default function SalesKanban() {
 
           <DragOverlay dropAnimation={null}>
             {activeItem ? (
-              <div className="rotate-3 scale-105 pointer-events-none drop-shadow-2xl">
+              <div className="rotate-3 scale-105 pointer-events-none opacity-90 drop-shadow-xl">
                 <KanbanCard item={activeItem} onDelete={() => {}} onEdit={() => {}} onAddMeeting={() => {}} onAddNote={() => {}} isDragging />
               </div>
             ) : null}
@@ -651,220 +575,232 @@ export default function SalesKanban() {
       </div>
 
       {/* Pipeline Modal */}
-      <Modal
-        isOpen={showPipelineModal}
-        onClose={() => {
-          setShowPipelineModal(false)
-          setPreselectedClient(null)
-        }}
-        title="Yeni Pipeline Kartı"
-      >
-        <PipelineForm
-          clients={clients}
-          onSubmit={handlePipelineSubmit}
-          onCancel={() => {
+      <Dialog 
+        open={showPipelineModal} 
+        onOpenChange={(open) => {
+          if (!open) {
             setShowPipelineModal(false)
             setPreselectedClient(null)
-          }}
-          onAddClient={handleOpenClientModal}
-          initialStage={selectedStage}
-          preselectedClientId={preselectedClient?.id}
-        />
-      </Modal>
-
-      {/* Client Modal */}
-      <Modal
-        isOpen={showClientModal}
-        onClose={() => setShowClientModal(false)}
-        title="Yeni Müşteri"
+          }
+        }}
       >
-        <ClientForm
-          onSubmit={handleClientSubmit}
-          onCancel={() => setShowClientModal(false)}
-        />
-      </Modal>
-
-      {/* Edit Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => { setShowEditModal(false); setEditingItem(null) }}
-        title="Kartı Düzenle"
-      >
-        {editingItem && (
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Yeni Pipeline Kartı</DialogTitle>
+          </DialogHeader>
           <PipelineForm
             clients={clients}
-            onSubmit={async (data) => {
-              await updateItem(editingItem.id, data)
-              setShowEditModal(false)
-              setEditingItem(null)
+            onSubmit={handlePipelineSubmit}
+            onCancel={() => {
+              setShowPipelineModal(false)
+              setPreselectedClient(null)
             }}
-            onCancel={() => { setShowEditModal(false); setEditingItem(null) }}
             onAddClient={handleOpenClientModal}
-            initialStage={editingItem.stage as PipelineStage}
-            preselectedClientId={editingItem.client_id || undefined}
-            editMode
-            initialData={{
-              estimated_value: editingItem.estimated_value?.toString() || '',
-              follow_up_date: editingItem.follow_up_date || '',
-              priority: editingItem.priority || 'medium',
-              notes: editingItem.notes || '',
-            }}
+            initialStage={selectedStage}
+            preselectedClientId={preselectedClient?.id}
           />
-        )}
-      </Modal>
+        </DialogContent>
+      </Dialog>
+
+      {/* Client Modal */}
+      <Dialog open={showClientModal} onOpenChange={setShowClientModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Yeni Müşteri</DialogTitle>
+          </DialogHeader>
+          <ClientForm
+            onSubmit={handleClientSubmit}
+            onCancel={() => setShowClientModal(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog 
+        open={showEditModal} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowEditModal(false)
+            setEditingItem(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Kartı Düzenle</DialogTitle>
+          </DialogHeader>
+          {editingItem && (
+            <PipelineForm
+              clients={clients}
+              onSubmit={async (data) => {
+                await updateItem(editingItem.id, data)
+                setShowEditModal(false)
+                setEditingItem(null)
+              }}
+              onCancel={() => { setShowEditModal(false); setEditingItem(null) }}
+              onAddClient={handleOpenClientModal}
+              initialStage={editingItem.stage as PipelineStage}
+              preselectedClientId={editingItem.client_id || undefined}
+              editMode
+              initialData={{
+                estimated_value: editingItem.estimated_value?.toString() || '',
+                follow_up_date: editingItem.follow_up_date || '',
+                priority: editingItem.priority || 'medium',
+                notes: editingItem.notes || '',
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Meeting Modal */}
-      <Modal
-        isOpen={showMeetingModal}
-        onClose={() => { setShowMeetingModal(false); setMeetingItem(null) }}
-        title={`Toplantı Oluştur - ${meetingItem?.clients ? `${meetingItem.clients.first_name} ${meetingItem.clients.last_name}` : ''}`}
+      <Dialog 
+        open={showMeetingModal} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowMeetingModal(false)
+            setMeetingItem(null)
+          }
+        }}
       >
-        <form onSubmit={handleMeetingSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Tarih</label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {[
-                { label: 'Bugün', date: new Date() },
-                { label: 'Yarın', date: new Date(Date.now() + 86400000) },
-                { label: '2 Gün Sonra', date: new Date(Date.now() + 2 * 86400000) },
-              ].map(({ label, date }) => {
-                const dateStr = date.toISOString().split('T')[0]
-                const isSelected = meetingFormData.scheduled_at.startsWith(dateStr)
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => {
-                      const currentTime = meetingFormData.scheduled_at.split('T')[1] || '10:00'
-                      setMeetingFormData(prev => ({ ...prev, scheduled_at: `${dateStr}T${currentTime}` }))
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      isSelected
-                        ? 'bg-green-600 text-white'
-                        : 'bg-white/10 text-text-secondary hover:bg-white/20 hover:text-white'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Toplantı Oluştur</DialogTitle>
+            <DialogDescription>
+              {meetingItem?.clients ? `${meetingItem.clients.first_name} ${meetingItem.clients.last_name}` : ''} için hızlı toplantı planlayın.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleMeetingSubmit(e);
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="space-y-2">
+              <Label>Tarih</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {[
+                  { label: 'Bugün', date: new Date() },
+                  { label: 'Yarın', date: new Date(Date.now() + 86400000) },
+                ].map(({ label, date }) => {
+                  const dateStr = date.toISOString().split('T')[0]
+                  const isSelected = meetingFormData.scheduled_at.startsWith(dateStr)
+                  return (
+                    <Button
+                      key={label}
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        const currentTime = meetingFormData.scheduled_at.split('T')[1] || '10:00'
+                        setMeetingFormData(prev => ({ ...prev, scheduled_at: `${dateStr}T${currentTime}` }))
+                      }}
+                      className="text-xs h-7 px-3 uppercase font-bold"
+                    >
+                      {label}
+                    </Button>
+                  )
+                })}
+              </div>
+              <Input
+                type="date"
+                value={meetingFormData.scheduled_at.split('T')[0] || ''}
+                onChange={(e) => {
+                  const currentTime = meetingFormData.scheduled_at.split('T')[1] || '10:00'
+                  setMeetingFormData(prev => ({ ...prev, scheduled_at: `${e.target.value}T${currentTime}` }))
+                }}
+                required
+              />
             </div>
-            <input
-              type="date"
-              value={meetingFormData.scheduled_at.split('T')[0] || ''}
-              onChange={(e) => {
-                const currentTime = meetingFormData.scheduled_at.split('T')[1] || '10:00'
-                setMeetingFormData(prev => ({ ...prev, scheduled_at: `${e.target.value}T${currentTime}` }))
-              }}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Saat</label>
-            <div className="grid grid-cols-4 gap-2 mb-3">
-              {['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00', '18:00'].map(time => {
-                const isSelected = meetingFormData.scheduled_at.includes(`T${time}`)
-                return (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => {
-                      const currentDate = meetingFormData.scheduled_at.split('T')[0] || new Date().toISOString().split('T')[0]
-                      setMeetingFormData(prev => ({ ...prev, scheduled_at: `${currentDate}T${time}` }))
-                    }}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                      isSelected
-                        ? 'bg-green-600 text-white'
-                        : 'bg-white/10 text-text-secondary hover:bg-white/20 hover:text-white'
-                    }`}
-                  >
-                    {time}
-                  </button>
-                )
-              })}
+            <div className="space-y-2">
+              <Label>Saat</Label>
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'].map(time => {
+                  const isSelected = meetingFormData.scheduled_at.includes(`T${time}`)
+                  return (
+                    <Button
+                      key={time}
+                      type="button"
+                      variant={isSelected ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => {
+                        const currentDate = meetingFormData.scheduled_at.split('T')[0] || new Date().toISOString().split('T')[0]
+                        setMeetingFormData(prev => ({ ...prev, scheduled_at: `${currentDate}T${time}` }))
+                      }}
+                      className="text-xs h-7 px-0 uppercase font-bold"
+                    >
+                      {time}
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Süre</label>
-            <select
-              value={meetingFormData.duration_minutes}
-              onChange={(e) => setMeetingFormData(prev => ({ ...prev, duration_minutes: Number(e.target.value) }))}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary"
-            >
-              <option value={15}>15 dakika</option>
-              <option value={30}>30 dakika</option>
-              <option value={45}>45 dakika</option>
-              <option value={60}>1 saat</option>
-              <option value={90}>1.5 saat</option>
-              <option value={120}>2 saat</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Notlar</label>
-            <textarea
-              value={meetingFormData.notes}
-              onChange={(e) => setMeetingFormData(prev => ({ ...prev, notes: e.target.value }))}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary resize-none"
-              rows={3}
-              placeholder="Toplantı konusu..."
-            />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => { setShowMeetingModal(false); setMeetingItem(null) }}
-              className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[20px]">event</span>
-              Toplantı Oluştur
-            </button>
-          </div>
-        </form>
-      </Modal>
+            <div className="space-y-2">
+              <Label>Süre</Label>
+              <Select
+                value={meetingFormData.duration_minutes.toString()}
+                onValueChange={(val) => setMeetingFormData(prev => ({ ...prev, duration_minutes: Number(val) }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="15">15 dakika</SelectItem>
+                  <SelectItem value="30">30 dakika</SelectItem>
+                  <SelectItem value="60">1 saat</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="pt-4">
+              <Button type="submit" className="w-full">
+                <Video className="mr-2 h-4 w-4" />
+                Planla
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Quick Note Modal */}
-      <Modal
-        isOpen={showNoteModal}
-        onClose={() => { setShowNoteModal(false); setNoteItem(null) }}
-        title={`Not Ekle - ${noteItem?.clients ? `${noteItem.clients.first_name} ${noteItem.clients.last_name}` : ''}`}
+      <Dialog 
+        open={showNoteModal} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowNoteModal(false)
+            setNoteItem(null)
+          }
+        }}
       >
-        <form onSubmit={handleNoteSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-text-secondary mb-2">Not</label>
-            <textarea
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary resize-none"
-              rows={5}
-              placeholder="Müşteri hakkında notlar..."
-              autoFocus
-            />
-          </div>
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => { setShowNoteModal(false); setNoteItem(null) }}
-              className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              <span className="material-symbols-outlined text-[20px]">save</span>
-              Kaydet
-            </button>
-          </div>
-        </form>
-      </Modal>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Not Düzenle</DialogTitle>
+          </DialogHeader>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleNoteSubmit(e);
+            }}
+            className="space-y-4 pt-4"
+          >
+            <div className="space-y-2">
+              <Label>Not</Label>
+              <textarea
+                value={noteContent}
+                onChange={(e) => setNoteContent(e.target.value)}
+                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                placeholder="Notunuzu buraya yazın..."
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit" className="w-full">
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                Kaydet
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

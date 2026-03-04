@@ -1,18 +1,64 @@
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle2,
+    Filter,
+    History,
+    Loader2,
+    MoreHorizontal,
+    Play,
+    Plus,
+    Square,
+    Timer,
+    Trash2,
+    TrendingUp,
+    Wallet
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import FormattedPriceInput from '../components/FormattedPriceInput'
-import Modal from '../components/Modal'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import {
+    Card,
+    CardContent
+} from '../components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from '../components/ui/dropdown-menu'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '../components/ui/select'
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from '../components/ui/table'
 import { useClients } from '../hooks/useClients'
 import { PAYMENT_METHODS, useInvoices, type InvoiceWithDetails, type PaymentMethod } from '../hooks/useInvoices'
 import { formatDurationDetailed, useTimeTracking } from '../hooks/useTimeTracking'
+import { cn } from '../lib/utils'
 
 type FilterType = 'all' | 'overdue' | 'partial' | 'unpaid' | 'paid'
 
-const FILTERS: { value: FilterType; label: string; color?: string }[] = [
-  { value: 'all', label: 'Tümü' },
-  { value: 'overdue', label: 'Vadesi Geçmiş', color: 'red' },
-  { value: 'partial', label: 'Kısmi Ödeme', color: 'amber' },
-  { value: 'unpaid', label: 'Bekleyen', color: 'slate' },
-  { value: 'paid', label: 'Ödendi', color: 'green' },
+const FILTERS: { value: FilterType; label: string; variant: "default" | "secondary" | "outline" | "destructive" }[] = [
+  { value: 'all', label: 'Tümü', variant: 'outline' },
+  { value: 'overdue', label: 'Vadesi Geçmiş', variant: 'destructive' },
+  { value: 'partial', label: 'Kısmi Ödeme', variant: 'secondary' },
+  { value: 'unpaid', label: 'Bekleyen', variant: 'outline' },
+  { value: 'paid', label: 'Ödendi', variant: 'default' },
 ]
 
 function InvoiceForm({
@@ -33,9 +79,9 @@ function InvoiceForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
-    client_id: '',
+    client_id: 'none',
     amount: '',
-    due_date: '',
+    due_date: new Date().toISOString().split('T')[0],
     invoice_number: '',
     notes: '',
   })
@@ -47,7 +93,7 @@ function InvoiceForm({
 
     try {
       await onSubmit({
-        client_id: formData.client_id || null,
+        client_id: formData.client_id === 'none' ? null : formData.client_id,
         amount: parseFloat(formData.amount) || 0,
         due_date: formData.due_date || null,
         invoice_number: formData.invoice_number || null,
@@ -61,96 +107,83 @@ function InvoiceForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Müşteri</label>
-        <select
+    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+      <div className="space-y-2">
+        <Label>Müşteri</Label>
+        <Select
           value={formData.client_id}
-          onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary transition-colors"
+          onValueChange={(val) => setFormData(prev => ({ ...prev, client_id: val }))}
         >
-          <option value="">Müşteri seçin...</option>
-          {clients.map(client => (
-            <option key={client.id} value={client.id}>
-              {client.first_name} {client.last_name} {client.company && `(${client.company})`}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="text-xs">
+            <SelectValue placeholder="Müşteri seçin..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Müşteri seçin...</SelectItem>
+            {clients.map(client => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.first_name} {client.last_name} {client.company && `(${client.company})`}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">Tutar (₺) *</label>
+        <div className="space-y-2">
+          <Label>Tutar (₺)*</Label>
           <FormattedPriceInput
             value={formData.amount}
             onChange={(val) => setFormData(prev => ({ ...prev, amount: val }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
+            className="text-xs"
             placeholder="10.000"
             required
           />
         </div>
-        <div>
-          <label className="block text-sm text-text-secondary mb-2">Fatura No</label>
-          <input
-            type="text"
+        <div className="space-y-2">
+          <Label>Fatura No</Label>
+          <Input
             value={formData.invoice_number}
             onChange={(e) => setFormData(prev => ({ ...prev, invoice_number: e.target.value }))}
-            className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
+            className="text-xs"
             placeholder="INV-001"
           />
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Vade Tarihi</label>
-        <input
+      <div className="space-y-2">
+        <Label>Vade Tarihi</Label>
+        <Input
           type="date"
           value={formData.due_date}
           onChange={(e) => setFormData(prev => ({ ...prev, due_date: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white focus:outline-none focus:border-primary transition-colors"
+          className="text-xs"
         />
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Notlar</label>
+      <div className="space-y-2">
+        <Label>Notlar</Label>
         <textarea
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors resize-none"
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
           placeholder="Ek notlar..."
-          rows={2}
         />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs">
+          {error}
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
-        >
-          İptal
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 py-3 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <span className="material-symbols-rounded animate-spin">progress_activity</span>
-          ) : (
-            <>
-              <span className="material-symbols-rounded">add</span>
-              Fatura Ekle
-            </>
+      <DialogFooter className="gap-2 sm:gap-0">
+        <Button variant="outline" onClick={onCancel} className="flex-1">İptal</Button>
+        <Button type="submit" disabled={loading} className="flex-1 gap-2">
+          {loading ? <Loader2 className="size-4 animate-spin" /> : (
+            <><Plus className="size-4" /> Fatura Ekle</>
           )}
-        </button>
-      </div>
+        </Button>
+      </DialogFooter>
     </form>
   )
 }
@@ -168,7 +201,7 @@ function PaymentForm({
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     amount: invoice.remaining.toString(),
-    method: '' as PaymentMethod | '',
+    method: 'cash' as PaymentMethod,
     notes: '',
   })
 
@@ -182,11 +215,7 @@ function PaymentForm({
       if (amount <= 0) throw new Error('Tutar 0\'dan büyük olmalı')
       if (amount > invoice.remaining) throw new Error('Tutar kalan tutardan fazla olamaz')
 
-      await onSubmit(
-        amount,
-        formData.method || undefined,
-        formData.notes || undefined
-      )
+      await onSubmit(amount, formData.method, formData.notes || undefined)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
@@ -195,93 +224,71 @@ function PaymentForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 bg-surface-dark rounded-xl border border-border-dark">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-text-secondary text-sm">Fatura Tutarı</span>
-          <span className="text-white font-bold">₺{invoice.amount.toLocaleString()}</span>
+    <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+      <div className="p-4 bg-accent/50 rounded-xl border space-y-2">
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-muted-foreground">Fatura Tutarı</span>
+          <span className="text-sm font-bold">₺{invoice.amount.toLocaleString()}</span>
         </div>
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-text-secondary text-sm">Ödenen</span>
-          <span className="text-green-400 font-medium">₺{invoice.total_paid.toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between items-center pt-2 border-t border-border-dark">
-          <span className="text-text-secondary text-sm font-medium">Kalan</span>
-          <span className="text-amber-400 font-bold">₺{invoice.remaining.toLocaleString()}</span>
+        <div className="flex justify-between items-center">
+          <span className="text-xs text-muted-foreground">Kalan</span>
+          <span className="text-sm font-bold text-amber-500">₺{invoice.remaining.toLocaleString()}</span>
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Ödeme Tutarı (₺) *</label>
+      <div className="space-y-2">
+        <Label>Ödeme Tutarı (₺)*</Label>
         <FormattedPriceInput
           value={formData.amount}
           onChange={(val) => setFormData(prev => ({ ...prev, amount: val }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
+          className="text-xs"
           placeholder="0"
           required
         />
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Ödeme Yöntemi</label>
+      <div className="space-y-2">
+        <Label>Ödeme Yöntemi</Label>
         <div className="flex flex-wrap gap-2">
           {PAYMENT_METHODS.map(method => (
-            <button
+            <Button
               key={method.value}
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, method: prev.method === method.value ? '' : method.value }))}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                formData.method === method.value
-                  ? 'bg-primary text-white'
-                  : 'bg-surface-dark text-text-secondary hover:bg-[#233648] hover:text-white border border-border-dark'
-              }`}
+              variant={formData.method === method.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFormData(prev => ({ ...prev, method: method.value as PaymentMethod }))}
+              className="text-xs font-bold uppercase h-8"
             >
               {method.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm text-text-secondary mb-2">Not</label>
-        <input
-          type="text"
+      <div className="space-y-2">
+        <Label>Not</Label>
+        <Input
           value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-4 py-3 bg-background-dark border border-border-dark rounded-xl text-white placeholder-text-secondary focus:outline-none focus:border-primary transition-colors"
+          className="text-xs"
           placeholder="Ödeme notu..."
         />
       </div>
 
       {error && (
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-          <p className="text-red-400 text-sm">{error}</p>
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs">
+          {error}
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-3 bg-surface-dark border border-border-dark hover:bg-background-dark text-white font-medium rounded-xl transition-colors"
-        >
-          İptal
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <span className="material-symbols-rounded animate-spin">progress_activity</span>
-          ) : (
-            <>
-              <span className="material-symbols-rounded">payments</span>
-              Ödeme Ekle
-            </>
+      <DialogFooter className="gap-2 sm:gap-0">
+        <Button variant="outline" onClick={onCancel} className="flex-1">İptal</Button>
+        <Button type="submit" disabled={loading} className="flex-1 gap-2">
+          {loading ? <Loader2 className="size-4 animate-spin" /> : (
+            <><CheckCircle2 className="size-4" /> Ödemeyi Kaydet</>
           )}
-        </button>
-      </div>
+        </Button>
+      </DialogFooter>
     </form>
   )
 }
@@ -294,8 +301,7 @@ export default function FinanceDashboard() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [showInvoiceForm, setShowInvoiceForm] = useState(false)
   const [paymentInvoice, setPaymentInvoice] = useState<InvoiceWithDetails | null>(null)
-  const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
-  const [timerDescription, setTimerDescription] = useState('')
+  const [historyInvoice, setHistoryInvoice] = useState<InvoiceWithDetails | null>(null)
   const [timerClientId, setTimerClientId] = useState<string>('')
 
   const stats = calculateStats()
@@ -306,7 +312,7 @@ export default function FinanceDashboard() {
     return invoices.filter(inv => inv.status === filter)
   }, [invoices, filter])
 
-  const handleAddInvoice = async (data: Parameters<typeof addInvoice>[0]) => {
+  const handleAddInvoice = async (data: any) => {
     await addInvoice(data)
     setShowInvoiceForm(false)
   }
@@ -317,315 +323,321 @@ export default function FinanceDashboard() {
     setPaymentInvoice(null)
   }
 
-  const handleDeleteInvoice = async (id: string) => {
-    if (!confirm('Bu fatura silinsin mi?')) return
-    await deleteInvoice(id)
-    setActionMenuOpen(null)
-  }
-
-  const getStatusLabel = (status: InvoiceWithDetails['status']) => {
+  const getStatusConfig = (status: InvoiceWithDetails['status']) => {
     switch (status) {
-      case 'overdue': return 'Vadesi Geçmiş'
-      case 'partial': return 'Kısmi Ödeme'
-      case 'unpaid': return 'Bekliyor'
-      case 'paid': return 'Ödendi'
-    }
-  }
-
-  const getStatusStyle = (status: InvoiceWithDetails['status']) => {
-    switch (status) {
-      case 'overdue': return 'bg-red-500/10 text-red-500 border-red-500/20'
-      case 'partial': return 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-      case 'unpaid': return 'bg-slate-700/30 text-slate-400 border-slate-700/50'
-      case 'paid': return 'bg-green-500/10 text-green-500 border-green-500/20'
+      case 'overdue': return { label: 'Gecikmiş', variant: 'destructive' as const }
+      case 'partial': return { label: 'Kısmi', variant: 'secondary' as const }
+      case 'unpaid': return { label: 'Bekleyen', variant: 'outline' as const }
+      case 'paid': return { label: 'Ödendi', variant: 'default' as const }
     }
   }
 
   if (loading) {
     return (
       <div className="flex w-full h-full items-center justify-center">
-        <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col h-full w-full overflow-hidden bg-transparent" onClick={() => setActionMenuOpen(null)}>
-      <header className="px-10 py-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8 shrink-0 relative z-20">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-3 mb-1">
-            <span className="material-symbols-rounded text-primary">payments</span>
-            <span className="text-secondary text-[10px] uppercase font-black tracking-[0.2em] opacity-70">Finansal Konsol</span>
+    <div className="flex flex-col h-full w-full bg-background overflow-hidden">
+      <header className="px-8 py-10 flex flex-col md:flex-row md:items-center justify-between gap-6 shrink-0">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="size-4 text-primary" />
+            <span className="text-primary text-xs uppercase font-bold tracking-[0.2em] opacity-80">Finans Yönetimi</span>
           </div>
-          <h1 className="text-white text-5xl font-black leading-none tracking-[-0.05em]">Gelir Kontrolü</h1>
-          <p className="text-slate-500 text-base font-light max-w-lg mt-2">
-            Fatura döngünüzü otomatikleştirin ve finansal büyümenizi izleyin.
+          <h1 className="text-4xl font-bold tracking-tight">Cari Kontrolü</h1>
+          <p className="text-muted-foreground text-sm max-w-lg mt-1">
+            Fatura takibinizi yapın ve tahsilat sürecinizi hızlandırın.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="relative group">
-            <div className="absolute inset-0 bg-primary/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            <button
-              onClick={() => setShowInvoiceForm(true)}
-              className="relative flex items-center gap-3 px-8 py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-xl shadow-primary/20 transition-all active:scale-95 group overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-              <span className="material-symbols-rounded font-bold">add_notes</span>
-              <span>Yeni Fatura Oluştur</span>
-            </button>
-          </div>
-        </div>
+        <Button onClick={() => setShowInvoiceForm(true)} className="gap-2 px-6 h-12 shadow-lg hover:shadow-primary/20 transition-all">
+          <Plus className="size-4" />
+          <span>Yeni Fatura Oluştur</span>
+        </Button>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10">
-        <div className="max-w-7xl mx-auto flex flex-col gap-8">
-          {/* Stats */}
-          {/* Visual Stats Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Main Receivable Widget */}
-            <div className="h-32 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-emerald-500/30 transition-all duration-500 shadow-2xl overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="material-symbols-rounded text-5xl text-emerald-500">account_balance_wallet</span>
-               </div>
-               <div>
-                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">Toplam Alacak</span>
-                  <p className="text-white text-3xl font-black mt-2 leading-none tracking-tight">₺{stats.totalReceivable.toLocaleString()}</p>
-               </div>
-               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">{stats.pendingCount} Aktif Fatura</p>
-            </div>
-
-            {/* Overdue Widget */}
-            <div className="h-32 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-rose-500/30 transition-all duration-500 shadow-2xl overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="material-symbols-rounded text-5xl text-rose-500">priority_high</span>
-               </div>
-               <div>
-                  <span className="text-[10px] font-black text-rose-500 uppercase tracking-widest px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20">Vadesi Geçen</span>
-                  <p className="text-rose-400 text-3xl font-black mt-2 leading-none tracking-tight">₺{stats.totalOverdue.toLocaleString()}</p>
-               </div>
-               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">Acil Kayıtlar</p>
-            </div>
-
-            {/* This Week Widget */}
-            <div className="h-32 bg-white/5 border border-white/10 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-primary/30 transition-all duration-500 shadow-2xl overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="material-symbols-rounded text-5xl text-primary">event_upcoming</span>
-               </div>
-               <div>
-                  <span className="text-[10px] font-black text-primary uppercase tracking-widest px-2 py-0.5 bg-primary/10 rounded-full border border-primary/20">Bu Hafta</span>
-                  <p className="text-white text-3xl font-black mt-2 leading-none tracking-tight">₺{stats.dueThisWeek.toLocaleString()}</p>
-               </div>
-               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight mt-auto">Tahmini Giriş</p>
-            </div>
-
-            {/* Timer Console Widget */}
-            <div className="h-32 bg-primary/5 border border-primary/20 rounded-[2rem] p-5 flex flex-col justify-between relative group hover:border-primary/50 transition-all duration-500 shadow-2xl overflow-hidden">
-               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                  <span className="material-symbols-rounded text-5xl text-primary">timer</span>
-               </div>
-               
-               {activeEntry ? (
-                 <div className="flex flex-col h-full relative z-10">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        <p className="text-[10px] font-black text-green-400 uppercase tracking-widest leading-none">Canlı Oturum</p>
-                    </div>
-                    <p className="text-white text-2xl font-black font-mono tracking-tight my-1">{formatDurationDetailed(elapsedSeconds)}</p>
-                     <div className="flex items-center justify-between mt-auto">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase truncate max-w-[80px]">{activeEntry.clients?.first_name || 'Aktif'}</span>
-                        <button onClick={stopTimer} className="px-4 py-1.5 bg-rose-500/20 hover:bg-rose-500 text-rose-400 hover:text-white text-[10px] font-black uppercase rounded-xl transition-all border border-rose-500/20 shadow-lg shadow-rose-500/10">BİTİR</button>
+      <div className="flex-1 overflow-y-auto px-8 pb-10">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Stats Bar */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-border/40 shadow-sm bg-card/50">
+               <CardContent className="p-5 flex flex-col justify-between h-32">
+                  <div className="flex justify-between items-start">
+                     <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                        <Wallet className="size-5" />
                      </div>
-                 </div>
-               ) : (
-                  <div className="flex flex-col h-full relative z-10">
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-2 py-0.5 bg-white/5 rounded-full border border-white/10 w-fit">Zaman Takibi</span>
-                     <div className="mt-auto flex flex-col gap-2">
-                        <div className="flex gap-2">
-                           <select 
-                              value={timerClientId} 
-                              onChange={(e) => setTimerClientId(e.target.value)}
-                              className="flex-1 bg-white/5 border border-white/10 rounded-xl text-[10px] text-slate-300 px-3 py-2 focus:outline-none focus:border-primary/50 appearance-none font-bold uppercase tracking-wider"
-                           >
-                               <option value="">İstemci Seç...</option>
-                              {clients.map(c => <option key={c.id} value={c.id}>{c.first_name}</option>)}
-                           </select>
-                           <button 
-                              onClick={() => timerClientId && startTimer(timerDescription, undefined, timerClientId)}
-                              className="size-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 transition-all"
-                           >
-                              <span className="material-symbols-rounded font-black">play_arrow</span>
-                           </button>
-                        </div>
-                         <p className="text-[10px] text-slate-400 font-medium">Günlük toplam: {timeStatsData.todayFormatted}</p>
-                     </div>
+                     <Badge variant="outline" className="text-xs font-bold text-emerald-600 border-emerald-200 bg-emerald-500/5">TOPLAM ALACAK</Badge>
                   </div>
-               )}
-            </div>
+                  <div className="mt-auto">
+                     <p className="text-2xl font-bold">₺{stats.totalReceivable.toLocaleString()}</p>
+                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{stats.pendingCount} Aktif Kayıt</p>
+                  </div>
+               </CardContent>
+            </Card>
+
+            <Card className="border-border/40 shadow-sm bg-card/50">
+               <CardContent className="p-5 flex flex-col justify-between h-32">
+                  <div className="flex justify-between items-start">
+                     <div className="size-10 rounded-xl bg-destructive/10 flex items-center justify-center text-destructive">
+                        <AlertCircle className="size-5" />
+                     </div>
+                     <Badge variant="outline" className="text-xs font-bold text-destructive border-destructive/20 bg-destructive/5">GECİKEN</Badge>
+                  </div>
+                  <div className="mt-auto">
+                     <p className="text-2xl font-bold text-destructive">₺{stats.totalOverdue.toLocaleString()}</p>
+                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Tahsilat Bekleyen</p>
+                  </div>
+               </CardContent>
+            </Card>
+
+            <Card className="border-border/40 shadow-sm bg-card/50">
+               <CardContent className="p-5 flex flex-col justify-between h-32">
+                  <div className="flex justify-between items-start">
+                     <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <Calendar className="size-5" />
+                     </div>
+                     <Badge variant="outline" className="text-xs font-bold text-primary border-primary/20 bg-primary/5">BU HAFTA</Badge>
+                  </div>
+                  <div className="mt-auto">
+                     <p className="text-2xl font-bold">₺{stats.dueThisWeek.toLocaleString()}</p>
+                     <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Planlanan Giriş</p>
+                  </div>
+               </CardContent>
+            </Card>
+
+            {/* Timer Mini Console */}
+            <Card className="border-primary/20 shadow-md bg-primary/5">
+                <CardContent className="p-5 flex flex-col justify-between h-32">
+                   {activeEntry ? (
+                     <>
+                        <div className="flex justify-between items-start">
+                           <div className="flex items-center gap-2">
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              </span>
+                              <span className="text-xs font-bold text-emerald-600 uppercase tracking-widest">Çalışıyor</span>
+                           </div>
+                           <Badge className="text-xs font-bold">{activeEntry.clients?.first_name || 'Aktif'}</Badge>
+                        </div>
+                        <div className="flex items-end justify-between mt-auto">
+                           <p className="text-2xl font-mono font-bold leading-none">{formatDurationDetailed(elapsedSeconds)}</p>
+                           <Button size="icon" variant="destructive" className="h-8 w-8 rounded-lg" onClick={stopTimer}>
+                             <Square className="size-3.5 fill-current" />
+                           </Button>
+                        </div>
+                     </>
+                   ) : (
+                     <>
+                        <div className="flex justify-between items-start">
+                           <Timer className="size-5 text-muted-foreground" />
+                           <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Hızlı Başlat</span>
+                        </div>
+                        <div className="flex gap-2 items-center mt-auto">
+                          <Select value={timerClientId} onValueChange={setTimerClientId}>
+                            <SelectTrigger className="h-8 text-xs font-bold uppercase w-full bg-background/50">
+                              <SelectValue placeholder="MÜŞTERİ" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.first_name}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                          <Button 
+                            size="icon" 
+                            className="h-8 w-8 shrink-0 rounded-lg" 
+                            onClick={() => timerClientId && startTimer('', undefined, timerClientId)}
+                          >
+                             <Play className="size-3.5 fill-current" />
+                          </Button>
+                        </div>
+                     </>
+                   )}
+                </CardContent>
+            </Card>
           </div>
 
-          {/* Filters & Table */}
-          <div className="flex flex-col gap-4">
-            <div className="flex overflow-x-auto pb-4 gap-3 no-scrollbar">
-              {FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  onClick={() => setFilter(f.value)}
-                  className={`flex items-center justify-center gap-3 h-11 px-6 rounded-2xl border text-xs font-black uppercase tracking-widest transition-all shrink-0 ${
-                    filter === f.value
-                      ? 'bg-white text-slate-900 border-white shadow-xl shadow-white/5'
-                      : 'bg-white/5 border-glass-border text-slate-400 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {f.color && <span className={`size-1.5 rounded-full ${f.value === 'overdue' ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]' : 'bg-' + f.color + '-500'}`}></span>}
-                  {f.label}
-                </button>
-              ))}
+          {/* Main Content Area */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between overflow-x-auto no-scrollbar pb-2">
+               <div className="flex gap-2">
+                  {FILTERS.map(f => (
+                    <Button
+                      key={f.value}
+                      variant={filter === f.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilter(f.value)}
+                      className="text-xs font-bold uppercase h-9 rounded-xl px-4"
+                    >
+                      {filter === f.value && <Filter className="size-3 mr-2" />}
+                      {f.label}
+                    </Button>
+                  ))}
+               </div>
             </div>
 
-            <div className="w-full overflow-hidden rounded-xl border border-border-dark bg-surface-dark shadow-sm min-h-[300px]">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-[#192633] border-b border-border-dark">
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary w-32">Durum</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary">Fatura No</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary">Müşteri</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary">Vade</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary text-right">Tutar</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary w-32">İlerleme</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary text-right">Kalan</th>
-                      <th className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-text-secondary text-center">İşlem</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-dark text-sm">
-                    {filteredInvoices.map((inv) => {
-                      const progress = inv.amount > 0 ? (inv.total_paid / inv.amount) * 100 : 0
-                      const clientName = inv.clients
-                        ? `${inv.clients.first_name} ${inv.clients.last_name}`
-                        : 'Bilinmiyor'
-                      const initials = inv.clients
-                        ? `${inv.clients.first_name[0]}${inv.clients.last_name[0]}`
-                        : '?'
-
-                      return (
-                        <tr key={inv.id} className="group hover:bg-white/[0.02] transition-colors">
-                          <td className="py-6 px-8">
-                             <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(inv.status)}`}>
-                                <span className={`size-1.5 rounded-full ${inv.status === 'overdue' ? 'bg-rose-500' : 'bg-current'}`} />
-                                {getStatusLabel(inv.status)}
-                             </span>
-                          </td>
-                          <td className="py-6 px-8 text-slate-400 font-mono text-xs">
+            <div className="border rounded-2xl overflow-hidden bg-card/30 backdrop-blur-sm">
+               <Table>
+                  <TableHeader className="bg-muted/50">
+                     <TableRow>
+                        <TableHead className="w-32 text-xs font-bold uppercase py-4">Durum</TableHead>
+                        <TableHead className="text-xs font-bold uppercase py-4">Fatura No</TableHead>
+                        <TableHead className="text-xs font-bold uppercase py-4">Müşteri</TableHead>
+                        <TableHead className="text-xs font-bold uppercase py-4">Vade</TableHead>
+                        <TableHead className="text-right text-xs font-bold uppercase py-4">Tutar</TableHead>
+                        <TableHead className="w-40 text-xs font-bold uppercase py-4">Süreç</TableHead>
+                        <TableHead className="text-right text-xs font-bold uppercase py-4">Kalan</TableHead>
+                        <TableHead className="text-center text-xs font-bold uppercase py-4">İşlem</TableHead>
+                     </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                     {filteredInvoices.map((inv) => {
+                       const progress = inv.amount > 0 ? (inv.total_paid / inv.amount) * 100 : 0
+                       const statusConfig = getStatusConfig(inv.status)
+                       return (
+                         <TableRow key={inv.id} className="group transition-colors">
+                           <TableCell>
+                              <Badge variant={statusConfig.variant} className="text-xs font-bold uppercase">
+                                {statusConfig.label}
+                              </Badge>
+                           </TableCell>
+                           <TableCell className="font-mono text-xs text-muted-foreground uppercase">
                              #{inv.invoice_number || '---'}
-                          </td>
-                          <td className="py-6 px-8 font-bold text-white">
-                             <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-xl bg-gradient-to-br from-primary/20 to-indigo-500/10 border border-primary/20 flex items-center justify-center text-[10px] text-primary font-black shadow-inner uppercase">
-                                   {initials}
-                                </div>
-                                <div className="flex flex-col">
-                                   <span className="text-sm">{clientName}</span>
-                                    <span className="text-[10px] text-slate-500 font-medium">Standart Proje</span>
-                                </div>
-                             </div>
-                          </td>
-                          <td className="py-6 px-8 text-slate-400 text-xs">
-                             {inv.due_date ? new Date(inv.due_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
-                          </td>
-                          <td className="py-6 px-8 text-right font-black text-white text-base">
+                           </TableCell>
+                           <TableCell>
+                              <div className="flex items-center gap-3">
+                                 <div className="size-8 rounded-lg bg-accent flex items-center justify-center text-xs font-bold">
+                                   {inv.clients?.first_name[0]}{inv.clients?.last_name?.[0] || ''}
+                                 </div>
+                                 <div className="flex flex-col">
+                                    <span className="text-sm font-bold truncate leading-none mb-1">
+                                      {inv.clients ? `${inv.clients.first_name} ${inv.clients.last_name}` : 'Genel'}
+                                    </span>
+                                    <span className="text-xs text-muted-foreground uppercase font-medium">{inv.clients?.company || 'Proje'}</span>
+                                 </div>
+                              </div>
+                           </TableCell>
+                           <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                             {inv.due_date ? new Date(inv.due_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' }) : '-'}
+                           </TableCell>
+                           <TableCell className="text-right font-bold text-sm">
                              ₺{inv.amount.toLocaleString()}
-                          </td>
-                          <td className="py-6 px-8">
-                             <div className="w-32 flex flex-col gap-2">
-                                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                                   <div
-                                      className={`h-full rounded-full transition-all duration-1000 ${
-                                         progress >= 100 ? 'bg-emerald-500' :
-                                         progress > 0 ? 'bg-amber-400' : 'bg-slate-700'
-                                      }`}
+                           </TableCell>
+                           <TableCell>
+                              <div className="space-y-2">
+                                 <div className="h-1 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className={cn(
+                                        "h-full rounded-full transition-all duration-700",
+                                        progress >= 100 ? "bg-emerald-500" : "bg-primary"
+                                      )}
                                       style={{ width: `${Math.min(progress, 100)}%` }}
-                                   />
-                                </div>
-                                <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none">
-                                    %{progress.toFixed(0)} Tahsil Edildi
-                                </span>
-                             </div>
-                          </td>
-                          <td className="py-6 px-8 text-right font-black text-white text-base">
-                             <span className={inv.remaining > 0 ? 'text-rose-400/80' : 'text-slate-500'}>
+                                    />
+                                 </div>
+                                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-tighter">%{progress.toFixed(0)} Tahsil</span>
+                              </div>
+                           </TableCell>
+                           <TableCell className="text-right font-bold text-sm">
+                             <span className={inv.remaining > 0 ? "text-amber-500" : "text-emerald-500"}>
                                 ₺{inv.remaining.toLocaleString()}
                              </span>
-                          </td>
-                          <td className="py-6 px-8 text-center relative">
-                             <div className="flex items-center justify-end gap-3">
-                                {inv.status !== 'paid' && (
-                                   <button
-                                      onClick={() => setPaymentInvoice(inv)}
-                                      className="flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 rounded-xl hover:bg-emerald-500 hover:text-slate-900 border border-emerald-500/20 transition-all active:scale-95"
+                           </TableCell>
+                           <TableCell>
+                              <div className="flex items-center justify-center gap-2">
+                                 {inv.status !== 'paid' && (
+                                   <Button
+                                     size="sm"
+                                     variant="ghost"
+                                     className="h-8 px-3 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                     onClick={() => setPaymentInvoice(inv)}
                                    >
-                                       Öde
-                                    </button>
-                                )}
-                                <button
-                                   onClick={(e) => { e.stopPropagation(); setActionMenuOpen(actionMenuOpen === inv.id ? null : inv.id) }}
-                                   className="size-8 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white flex items-center justify-center transition-all"
-                                >
-                                   <span className="material-symbols-rounded text-[18px]">more_horiz</span>
-                                </button>
-
-                              {actionMenuOpen === inv.id && (
-                                <div className="absolute right-8 top-10 w-32 bg-surface-lighter border border-border-dark shadow-xl rounded-lg z-20 py-1 flex flex-col items-start">
-                                  <button
-                                    onClick={() => handleDeleteInvoice(inv.id)}
-                                    className="w-full text-left px-4 py-2 text-xs hover:bg-[#1f2b36] text-white hover:text-red-400"
-                                  >
-                                    Sil
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                    {filteredInvoices.length === 0 && (
-                      <tr>
-                        <td colSpan={8} className="py-8 text-center text-text-secondary">
-                          Fatura bulunamadı.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                                      Öde
+                                   </Button>
+                                 )}
+                                 {inv.payments.length > 0 && (
+                                   <Button
+                                     size="sm"
+                                     variant="ghost"
+                                     className="h-8 px-3 text-muted-foreground hover:text-foreground"
+                                     onClick={() => setHistoryInvoice(inv)}
+                                   >
+                                     <History className="size-3.5 mr-1.5" />
+                                     Geçmiş
+                                   </Button>
+                                 )}
+                                 <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                       <Button variant="ghost" size="icon" className="h-8 w-8">
+                                          <MoreHorizontal className="size-4" />
+                                       </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                       <DropdownMenuItem 
+                                         className="text-destructive gap-2"
+                                         onClick={() => {
+                                           if (confirm('Bu faturayı silmek istediğinize emin misiniz?')) {
+                                             deleteInvoice(inv.id)
+                                           }
+                                         }}
+                                       >
+                                          <Trash2 className="size-4" />
+                                          Faturayı Sil
+                                       </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                 </DropdownMenu>
+                              </div>
+                           </TableCell>
+                         </TableRow>
+                       )
+                     })}
+                     {filteredInvoices.length === 0 && (
+                        <TableRow>
+                           <TableCell colSpan={8} className="h-32 text-center text-muted-foreground opacity-50">
+                              Kayıt bulunamadı.
+                           </TableCell>
+                        </TableRow>
+                     )}
+                  </TableBody>
+               </Table>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Invoice Form Modal */}
-      <Modal isOpen={showInvoiceForm} onClose={() => setShowInvoiceForm(false)} title="Yeni Fatura">
-        <InvoiceForm
-          clients={clients}
-          onSubmit={handleAddInvoice}
-          onCancel={() => setShowInvoiceForm(false)}
-        />
-      </Modal>
-
-      {/* Payment Form Modal */}
-      <Modal isOpen={!!paymentInvoice} onClose={() => setPaymentInvoice(null)} title="Ödeme Ekle">
-        {paymentInvoice && (
-          <PaymentForm
-            invoice={paymentInvoice}
-            onSubmit={handleAddPayment}
-            onCancel={() => setPaymentInvoice(null)}
+      {/* Invoice Modal */}
+      <Dialog open={showInvoiceForm} onOpenChange={setShowInvoiceForm}>
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle>Fatura Kaydı</DialogTitle>
+            <DialogDescription>Yeni bir fatura girişi yaparak cari takibini başlatın.</DialogDescription>
+          </DialogHeader>
+          <InvoiceForm
+            clients={clients}
+            onSubmit={handleAddInvoice}
+            onCancel={() => setShowInvoiceForm(false)}
           />
-        )}
-      </Modal>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Modal */}
+      <Dialog open={!!paymentInvoice} onOpenChange={(open) => !open && setPaymentInvoice(null)}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Tahsilat Kaydı</DialogTitle>
+            <DialogDescription>Gelen ödemeyi faturaya mahsup edin.</DialogDescription>
+          </DialogHeader>
+          {paymentInvoice && (
+            <PaymentForm
+              invoice={paymentInvoice}
+              onSubmit={handleAddPayment}
+              onCancel={() => setPaymentInvoice(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

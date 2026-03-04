@@ -1,13 +1,45 @@
+import {
+    Check,
+    Copy,
+    Database,
+    Edit2,
+    ExternalLink,
+    Eye,
+    EyeOff,
+    Globe,
+    Key,
+    Loader2,
+    Lock,
+    Plus,
+    Search,
+    Shield,
+    ShieldCheck,
+    Terminal,
+    Trash2,
+    Zap
+} from 'lucide-react'
 import { useState } from 'react'
-import Modal from '../components/Modal'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
+} from '../components/ui/select'
 import { useClients } from '../hooks/useClients'
 import { useCredentials, type CredentialType, type CredentialWithClient } from '../hooks/useCredentials'
+import { cn } from '../lib/utils'
 
-const CREDENTIAL_TYPES: { value: CredentialType; label: string; icon: string; color: string; bg: string }[] = [
-  { value: 'web', label: 'Web Girişi', icon: 'language', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  { value: 'ssh', label: 'Terminal / SSH', icon: 'terminal', color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  { value: 'db', label: 'Veritabanı', icon: 'database', color: 'text-purple-400', bg: 'bg-purple-500/10' },
-  { value: 'api', label: 'API / Servis', icon: 'api', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+const CREDENTIAL_TYPES: { value: CredentialType; label: string; icon: any; variant: "default" | "secondary" | "destructive" | "outline" | null | undefined }[] = [
+  { value: 'web', label: 'Web Girişi', icon: Globe, variant: 'default' },
+  { value: 'ssh', label: 'Terminal / SSH', icon: Terminal, variant: 'secondary' },
+  { value: 'db', label: 'Veritabanı', icon: Database, variant: 'outline' },
+  { value: 'api', label: 'API / Servis', icon: Zap, variant: 'default' },
 ]
 
 function CredentialForm({
@@ -26,7 +58,7 @@ function CredentialForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
-    client_id: initialData?.client_id || preselectedClientId || '',
+    client_id: initialData?.client_id || preselectedClientId || 'none',
     category: initialData?.category || 'web',
     service_name: initialData?.service_name || '',
     username: initialData?.username || '',
@@ -42,7 +74,7 @@ function CredentialForm({
 
     try {
       await onSubmit({
-        client_id: formData.client_id || null,
+        client_id: formData.client_id === 'none' ? null : formData.client_id,
         category: formData.category,
         service_name: formData.service_name,
         username: formData.username || null,
@@ -58,59 +90,64 @@ function CredentialForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5 pt-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Müşteri Bağlantısı</label>
-          <select
+          <Label>Müşteri</Label>
+          <Select
             value={formData.client_id}
-            onChange={(e) => setFormData(prev => ({ ...prev, client_id: e.target.value }))}
-            className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
+            onValueChange={(val) => setFormData(prev => ({ ...prev, client_id: val }))}
           >
-            <option value="" className="bg-slate-900">Genel / Müşterisiz</option>
-            {clients.map(client => (
-              <option key={client.id} value={client.id} className="bg-slate-900">
-                {client.first_name} {client.last_name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="text-xs">
+              <SelectValue placeholder="Müşteri Seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Genel / Müşterisiz</SelectItem>
+              {clients.map(client => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.first_name} {client.last_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Protokol Türü</label>
-          <select
-            value={formData.category || 'web'}
-            onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-            className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-bold appearance-none"
+          <Label>Kategori</Label>
+          <Select
+            value={formData.category}
+            onValueChange={(val: any) => setFormData(prev => ({ ...prev, category: val }))}
           >
-            {CREDENTIAL_TYPES.map(type => (
-              <option key={type.value} value={type.value} className="bg-slate-900">{type.label}</option>
-            ))}
-          </select>
+            <SelectTrigger className="text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CREDENTIAL_TYPES.map(type => (
+                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Kaynak Başlığı</label>
-        <input
-          type="text"
+        <Label>Servis / Kaynak Adı</Label>
+        <Input
           value={formData.service_name}
           onChange={(e) => setFormData(prev => ({ ...prev, service_name: e.target.value }))}
-          className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 transition-all font-bold"
-          placeholder="örn. AWS Üretim Paneli"
+          placeholder="örn. AWS Console, Production DB"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Bağlantı URL'i / Host</label>
+        <Label>Bağlantı URL / Host</Label>
         <div className="relative">
-           <span className="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">link</span>
-           <input
-            type="text"
-            value={formData.url || ''}
+          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={formData.url}
             onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-            className="w-full pl-12 pr-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-primary text-sm focus:outline-none focus:border-primary/50 transition-all font-mono"
+            className="pl-9 font-mono text-xs"
             placeholder="https://console.aws.amazon.com/..."
           />
         </div>
@@ -118,72 +155,54 @@ function CredentialForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">
-            Kimlik / Kullanıcı Adı
-          </label>
-          <input
-            type="text"
-            value={formData.username || ''}
+          <Label>Kullanıcı Adı</Label>
+          <Input
+            value={formData.username}
             onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-            className="w-full px-4 py-3 bg-white/5 border border-white/5 rounded-xl text-white text-sm focus:outline-none focus:border-primary/50 font-mono"
+            className="font-mono text-xs"
             placeholder="admin"
           />
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-rose-500/80 ml-1">
-            Sır / Şifre
-          </label>
-          <input
+          <Label>Şifre</Label>
+          <Input
             type="password"
-            value={formData.password_encrypted || ''}
+            value={formData.password_encrypted}
             onChange={(e) => setFormData(prev => ({ ...prev, password_encrypted: e.target.value }))}
-            className="w-full px-4 py-3 bg-rose-500/5 border border-rose-500/10 rounded-xl text-rose-400 text-sm focus:outline-none focus:border-rose-500/50 font-mono"
+            className="font-mono text-xs"
             placeholder="••••••••••"
           />
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Güvenlik Notları</label>
+        <Label>Notlar</Label>
         <textarea
-          value={formData.notes || ''}
+          value={formData.notes}
           onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-          className="w-full px-5 py-4 bg-white/5 border border-white/5 rounded-[1.25rem] text-slate-300 text-sm focus:outline-none focus:border-primary/50 transition-all font-medium resize-none"
-          placeholder="Erişim kısıtlamaları, yenileme politikası vb..."
-          rows={3}
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="Ek güvenlik detayları..."
         />
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-center gap-3">
-          <span className="material-symbols-rounded text-rose-500 text-[20px]">error</span>
-          <p className="text-rose-400 text-xs font-bold uppercase tracking-widest">{error}</p>
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-destructive text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+          <Shield className="size-4" />
+          {error}
         </div>
       )}
 
-      <div className="flex gap-4 pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 text-slate-400 font-black uppercase tracking-widest rounded-2xl transition-all"
-        >
-          İptal
-        </button>
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex-1 py-4 bg-primary hover:bg-primary-dark text-white font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50"
-        >
-          {loading ? (
-            <span className="material-symbols-rounded animate-spin">progress_activity</span>
-          ) : (
+      <DialogFooter className="gap-2 sm:gap-0">
+        <Button variant="outline" onClick={onCancel} className="flex-1">İptal</Button>
+        <Button type="submit" disabled={loading} className="flex-1 gap-2">
+          {loading ? <Loader2 className="size-4 animate-spin" /> : (
             <>
-              <span className="material-symbols-rounded font-black">{initialData ? 'verified_user' : 'encrypted'}</span>
-              {initialData ? 'Kasayı Güncelle' : 'Kasaya Güvenle Kaydet'}
+              <ShieldCheck className="size-4" />
+              {initialData ? 'Güncelle' : 'Kaydet'}
             </>
           )}
-        </button>
-      </div>
+        </Button>
+      </DialogFooter>
     </form>
   )
 }
@@ -208,92 +227,89 @@ const CredentialCard = ({
   const typeConfig = CREDENTIAL_TYPES.find(t => t.value === (cred.category as CredentialType)) || CREDENTIAL_TYPES[0]
 
   return (
-    <div className="group relative">
-      {/* Decorative Glow */}
-      <div className={`absolute -inset-0.5 rounded-[2rem] bg-gradient-to-br transition-all duration-500 opacity-0 blur group-hover:opacity-100 ${typeConfig.bg.replace('bg-', 'from-').replace('/10', '/30')}`} />
-      
-      <div className="relative flex flex-col h-full bg-[#0a0f1a] border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl transition-all duration-500 group-hover:translate-y-[-4px] group-hover:border-white/10">
-        {/* Card Header */}
-        <div className="p-6 pb-4 flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`size-12 rounded-2xl flex items-center justify-center ${typeConfig.bg} ${typeConfig.color} shadow-inner`}>
-              <span className="material-symbols-rounded text-2xl">{typeConfig.icon}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{typeConfig.label}</span>
-              <h3 className="text-white font-black tracking-tight leading-tight">{cred.service_name}</h3>
-            </div>
+    <Card className="group relative overflow-hidden border-border/40 bg-card/50 backdrop-blur-sm transition-all duration-300 hover:border-primary/50 hover:shadow-md">
+      <CardHeader className="p-4 pb-2">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-3">
+             <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <typeConfig.icon className="size-5" />
+             </div>
+             <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{typeConfig.label}</span>
+                <h3 className="text-sm font-bold truncate leading-tight">{cred.service_name}</h3>
+             </div>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-            <button onClick={onEdit} className="size-8 rounded-lg hover:bg-white/5 text-slate-500 hover:text-white transition-all flex items-center justify-center">
-              <span className="material-symbols-rounded text-[18px]">edit_square</span>
-            </button>
-            <button onClick={onDelete} className="size-8 rounded-lg hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 transition-all flex items-center justify-center">
-              <span className="material-symbols-rounded text-[18px]">delete</span>
-            </button>
+          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onEdit}>
+              <Edit2 className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:bg-destructive/10" onClick={onDelete}>
+              <Trash2 className="size-3.5" />
+            </Button>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Content Section */}
-        <div className="px-6 pb-6 pt-2 space-y-4">
-          {cred.url && (
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Geçit Bağlantı Noktası</label>
-              <a
-                href={cred.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-primary font-mono bg-primary/5 border border-primary/10 px-4 py-2.5 rounded-xl hover:bg-primary hover:text-white transition-all overflow-hidden"
-              >
-                <span className="material-symbols-rounded text-[14px]">open_in_new</span>
+      <CardContent className="p-4 pt-4 space-y-4">
+        {cred.url && (
+          <a
+            href={cred.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 group/link"
+          >
+             <div className="flex-1 flex items-center gap-2 text-sm font-mono text-primary bg-primary/5 border border-primary/10 px-3 py-1.5 rounded-lg overflow-hidden transition-colors group-hover/link:bg-primary group-hover/link:text-white">
+                <ExternalLink className="size-3 shrink-0" />
                 <span className="truncate">{cred.url}</span>
-              </a>
+             </div>
+          </a>
+        )}
+
+        <div className="grid gap-2">
+          {cred.username && (
+            <div 
+              onClick={() => copyToClipboard(cred.username!, `${cred.id}-user`)}
+              className="flex items-center justify-between p-2.5 bg-muted/30 border border-border/20 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase text-muted-foreground mb-0.5">Kullanıcı Adı</p>
+                <p className="text-xs font-mono font-medium truncate">{cred.username}</p>
+              </div>
+              {copiedId === `${cred.id}-user` ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100" />}
             </div>
           )}
 
-          <div className="space-y-3 pt-2">
-            {cred.username && (
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest text-slate-500">Kimlik / UID</label>
-                <div onClick={() => copyToClipboard(cred.username!, `${cred.id}-user`)} className="bg-white/[0.02] border border-white/5 px-4 py-3 rounded-xl cursor-pointer hover:bg-white/5 transition-colors flex items-center justify-between group/field">
-                  <span className="text-white text-sm font-mono tracking-tight">{cred.username}</span>
-                  <span className="material-symbols-rounded text-[14px] opacity-0 group-hover/field:opacity-100">{copiedId === `${cred.id}-user` ? 'done' : 'content_copy'}</span>
-                </div>
+          {cred.password_encrypted && (
+            <div className="flex items-center justify-between p-2.5 bg-destructive/5 border border-destructive/10 rounded-lg group/pass">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold uppercase text-destructive/60 mb-0.5">Şifre</p>
+                <p className="text-xs font-mono font-medium truncate text-destructive/80">
+                  {visibleSecrets[`${cred.id}-pass`] ? cred.password_encrypted : '••••••••••••'}
+                </p>
               </div>
-            )}
-
-            {cred.password_encrypted && (
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black uppercase tracking-widest text-rose-500/60">Sır / Token</label>
-                <div
-                  className="relative h-11 bg-rose-500/5 border border-rose-500/10 rounded-xl overflow-hidden cursor-pointer group/pass"
-                  onClick={() => !visibleSecrets[`${cred.id}-pass`] && toggleVisibility(`${cred.id}-pass`)}
+              <div className="flex gap-1.5 shrink-0 ml-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => toggleVisibility(`${cred.id}-pass`)}
                 >
-                  <div className={`absolute inset-0 flex items-center justify-between px-4 transition-all duration-300 ${visibleSecrets[`${cred.id}-pass`] ? 'opacity-100' : 'opacity-0 translate-y-2'}`}>
-                    <span className="text-rose-400 text-sm font-mono truncate mr-8">{cred.password_encrypted}</span>
-                    <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); toggleVisibility(`${cred.id}-pass`) }} className="text-rose-500/60 hover:text-rose-400">
-                        <span className="material-symbols-rounded text-[16px]">visibility_off</span>
-                      </button>
-                      <button onClick={(e) => { e.stopPropagation(); copyToClipboard(cred.password_encrypted!, `${cred.id}-pass`) }} className="text-rose-500/60 hover:text-rose-400">
-                        <span className="material-symbols-rounded text-[16px]">{copiedId === `${cred.id}-pass` ? 'done' : 'content_copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {!visibleSecrets[`${cred.id}-pass`] && (
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 text-rose-500/40 group-hover/pass:text-rose-400 transition-colors">
-                       <span className="material-symbols-rounded text-[18px]">lock</span>
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em]">Kilit Çözme Protokolü</span>
-                    </div>
-                  )}
-                </div>
+                  {visibleSecrets[`${cred.id}-pass`] ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => copyToClipboard(cred.password_encrypted!, `${cred.id}-pass`)}
+                >
+                  {copiedId === `${cred.id}-pass` ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
+                </Button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -349,112 +365,120 @@ export default function CustomerCredentials() {
 
   if (loading) {
     return (
-      <div className="flex w-full h-full items-center justify-center">
-        <span className="material-symbols-rounded text-primary text-4xl animate-spin">progress_activity</span>
+      <div className="flex-1 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
     <div className="flex w-full h-full overflow-hidden">
-      {/* Glassmorphic Sidebar */}
-      <aside className="w-80 flex flex-col border-r border-white/5 bg-glass-bg backdrop-blur-3xl shrink-0 z-20">
+      {/* Sidebar - Clients */}
+      <aside className="w-80 flex flex-col border-r bg-card/30 shrink-0 z-20">
         <div className="p-6 space-y-6">
-          <div className="flex flex-col gap-1 mb-2">
-             <span className="text-primary text-[10px] uppercase font-black tracking-widest opacity-80 leading-none">Güvenlik Merkezi</span>
-             <h2 className="text-white text-2xl font-black tracking-tight mt-1">Kimlik Kasası</h2>
+          <div className="space-y-1">
+             <span className="text-primary text-xs uppercase font-bold tracking-[0.2em] opacity-80">Güvenlik Merkezi</span>
+             <h2 className="text-2xl font-bold tracking-tight">Kimlik Kasası</h2>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-               <span className="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/5 text-white placeholder-slate-600 text-xs rounded-xl border border-white/5 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 pl-10 pr-3 py-3 outline-none transition-all"
-                  placeholder="Varlıklarda ara..."
-                />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-10 bg-background/50"
+                placeholder="Ara..."
+              />
             </div>
-            <button
-               onClick={() => setShowForm(true)}
-               className="size-11 bg-primary hover:bg-primary-dark text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-primary/20 active:scale-90"
+            <Button
+              onClick={() => setShowForm(true)}
+              size="icon"
+              className="h-10 w-10 shrink-0"
             >
-               <span className="material-symbols-rounded font-black">add</span>
-            </button>
+              <Plus className="size-4" />
+            </Button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-1">
+        <div className="flex-1 overflow-y-auto p-3 space-y-1">
           <div
             onClick={() => setSelectedClientId(null)}
-            className={`group flex items-center gap-4 px-4 py-4 rounded-[1.25rem] cursor-pointer transition-all border ${
-              selectedClientId === null ? 'bg-white/10 border-primary/40 shadow-xl' : 'hover:bg-white/5 border-transparent'
-            }`}
+            className={cn(
+              "group flex items-center gap-4 px-4 py-4 rounded-xl cursor-pointer transition-all border",
+              selectedClientId === null ? "bg-primary/5 border-primary/30 shadow-sm" : "hover:bg-accent/50 border-transparent"
+            )}
           >
-            <div className={`size-10 rounded-xl flex items-center justify-center ${selectedClientId === null ? 'bg-primary text-white' : 'bg-white/5 text-slate-500 group-hover:text-white transition-colors'}`}>
-              <span className="material-symbols-rounded text-xl font-black">vpn_lock</span>
+            <div className={cn(
+              "size-10 rounded-xl flex items-center justify-center transition-colors",
+              selectedClientId === null ? "bg-primary text-white" : "bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white"
+            )}>
+              <Lock className="size-5" />
             </div>
             <div className="flex flex-col">
-              <span className="text-white text-xs font-black">Genel Kasa</span>
-              <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{credentials.length} Kayıt</span>
+              <span className="text-sm font-bold">Genel Kasa</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{credentials.length} Kayıt</span>
             </div>
           </div>
 
-          <div className="py-2 px-4">
-             <div className="h-px w-full bg-white/5" />
+          <div className="py-2 px-1">
+             <div className="h-px w-full bg-border/40" />
           </div>
 
           {clientsWithCredentials.map(client => (
             <div
               key={client.id}
               onClick={() => setSelectedClientId(client.id)}
-              className={`group flex items-center gap-4 px-4 py-4 rounded-[1.25rem] cursor-pointer transition-all border ${
-                selectedClientId === client.id ? 'bg-white/10 border-primary/40 shadow-xl' : 'hover:bg-white/5 border-transparent'
-              }`}
+              className={cn(
+                "group flex items-center gap-4 px-4 py-4 rounded-xl cursor-pointer transition-all border",
+                selectedClientId === client.id ? "bg-primary/5 border-primary/30 shadow-sm" : "hover:bg-accent/50 border-transparent"
+              )}
             >
-              <div className={`size-10 rounded-xl flex items-center justify-center text-xs font-black ${selectedClientId === client.id ? 'bg-primary text-white' : 'bg-white/5 text-slate-500 group-hover:text-white transition-colors'}`}>
-                {client.first_name[0]}{client.last_name[0]}
+              <div className={cn(
+                "size-10 rounded-xl flex items-center justify-center text-xs font-black transition-colors",
+                selectedClientId === client.id ? "bg-primary text-white" : "bg-secondary text-muted-foreground group-hover:bg-primary group-hover:text-white"
+              )}>
+                {client.first_name[0]}{client.last_name?.[0] || client.first_name[1] || ''}
               </div>
               <div className="flex flex-col overflow-hidden">
-                <span className="text-white text-xs font-bold truncate">{client.first_name} {client.last_name}</span>
-                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{getCredentialsByClient(client.id).length} Kayıt</span>
+                <span className="text-sm font-bold truncate">{client.first_name} {client.last_name}</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{getCredentialsByClient(client.id).length} Kayıt</span>
               </div>
             </div>
           ))}
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col bg-transparent overflow-hidden">
-        <header className="px-10 py-10 border-b border-white/5 flex items-center justify-between">
+      {/* Main Board */}
+      <div className="flex-1 flex flex-col overflow-hidden bg-background">
+        <header className="px-8 py-8 border-b flex items-center justify-between shrink-0">
            <div className="space-y-1">
               <div className="flex items-center gap-3">
-                 <h1 className="text-4xl font-black text-white tracking-tight">
-                   {selectedClientId ? clients.find(c => c.id === selectedClientId)?.company || 'Güvenli Müşteri Varlığı' : 'Ana Altyapı'}
+                 <h1 className="text-3xl font-bold tracking-tight">
+                   {selectedClientId ? clients.find(c => c.id === selectedClientId)?.company || 'Müşteri Kasası' : 'Ana Altyapı'}
                  </h1>
-                 <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[10px] font-black text-blue-400 uppercase tracking-widest">
-                    Canlı Şifreleme
-                 </div>
+                 <Badge variant="outline" className="gap-1.5 text-blue-500 border-blue-200">
+                    <ShieldCheck className="size-3" />
+                    AES-256
+                 </Badge>
               </div>
-              <p className="text-slate-500 text-xs font-medium ml-1">
-                Şifreleme aktif • {filteredCredentials.length} korunan kaynak
+              <p className="text-muted-foreground text-sm font-medium">
+                {filteredCredentials.length} korunan kimlik bilgisi
               </p>
            </div>
-           <button
-             onClick={() => setShowForm(true)}
-             className="flex items-center gap-3 px-8 h-12 bg-primary hover:bg-primary-dark text-white rounded-[1rem] text-sm font-black uppercase tracking-widest transition-all shadow-xl shadow-primary/20 active:scale-95"
-           >
-             <span className="material-symbols-rounded text-[20px] font-black">add_moderator</span>
-             Yeni Protokol
-           </button>
+           <Button onClick={() => setShowForm(true)} className="gap-2">
+             <Key className="size-4" />
+             Yeni Kayıt
+           </Button>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-10 py-10 pb-32">
-          <div className="max-w-7xl mx-auto">
+        <div className="flex-1 overflow-y-auto px-8 py-8">
+          <div className="max-w-6xl mx-auto">
             {filteredCredentials.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-24 opacity-30">
-                  <span className="material-symbols-rounded text-8xl mb-6">lock_reset</span>
-                  <p className="text-xl font-black uppercase tracking-[0.3em]">Güvenli Protokol Bulunamadı</p>
+               <div className="flex flex-col items-center justify-center py-24 opacity-30 text-center">
+                  <Lock className="size-20 mb-6 text-muted-foreground" />
+                  <p className="text-xl font-bold uppercase tracking-widest">Kasa Boş</p>
+                  <p className="text-sm">Henüz bir kimlik bilgisi eklenmemiş.</p>
                </div>
             ) : (
                <div className="space-y-12">
@@ -463,13 +487,12 @@ export default function CustomerCredentials() {
                     if (typeCreds.length === 0) return null
                     return (
                       <section key={type.value} className="space-y-6">
-                        <div className="flex items-center gap-4 mb-2">
-                           <div className={`h-px flex-1 bg-gradient-to-r from-transparent to-white/5`} />
-                           <h2 className={`text-[10px] font-black uppercase tracking-[0.4em] ${type.color} flex items-center gap-2`}>
-                             <span className="material-symbols-rounded text-sm">{type.icon}</span>
-                             {type.label} Kanalları
+                        <div className="flex items-center gap-4">
+                           <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+                             <type.icon className="size-3.5" />
+                             {type.label}
                            </h2>
-                           <div className={`h-px flex-1 bg-gradient-to-l from-transparent to-white/5`} />
+                           <div className="h-px flex-1 bg-border/40" />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                           {typeCreds.map(cred => (
@@ -494,25 +517,30 @@ export default function CustomerCredentials() {
         </div>
       </div>
 
-      <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Güvenli Protokolü Başlat">
-        <CredentialForm
-          clients={clients}
-          onSubmit={handleAdd}
-          onCancel={() => setShowForm(false)}
-          preselectedClientId={selectedClientId || undefined}
-        />
-      </Modal>
-
-      <Modal isOpen={!!editingCredential} onClose={() => setEditingCredential(null)} title="Kasa Yapısını Güncelle">
-        {editingCredential && (
+      {/* Form Dialog */}
+      <Dialog 
+        open={showForm || !!editingCredential} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowForm(false)
+            setEditingCredential(null)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{editingCredential ? 'Kayıt Güncelle' : 'Yeni Kimlik Ekle'}</DialogTitle>
+            <DialogDescription>Girdiğiniz tüm bilgiler uçtan uca şifrelenerek saklanır.</DialogDescription>
+          </DialogHeader>
           <CredentialForm
             clients={clients}
-            onSubmit={handleEdit}
-            onCancel={() => setEditingCredential(null)}
-            initialData={editingCredential}
+            onSubmit={editingCredential ? handleEdit : handleAdd}
+            onCancel={() => { setShowForm(false); setEditingCredential(null); }}
+            initialData={editingCredential || undefined}
+            preselectedClientId={selectedClientId || undefined}
           />
-        )}
-      </Modal>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
