@@ -638,6 +638,76 @@ export default function FinanceDashboard() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Payment History Modal */}
+      <Dialog open={!!historyInvoice} onOpenChange={(open) => !open && setHistoryInvoice(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="size-5 text-primary" />
+              Ödeme Geçmişi
+            </DialogTitle>
+            <DialogDescription>
+              {historyInvoice?.clients
+                ? `${historyInvoice.clients.first_name} ${historyInvoice.clients.last_name}`
+                : 'Genel'} — #{historyInvoice?.invoice_number || '---'}
+            </DialogDescription>
+          </DialogHeader>
+          {historyInvoice && (
+            <div className="space-y-4 pt-2">
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="p-3 bg-accent/50 rounded-xl border text-center">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Toplam</p>
+                  <p className="text-sm font-bold">₺{historyInvoice.amount.toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-emerald-500/5 rounded-xl border border-emerald-500/10 text-center">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Ödenen</p>
+                  <p className="text-sm font-bold text-emerald-600">₺{historyInvoice.total_paid.toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 text-center">
+                  <p className="text-xs text-muted-foreground font-medium mb-1">Kalan</p>
+                  <p className="text-sm font-bold text-amber-600">₺{historyInvoice.remaining.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Payment list */}
+              <div className="space-y-2 max-h-72 overflow-y-auto">
+                {historyInvoice.payments
+                  .sort((a, b) => new Date(b.payment_date || b.created_at || '').getTime() - new Date(a.payment_date || a.created_at || '').getTime())
+                  .map((p) => {
+                    const methodLabel = PAYMENT_METHODS.find(m => m.value === p.payment_method)?.label || p.payment_method
+                    return (
+                      <div key={p.id} className="flex items-center gap-3 p-3 bg-muted/40 rounded-xl border border-border/40">
+                        <div className="size-9 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="size-4 text-emerald-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-sm font-bold">₺{p.amount.toLocaleString()}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {p.payment_date
+                                ? new Date(p.payment_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })
+                                : '---'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {methodLabel && (
+                              <Badge variant="secondary" className="text-[10px] font-bold uppercase h-5">
+                                {methodLabel}
+                              </Badge>
+                            )}
+                            {p.notes && <span className="text-xs text-muted-foreground truncate">{p.notes}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -260,6 +260,7 @@ export type Database = {
           is_paid: boolean | null
           notes: string | null
           paid_at: string | null
+          pipeline_id: string | null
           project_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -275,6 +276,7 @@ export type Database = {
           is_paid?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          pipeline_id?: string | null
           project_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -290,6 +292,7 @@ export type Database = {
           is_paid?: boolean | null
           notes?: string | null
           paid_at?: string | null
+          pipeline_id?: string | null
           project_id?: string | null
           updated_at?: string | null
           user_id?: string | null

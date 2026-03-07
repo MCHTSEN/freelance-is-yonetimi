@@ -23,9 +23,12 @@ import {
     Clock,
     Loader2,
     MessageSquare,
+    Pencil,
     Plus,
     Search,
-    Trophy
+    Trophy,
+    X,
+    Check,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Badge } from '../components/ui/badge'
@@ -130,7 +133,7 @@ function JobCard({ job, onClick, isDragging }: { job: WonJob; onClick: () => voi
         {job.last_status_note && (
            <div className="flex items-start gap-2 p-3 bg-primary/5 rounded-xl border border-primary/10 transition-colors group-hover:bg-primary/10">
               <MessageSquare className="size-3.5 mt-0.5 text-primary shrink-0 opacity-70" />
-              <p className="text-[12px] text-foreground/90 line-clamp-2 italic leading-relaxed font-medium">
+              <p className="text-[12px] text-foreground/90 italic leading-relaxed font-medium">
                 {job.last_status_note}
               </p>
            </div>
@@ -203,6 +206,8 @@ export default function WonJobs() {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [comments, setComments] = useState<JobComment[]>([])
   const [newComment, setNewComment] = useState('')
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null)
+  const [editingContent, setEditingContent] = useState('')
 
   useEffect(() => {
     fetchJobs()
@@ -261,9 +266,10 @@ export default function WonJobs() {
   const addComment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedJob || !newComment.trim()) return
+    const { data: { user } } = await supabase.auth.getUser()
     const { data, error } = await supabase
       .from('job_comments')
-      .insert({ pipeline_id: selectedJob.id, content: newComment })
+      .insert({ pipeline_id: selectedJob.id, content: newComment, user_id: user?.id })
       .select()
       .single()
 
@@ -274,6 +280,37 @@ export default function WonJobs() {
       setJobs(jobs.map(j => j.id === selectedJob.id ? { ...j, last_status_note: newComment } : j))
       // Also update in DB
       await supabase.from('pipeline').update({ last_status_note: newComment }).eq('id', selectedJob.id)
+    }
+  }
+
+  const startEditComment = (comment: JobComment) => {
+    setEditingCommentId(comment.id)
+    setEditingContent(comment.content)
+  }
+
+  const cancelEditComment = () => {
+    setEditingCommentId(null)
+    setEditingContent('')
+  }
+
+  const saveEditComment = async (commentId: string) => {
+    if (!editingContent.trim()) return
+    const { error } = await supabase
+      .from('job_comments')
+      .update({ content: editingContent })
+      .eq('id', commentId)
+
+    if (!error) {
+      const updatedComments = comments.map(c => c.id === commentId ? { ...c, content: editingContent } : c)
+      setComments(updatedComments)
+      setEditingCommentId(null)
+      setEditingContent('')
+
+      // En son yorum düzenlendiyse last_status_note'u da güncelle
+      if (selectedJob && updatedComments[0]?.id === commentId) {
+        setJobs(jobs.map(j => j.id === selectedJob.id ? { ...j, last_status_note: editingContent } : j))
+        await supabase.from('pipeline').update({ last_status_note: editingContent }).eq('id', selectedJob.id)
+      }
     }
   }
 
@@ -430,12 +467,45 @@ export default function WonJobs() {
                 <div className="space-y-3">
                    {comments.map((c) => (
                       <div key={c.id} className="p-3 bg-muted/40 rounded-xl border border-border/40 relative group">
-                         <p className="text-sm leading-relaxed">{c.content}</p>
-                         <div className="flex items-center justify-between mt-2">
-                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">
-                               {new Date(c.created_at).toLocaleString('tr-TR')}
-                            </span>
-                         </div>
+                         {editingCommentId === c.id ? (
+                            <div className="space-y-2">
+                               <Input
+                                  value={editingContent}
+                                  onChange={(e) => setEditingContent(e.target.value)}
+                                  onKeyDown={(e) => {
+                                     if (e.key === 'Enter') saveEditComment(c.id)
+                                     if (e.key === 'Escape') cancelEditComment()
+                                  }}
+                                  autoFocus
+                                  className="text-sm"
+                               />
+                               <div className="flex gap-2 justify-end">
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={cancelEditComment}>
+                                     <X className="size-3.5" />
+                                  </Button>
+                                  <Button size="icon" className="h-7 w-7" onClick={() => saveEditComment(c.id)}>
+                                     <Check className="size-3.5" />
+                                  </Button>
+                               </div>
+                            </div>
+                         ) : (
+                            <>
+                               <p className="text-sm leading-relaxed pr-6">{c.content}</p>
+                               <div className="flex items-center justify-between mt-2">
+                                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-tight">
+                                     {new Date(c.created_at).toLocaleString('tr-TR')}
+                                  </span>
+                                  <Button
+                                     size="icon"
+                                     variant="ghost"
+                                     className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                     onClick={() => startEditComment(c)}
+                                  >
+                                     <Pencil className="size-3" />
+                                  </Button>
+                               </div>
+                            </>
+                         )}
                       </div>
                    ))}
                    {comments.length === 0 && (

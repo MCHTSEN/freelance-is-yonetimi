@@ -148,7 +148,27 @@ export function usePipeline() {
       .single()
 
     if (error) throw error
-    setItems(prev => prev.map(item => item.id === id ? data as PipelineWithClient : item))
+
+    // estimated_value değiştiyse bağlı faturayı da güncelle
+    if (updates.estimated_value !== undefined) {
+      try {
+        const { data: linkedInvoices } = await supabase
+          .from('invoices')
+          .select('id')
+          .eq('pipeline_id', id)
+
+        if (linkedInvoices && linkedInvoices.length > 0) {
+          await supabase
+            .from('invoices')
+            .update({ amount: updates.estimated_value })
+            .eq('pipeline_id', id)
+        }
+      } catch (err) {
+        console.error('Failed to sync invoice amount:', err)
+      }
+    }
+
+    await fetchPipeline()
     return data
   }
 
@@ -233,6 +253,7 @@ export function usePipeline() {
     addItem,
     updateItem,
     updateStage,
+    moveItem: updateStage,
     deleteItem,
     getItemsByStage,
     refetch: fetchPipeline,

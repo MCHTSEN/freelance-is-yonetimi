@@ -132,6 +132,18 @@ export function useInvoices() {
 
     if (error) throw error
 
+    // amount değiştiyse bağlı pipeline'ın estimated_value'sunu da güncelle
+    if (updates.amount !== undefined && data.pipeline_id) {
+      try {
+        await supabase
+          .from('pipeline')
+          .update({ estimated_value: updates.amount })
+          .eq('id', data.pipeline_id)
+      } catch (err) {
+        console.error('Failed to sync pipeline estimated_value:', err)
+      }
+    }
+
     setInvoices(prev => prev.map(inv => {
       if (inv.id === id) {
         const totalPaid = inv.total_paid
