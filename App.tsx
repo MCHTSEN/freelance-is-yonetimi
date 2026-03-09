@@ -1,8 +1,8 @@
 import {
   Calendar,
-  Bot,
   CheckSquare,
   ChevronRight,
+  ExternalLink,
   FileText,
   LayoutGrid,
   Loader2,
@@ -36,7 +36,6 @@ import MeetingNotes from './screens/MeetingNotes';
 import PublicBooking from './screens/PublicBooking';
 import SalesKanban from './screens/SalesKanban';
 import TimerPage from './screens/TimerPage';
-import TikTokOpsCenter from './screens/TikTokOpsCenter';
 import WonJobs from './screens/WonJobs';
 
 enum Screen {
@@ -46,8 +45,7 @@ enum Screen {
   CREDENTIALS = 'CREDENTIALS',
   FINANCE = 'FINANCE',
   TIMER = 'TIMER',
-  CALENDAR = 'CALENDAR',
-  TIKTOK_OPS = 'TIKTOK_OPS'
+  CALENDAR = 'CALENDAR'
 }
 
 // Loading spinner component
@@ -174,7 +172,15 @@ function Dashboard() {
           
           {!isSidebarCollapsed && <p className="text-xs font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-2 px-2">Operasyon</p>}
           <NavItem screen={Screen.CALENDAR} icon={Calendar} label="Takvim & Randevu" />
-          <NavItem screen={Screen.TIKTOK_OPS} icon={Bot} label="Operasyon Merkezi" />
+          <a
+            href="https://social.lukeristudio.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all duration-300 text-muted-foreground hover:bg-card hover:text-foreground hover:shadow-sm group"
+          >
+            <ExternalLink className={cn("size-4.5 shrink-0 text-muted-foreground transition-transform group-hover:scale-110")} />
+            {!isSidebarCollapsed && <span className="text-xs font-semibold tracking-tight">Social Ops Center</span>}
+          </a>
           <NavItem screen={Screen.NOTES} icon={FileText} label="Meeting Notes" />
           <NavItem screen={Screen.CREDENTIALS} icon={ShieldCheck} label="Client Vault" />
           <NavItem screen={Screen.FINANCE} icon={Wallet} label="Finans" />
@@ -242,7 +248,6 @@ function Dashboard() {
           {currentScreen === Screen.FINANCE && <FinanceDashboard />}
           {currentScreen === Screen.TIMER && <TimerPage />}
           {currentScreen === Screen.CALENDAR && <CalendarBookings />}
-          {currentScreen === Screen.TIKTOK_OPS && <TikTokOpsCenter />}
         </div>
       </main>
     </div>
