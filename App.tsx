@@ -1,5 +1,6 @@
 import {
   Calendar,
+  Bot,
   CheckSquare,
   ChevronRight,
   FileText,
@@ -35,6 +36,7 @@ import MeetingNotes from './screens/MeetingNotes';
 import PublicBooking from './screens/PublicBooking';
 import SalesKanban from './screens/SalesKanban';
 import TimerPage from './screens/TimerPage';
+import TikTokOpsCenter from './screens/TikTokOpsCenter';
 import WonJobs from './screens/WonJobs';
 
 enum Screen {
@@ -44,7 +46,8 @@ enum Screen {
   CREDENTIALS = 'CREDENTIALS',
   FINANCE = 'FINANCE',
   TIMER = 'TIMER',
-  CALENDAR = 'CALENDAR'
+  CALENDAR = 'CALENDAR',
+  TIKTOK_OPS = 'TIKTOK_OPS'
 }
 
 // Loading spinner component
@@ -171,6 +174,7 @@ function Dashboard() {
           
           {!isSidebarCollapsed && <p className="text-xs font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-2 px-2">Operasyon</p>}
           <NavItem screen={Screen.CALENDAR} icon={Calendar} label="Takvim & Randevu" />
+          <NavItem screen={Screen.TIKTOK_OPS} icon={Bot} label="Operasyon Merkezi" />
           <NavItem screen={Screen.NOTES} icon={FileText} label="Meeting Notes" />
           <NavItem screen={Screen.CREDENTIALS} icon={ShieldCheck} label="Client Vault" />
           <NavItem screen={Screen.FINANCE} icon={Wallet} label="Finans" />
@@ -238,6 +242,7 @@ function Dashboard() {
           {currentScreen === Screen.FINANCE && <FinanceDashboard />}
           {currentScreen === Screen.TIMER && <TimerPage />}
           {currentScreen === Screen.CALENDAR && <CalendarBookings />}
+          {currentScreen === Screen.TIKTOK_OPS && <TikTokOpsCenter />}
         </div>
       </main>
     </div>

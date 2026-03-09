@@ -47,7 +47,7 @@ import {
     SelectValue,
 } from '../components/ui/select'
 import { useClients } from '../hooks/useClients'
-import { PipelineStage, PipelineWithClient, STAGE_CONFIG, usePipeline } from '../hooks/usePipeline'
+import { PipelineStage, PipelineWithClient, SALES_STAGES, STAGE_CONFIG, usePipeline } from '../hooks/usePipeline'
 import type { Client } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
 import { cn } from '../lib/utils'
@@ -541,7 +541,8 @@ export default function SalesKanban() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-6 min-w-full h-full">
-            {(Object.entries(STAGE_CONFIG) as [PipelineStage, typeof STAGE_CONFIG[PipelineStage]][]).map(([stage, config]) => {
+            {SALES_STAGES.map((stage) => {
+              const config = STAGE_CONFIG[stage]
               const stageItems = searchQuery
                 ? filteredItems.filter(i => i.stage === stage)
                 : getItemsByStage(stage)

@@ -3,6 +3,7 @@ import type { Client, Pipeline, PipelineInsert } from '../lib/supabase'
 import { supabase } from '../lib/supabase'
 
 export type PipelineStage = 'lead' | 'contacted' | 'meeting' | 'proposal_sent' | 'won' | 'completed'
+export const SALES_STAGES: PipelineStage[] = ['lead', 'contacted', 'meeting', 'proposal_sent']
 
 export interface InvoicePayment {
   id: string
